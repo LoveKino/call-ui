@@ -1,2 +1,3 @@
-# call-ui
-function calling editor ui
+# lambda-ui
+
+lambda editor ui
