@@ -12,6 +12,8 @@ let InputList = require('kabanery-dynamic-listview/lib/inputList');
 
 let TreeOptionView = require('./treeOptionView');
 
+let JsonDataView = require('./jsonDataView');
+
 /**
  * lambda UI editor
  *
@@ -47,9 +49,9 @@ let TreeOptionView = require('./treeOptionView');
  */
 
 // expression type
-const EXPRESSION_TYPES = ['application', 'variable', 'json', 'abstraction', 'predicate'];
+const EXPRESSION_TYPES = ['variable', 'data', 'abstraction', 'predicate'];
 
-const [APPLICATION, VARIABLE, JSON_DATA, ABSTRACTION, PREDICATE] = EXPRESSION_TYPES;
+const [VARIABLE, JSON_DATA, ABSTRACTION, PREDICATE] = EXPRESSION_TYPES;
 
 /**
  * expression user interface
@@ -72,15 +74,20 @@ module.exports = view(({
     width: 30px;
     outline: none;
 } 
+
+.lambda-params fieldset{
+    padding: 1px 4px;
+    border: 0;
+}
     `));
 
-    return declareView({
+    return expressionView({
         predicates,
         predicatesMetaInfo
     });
 });
 
-let declareView = view(({
+let expressionView = view(({
     predicates,
     predicatesMetaInfo,
     expressionType,
@@ -112,11 +119,12 @@ let declareView = view(({
         expressionType && n('div', {
             style: {
                 border: '1px solid rgba(200, 200, 200, 0.4)',
+                marginLeft: 15,
                 marginTop: 5,
                 padding: 5
             }
         }, [
-            expressionType === JSON_DATA ? jsonDataView({
+            expressionType === JSON_DATA ? JsonDataView({
                 predicates, predicatesMetaInfo
             }) :
             expressionType === PREDICATE ? predicateView({
@@ -142,13 +150,13 @@ let abstractionView = view(({
                 style: {
                     marginTop: 4
                 }
-            },'expression'),
+            }, 'expression'),
             n('div', {
                 style: {
                     margin: '10px'
                 }
-            },[
-                declareView({
+            }, [
+                expressionView({
                     predicates,
                     predicatesMetaInfo
                 })
@@ -179,7 +187,6 @@ let predicateView = view(({
         args
     } = get(predicatesMetaInfo, predicatePath);
     return n('div', [
-        n('span', predicatePath),
         paramsFieldView({
             args,
             predicates,
@@ -193,27 +200,29 @@ let paramsFieldView = view(({
     predicates,
     predicatesMetaInfo
 }) => {
-    return n('div', [
+    return n('div', {
+        'class': 'lambda-params'
+    }, [
         map(args, ({
             name
         }) => {
-            return n('fieldset', [
-                name && n('label', name),
-                declareView({
+            return n('fieldset', {
+                style: {
+                    padding: '4px'
+                }
+            },[
+                name && n('label', {
+                    style: {
+                        marginRight: 10
+                    }
+                }, name),
+
+                expressionView({
                     predicatesMetaInfo,
                     predicates
                 })
             ]);
         })
-    ]);
-});
-
-/**
- * used to define json data
- */
-let jsonDataView = view(() => {
-    return n('div', [
-        n('input')
     ]);
 });
 

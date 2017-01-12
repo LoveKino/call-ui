@@ -21,22 +21,22 @@ module.exports = view(({
     }, [
         n('div', {
             style: {
-                border: '1px solid rgba(200, 200, 200, 0.8)',
+                border: !path ? '1px solid rgba(200, 200, 200, 0.8)' : 'none',
                 borderRadius: 6,
                 padding: 5,
-                cursor: 'pointer',
-                width: 160
+                cursor: 'pointer'
             },
 
             onclick: () => {
                 update('showSelectTree', !showSelectTree);
             }
-        }, path ? n('span', path) : n('span', 'please select')),
+        }, path ? renderGuideLine(path) : n('span', 'please select')),
 
         n('div', {
             style: {
                 position: 'absolute',
-                backgroundColor: 'white'
+                backgroundColor: 'white',
+                zIndex: 10000
             }
         }, [
             showSelectTree && TreeSelect({
@@ -52,3 +52,7 @@ module.exports = view(({
         ])
     ]);
 });
+
+let renderGuideLine = (path) => {
+    return n('span', `> ${path.split('.').join(' > ')}`);
+};
