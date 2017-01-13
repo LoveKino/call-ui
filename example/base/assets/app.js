@@ -57,6 +57,10 @@
 	} = dsl;
 
 	let {
+	    map
+	} = __webpack_require__(32);
+
+	let {
 	    n, view
 	} = __webpack_require__(3);
 
@@ -64,7 +68,9 @@
 	    let predicates = {
 	        math: {
 	            '+': (x, y) => x + y
-	        }
+	        },
+
+	        map
 	    };
 
 	    let run = interpreter(predicates);
@@ -98,13 +104,35 @@
 	                            name: 'number'
 	                        }]
 	                    }
+	                },
+
+	                map: {
+	                    args: [{
+	                        type: 'Array',
+	                        name: 'list'
+	                    }, {
+	                        type: 'function',
+	                        name: 'handler'
+	                    }]
 	                }
 	            },
 
 	            predicates,
 
 	            onchange: (v) => {
-	                updateShowView('value', v && v instanceof Error ? n('pre', v.stack) : n('span', run(getJson(v)).toString()));
+	                let getValue = (v) => {
+	                    if (v instanceof Error) {
+	                        return v;
+	                    }
+	                    try {
+	                        return run(getJson(v)).toString();
+	                    } catch (err) {
+	                        return err;
+	                    }
+	                };
+
+	                v = getValue(v);
+	                updateShowView('value', v && v instanceof Error ? n('pre', v.stack) : n('span', v));
 	            }
 	        }),
 
@@ -26819,12 +26847,14 @@
 	} = __webpack_require__(3);
 
 	let {
-	    get, map
+	    get
 	} = __webpack_require__(32);
 
 	let {
 	    dsl
 	} = __webpack_require__(69);
+
+	let ParamsFieldView = __webpack_require__(80);
 
 	let method = dsl.require;
 
@@ -26845,7 +26875,7 @@
 	    );
 
 	    return n('div', [
-	        paramsFieldView({
+	        ParamsFieldView({
 	            args,
 	            predicates,
 	            predicatesMetaInfo,
@@ -26859,7 +26889,26 @@
 	    ]);
 	});
 
-	let paramsFieldView = view(({
+	let getPredicatePath = (path) => path.split('.').slice(1).join('.');
+
+	const id = v => v;
+
+
+/***/ },
+/* 80 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    n, view
+	} = __webpack_require__(3);
+
+	let {
+	    map
+	} = __webpack_require__(32);
+
+	module.exports = view(({
 	    args,
 	    predicates,
 	    predicatesMetaInfo,
@@ -26898,8 +26947,6 @@
 	        })
 	    ]);
 	});
-
-	let getPredicatePath = (path) => path.split('.').slice(1).join('.');
 
 	const id = v => v;
 
