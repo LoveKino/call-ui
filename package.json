@@ -33,6 +33,7 @@
     "kabanery-editor": "0.0.2",
     "kabanery-fold": "0.0.1",
     "kabanery-select": "0.0.1",
-    "kabanery-tree-select": "^0.1.1"
+    "kabanery-tree-select": "^0.1.1",
+    "leta": "^0.1.1"
   }
 }

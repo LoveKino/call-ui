@@ -53,6 +53,13 @@ module.exports = view(({
     ]);
 });
 
+/**
+ * @param path string
+ */
 let renderGuideLine = (path) => {
-    return n('span', `> ${path.split('.').join(' > ')}`);
+    return n('span', {
+        style: {
+            color: '#85981f'
+        }
+    }, `> ${path.split('.').join(' > ')}`);
 };

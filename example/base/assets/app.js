@@ -96,11 +96,11 @@
 	    map, get
 	} = __webpack_require__(32);
 
-	let InputList = __webpack_require__(35);
-
 	let TreeOptionView = __webpack_require__(42);
 
 	let JsonDataView = __webpack_require__(59);
+
+	let VariableView = __webpack_require__(71);
 
 	/**
 	 * lambda UI editor
@@ -141,19 +141,7 @@
 
 	const [VARIABLE, JSON_DATA, ABSTRACTION, PREDICATE] = EXPRESSION_TYPES;
 
-	/**
-	 * expression user interface
-	 *
-	 * 1. user choses expression type
-	 * 2. define current expression type
-	 */
-	module.exports = view(({
-	    predicates,
-	    predicatesMetaInfo
-	}) => {
-	    document.getElementsByTagName('head')[0].appendChild(n('style', {
-	        type: 'text/css'
-	    }, `.lambda-variable fieldset{
+	const LAMBDA_STYLE = `.lambda-variable fieldset{
 	    display: inline-block;
 	    border: 1px solid rgba(200, 200, 200, 0.4);
 	    padding: 1px 4px;
@@ -166,8 +154,21 @@
 	.lambda-params fieldset{
 	    padding: 1px 4px;
 	    border: 0;
-	}
-	    `));
+	}`;
+
+	/**
+	 * expression user interface
+	 *
+	 * 1. user choses expression type
+	 * 2. define current expression type
+	 */
+	module.exports = view(({
+	    predicates,
+	    predicatesMetaInfo
+	}) => {
+	    document.getElementsByTagName('head')[0].appendChild(n('style', {
+	        type: 'text/css'
+	    }, LAMBDA_STYLE));
 
 	    return expressionView({
 	        predicates,
@@ -179,10 +180,20 @@
 	    predicates,
 	    predicatesMetaInfo,
 	    expressionType,
-	    path
+	    path,
+	    variables = [],
+	        onchange = id
 	}, {
 	    update
 	}) => {
+	    let expressionTypes = {
+	        [JSON_DATA]: 1, // declare json data
+	        [ABSTRACTION]: 1, // declare function
+	        [PREDICATE]: predicates // declare function
+	    };
+	    if (variables.length) {
+	        expressionType.variable = variables;
+	    }
 	    return n('div', {
 	        style: {
 	            display: 'inline-block',
@@ -191,11 +202,7 @@
 	        }
 	    }, [
 	        TreeOptionView({
-	            data: {
-	                [JSON_DATA]: 1, // declare json data
-	                [ABSTRACTION]: 1, // declare function
-	                [PREDICATE]: predicates // declare function
-	            },
+	            data: expressionTypes,
 	            onselected: (v, path) => {
 	                update([
 	                    ['path', path],
@@ -213,15 +220,22 @@
 	            }
 	        }, [
 	            expressionType === JSON_DATA ? JsonDataView({
-	                predicates, predicatesMetaInfo
+	                predicates, predicatesMetaInfo,
+	                onchange: (v) => {
+	                    // JSON data
+	                    onchange(v);
+	                }
 	            }) :
+
 	            expressionType === PREDICATE ? predicateView({
 	                path, predicates, predicatesMetaInfo
 	            }) :
+
 	            expressionType === ABSTRACTION ? abstractionView({
 	                predicates,
 	                predicatesMetaInfo
 	            }) :
+
 	            null
 	        ])
 	    ]);
@@ -232,7 +246,9 @@
 	    predicatesMetaInfo
 	}) => {
 	    return n('div', [
-	        variableView({}),
+	        VariableView({
+	            title: VARIABLE
+	        }),
 	        n('div', [
 	            n('div', {
 	                style: {
@@ -250,18 +266,6 @@
 	                })
 	            ])
 	        ])
-	    ]);
-	});
-
-	// used to define variables
-	let variableView = view(() => {
-	    return n('div', {
-	        'class': 'lambda-variable'
-	    }, [
-	        InputList({
-	            listData: [],
-	            title: VARIABLE
-	        })
 	    ]);
 	});
 
@@ -298,7 +302,7 @@
 	                style: {
 	                    padding: '4px'
 	                }
-	            },[
+	            }, [
 	                name && n('label', {
 	                    style: {
 	                        marginRight: 10
@@ -319,6 +323,8 @@
 	};
 
 	let getPredicatePath = (path) => path.split('.').slice(1).join('.');
+
+	const id = v => v;
 
 
 /***/ },
@@ -3981,8 +3987,15 @@
 	    ]);
 	});
 
+	/**
+	 * @param path string
+	 */
 	let renderGuideLine = (path) => {
-	    return n('span', `> ${path.split('.').join(' > ')}`);
+	    return n('span', {
+	        style: {
+	            color: '#85981f'
+	        }
+	    }, `> ${path.split('.').join(' > ')}`);
 	};
 
 
@@ -5393,11 +5406,22 @@
 
 	const INLINE_TYPES = [NUMBER, BOOLEAN, STRING, NULL];
 
+	const id = v => v;
+
+	const DEFAULT_MAP = {
+	    [NUMBER]: 0,
+	    [BOOLEAN]: true,
+	    [STRING]: '',
+	    [JSON_TYPE]: '{\n\n}',
+	    [NULL]: null
+	};
+
 	/**
 	 * used to define json data
 	 */
 	module.exports = view(({
-	    type
+	    type,
+	    onchange = id
 	}, {
 	    update
 	}) => {
@@ -5416,6 +5440,8 @@
 	                    [NULL]: 1
 	                },
 	                onselected: (v, path) => {
+	                    onchange(DEFAULT_MAP[path]);
+
 	                    update([
 	                        ['type', path]
 	                    ]);
@@ -5423,15 +5449,36 @@
 	            })
 	        ]),
 
-	        //n('input')
-	        type === NUMBER && n('input type="number"'),
+	        type === NUMBER && n('input type="number"', {
+	            value: DEFAULT_MAP[type],
+	            oninput: (e) => {
+	                let num = Number(e.target.value);
+	                onchange(num);
+	            }
+	        }),
+
 	        type === BOOLEAN && SelectView({
 	            options: [
 	                ['true'],
 	                ['false']
-	            ]
+	            ],
+	            onchange: (v) => {
+	                let ret = false;
+	                if (v === 'true') {
+	                    ret = true;
+	                }
+
+	                onchange(ret);
+	            }
 	        }),
-	        type === STRING && n('input type="text"'),
+
+	        type === STRING && n('input type="text"', {
+	            value: DEFAULT_MAP[type],
+	            oninput: (e) => {
+	                onchange(e.target.value);
+	            }
+	        }),
+
 	        type === JSON_TYPE && n('div', {
 	            style: {
 	                marginLeft: 15,
@@ -5440,9 +5487,19 @@
 	            }
 	        }, [
 	            editor({
-	                content: ''
+	                content: DEFAULT_MAP[type],
+	                onchange: (v) => {
+	                    // TODO catch
+	                    try {
+	                        let jsonObject = JSON.parse(v);
+	                        onchange(jsonObject);
+	                    } catch (err) {
+	                        onchange(err);
+	                    }
+	                }
 	            })
 	        ]),
+
 	        type === NULL && n('span', 'null'),
 	    ]);
 	});
@@ -25880,6 +25937,33 @@
 
 	var dom = acequire("../lib/dom");
 	dom.importCssString(exports.cssText, exports.cssClass);
+	});
+
+
+/***/ },
+/* 71 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    n, view
+	} = __webpack_require__(3);
+
+	let InputList = __webpack_require__(35);
+
+	// used to define variables
+	module.exports = view(({
+	    title
+	}) => {
+	    return n('div', {
+	        'class': 'lambda-variable'
+	    }, [
+	        InputList({
+	            listData: [],
+	            title
+	        })
+	    ]);
 	});
 
 

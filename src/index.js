@@ -8,11 +8,11 @@ let {
     map, get
 } = require('bolzano');
 
-let InputList = require('kabanery-dynamic-listview/lib/inputList');
-
 let TreeOptionView = require('./treeOptionView');
 
 let JsonDataView = require('./jsonDataView');
+
+let VariableView = require('./variableView');
 
 /**
  * lambda UI editor
@@ -53,19 +53,7 @@ const EXPRESSION_TYPES = ['variable', 'data', 'abstraction', 'predicate'];
 
 const [VARIABLE, JSON_DATA, ABSTRACTION, PREDICATE] = EXPRESSION_TYPES;
 
-/**
- * expression user interface
- *
- * 1. user choses expression type
- * 2. define current expression type
- */
-module.exports = view(({
-    predicates,
-    predicatesMetaInfo
-}) => {
-    document.getElementsByTagName('head')[0].appendChild(n('style', {
-        type: 'text/css'
-    }, `.lambda-variable fieldset{
+const LAMBDA_STYLE = `.lambda-variable fieldset{
     display: inline-block;
     border: 1px solid rgba(200, 200, 200, 0.4);
     padding: 1px 4px;
@@ -78,8 +66,21 @@ module.exports = view(({
 .lambda-params fieldset{
     padding: 1px 4px;
     border: 0;
-}
-    `));
+}`;
+
+/**
+ * expression user interface
+ *
+ * 1. user choses expression type
+ * 2. define current expression type
+ */
+module.exports = view(({
+    predicates,
+    predicatesMetaInfo
+}) => {
+    document.getElementsByTagName('head')[0].appendChild(n('style', {
+        type: 'text/css'
+    }, LAMBDA_STYLE));
 
     return expressionView({
         predicates,
@@ -91,10 +92,20 @@ let expressionView = view(({
     predicates,
     predicatesMetaInfo,
     expressionType,
-    path
+    path,
+    variables = [],
+        onchange = id
 }, {
     update
 }) => {
+    let expressionTypes = {
+        [JSON_DATA]: 1, // declare json data
+        [ABSTRACTION]: 1, // declare function
+        [PREDICATE]: predicates // declare function
+    };
+    if (variables.length) {
+        expressionType.variable = variables;
+    }
     return n('div', {
         style: {
             display: 'inline-block',
@@ -103,11 +114,7 @@ let expressionView = view(({
         }
     }, [
         TreeOptionView({
-            data: {
-                [JSON_DATA]: 1, // declare json data
-                [ABSTRACTION]: 1, // declare function
-                [PREDICATE]: predicates // declare function
-            },
+            data: expressionTypes,
             onselected: (v, path) => {
                 update([
                     ['path', path],
@@ -125,15 +132,22 @@ let expressionView = view(({
             }
         }, [
             expressionType === JSON_DATA ? JsonDataView({
-                predicates, predicatesMetaInfo
+                predicates, predicatesMetaInfo,
+                onchange: (v) => {
+                    // JSON data
+                    onchange(v);
+                }
             }) :
+
             expressionType === PREDICATE ? predicateView({
                 path, predicates, predicatesMetaInfo
             }) :
+
             expressionType === ABSTRACTION ? abstractionView({
                 predicates,
                 predicatesMetaInfo
             }) :
+
             null
         ])
     ]);
@@ -144,7 +158,9 @@ let abstractionView = view(({
     predicatesMetaInfo
 }) => {
     return n('div', [
-        variableView({}),
+        VariableView({
+            title: VARIABLE
+        }),
         n('div', [
             n('div', {
                 style: {
@@ -162,18 +178,6 @@ let abstractionView = view(({
                 })
             ])
         ])
-    ]);
-});
-
-// used to define variables
-let variableView = view(() => {
-    return n('div', {
-        'class': 'lambda-variable'
-    }, [
-        InputList({
-            listData: [],
-            title: VARIABLE
-        })
     ]);
 });
 
@@ -210,7 +214,7 @@ let paramsFieldView = view(({
                 style: {
                     padding: '4px'
                 }
-            },[
+            }, [
                 name && n('label', {
                     style: {
                         marginRight: 10
@@ -231,3 +235,5 @@ let getExpressionType = (path) => {
 };
 
 let getPredicatePath = (path) => path.split('.').slice(1).join('.');
+
+const id = v => v;
