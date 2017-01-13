@@ -15,8 +15,6 @@ let {
 } = require('kabanery');
 
 let demo = view(() => {
-    let value = null;
-
     let predicates = {
         math: {
             '+': (x, y) => x + y
@@ -33,7 +31,12 @@ let demo = view(() => {
         update
     }) => {
         updateShowView = update;
-        return value && value instanceof Error ? n('pre', value.stack) : n('span', run(getJson(value)));
+
+        return n('div', {
+            style: {
+                marginTop: 10
+            }
+        }, [value]);
     });
 
     return () => n('div', [
@@ -55,12 +58,12 @@ let demo = view(() => {
             predicates,
 
             onchange: (v) => {
-                updateShowView('value', v);
+                updateShowView('value', v && v instanceof Error ? n('pre', v.stack) : n('span', run(getJson(v)).toString()));
             }
         }),
 
         valueShowView({
-            value
+            value: n('span', '')
         })
     ]);
 });

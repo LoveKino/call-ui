@@ -4,15 +4,13 @@ let {
     view, n
 } = require('kabanery');
 
-let {
-    map, get
-} = require('bolzano');
-
 let TreeOptionView = require('./treeOptionView');
 
 let JsonDataView = require('./jsonDataView');
 
 let AbstractionView = require('./abstractionView');
+
+let PredicateView = require('./predicateView');
 
 /**
  * lambda UI editor
@@ -136,14 +134,15 @@ let expressionView = view(({
         }, [
             expressionType === JSON_DATA ? JsonDataView({
                 predicates, predicatesMetaInfo,
-                onchange: (v) => {
-                    // JSON data
-                    onchange(v);
-                }
+                onchange
             }) :
 
-            expressionType === PREDICATE ? predicateView({
-                path, predicates, predicatesMetaInfo
+            expressionType === PREDICATE ? PredicateView({
+                path,
+                predicates,
+                predicatesMetaInfo,
+                expressionView,
+                onchange
             }) :
 
             expressionType === ABSTRACTION ? AbstractionView({
@@ -158,59 +157,8 @@ let expressionView = view(({
     ]);
 });
 
-let predicateView = view(({
-    path,
-    predicatesMetaInfo,
-    predicates
-}) => {
-    let predicatePath = getPredicatePath(path);
-    let {
-        args
-    } = get(predicatesMetaInfo, predicatePath);
-    return n('div', [
-        paramsFieldView({
-            args,
-            predicates,
-            predicatesMetaInfo
-        })
-    ]);
-});
-
-let paramsFieldView = view(({
-    args,
-    predicates,
-    predicatesMetaInfo
-}) => {
-    return n('div', {
-        'class': 'lambda-params'
-    }, [
-        map(args, ({
-            name
-        }) => {
-            return n('fieldset', {
-                style: {
-                    padding: '4px'
-                }
-            }, [
-                name && n('label', {
-                    style: {
-                        marginRight: 10
-                    }
-                }, name),
-
-                expressionView({
-                    predicatesMetaInfo,
-                    predicates
-                })
-            ]);
-        })
-    ]);
-});
-
 let getExpressionType = (path) => {
     return path.split('.')[0];
 };
-
-let getPredicatePath = (path) => path.split('.').slice(1).join('.');
 
 const id = v => v;

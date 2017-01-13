@@ -61,8 +61,6 @@
 	} = __webpack_require__(3);
 
 	let demo = view(() => {
-	    let value = null;
-
 	    let predicates = {
 	        math: {
 	            '+': (x, y) => x + y
@@ -79,7 +77,12 @@
 	        update
 	    }) => {
 	        updateShowView = update;
-	        return value && value instanceof Error ? n('pre', value.stack) : n('span', run(getJson(value)));
+
+	        return n('div', {
+	            style: {
+	                marginTop: 10
+	            }
+	        }, [value]);
 	    });
 
 	    return () => n('div', [
@@ -101,12 +104,12 @@
 	            predicates,
 
 	            onchange: (v) => {
-	                updateShowView('value', v);
+	                updateShowView('value', v && v instanceof Error ? n('pre', v.stack) : n('span', run(getJson(v)).toString()));
 	            }
 	        }),
 
 	        valueShowView({
-	            value
+	            value: n('span', '')
 	        })
 	    ]);
 	});
@@ -135,15 +138,13 @@
 	    view, n
 	} = __webpack_require__(3);
 
-	let {
-	    map, get
-	} = __webpack_require__(32);
-
 	let TreeOptionView = __webpack_require__(35);
 
 	let JsonDataView = __webpack_require__(50);
 
 	let AbstractionView = __webpack_require__(68);
+
+	let PredicateView = __webpack_require__(79);
 
 	/**
 	 * lambda UI editor
@@ -267,14 +268,15 @@
 	        }, [
 	            expressionType === JSON_DATA ? JsonDataView({
 	                predicates, predicatesMetaInfo,
-	                onchange: (v) => {
-	                    // JSON data
-	                    onchange(v);
-	                }
+	                onchange
 	            }) :
 
-	            expressionType === PREDICATE ? predicateView({
-	                path, predicates, predicatesMetaInfo
+	            expressionType === PREDICATE ? PredicateView({
+	                path,
+	                predicates,
+	                predicatesMetaInfo,
+	                expressionView,
+	                onchange
 	            }) :
 
 	            expressionType === ABSTRACTION ? AbstractionView({
@@ -289,60 +291,9 @@
 	    ]);
 	});
 
-	let predicateView = view(({
-	    path,
-	    predicatesMetaInfo,
-	    predicates
-	}) => {
-	    let predicatePath = getPredicatePath(path);
-	    let {
-	        args
-	    } = get(predicatesMetaInfo, predicatePath);
-	    return n('div', [
-	        paramsFieldView({
-	            args,
-	            predicates,
-	            predicatesMetaInfo
-	        })
-	    ]);
-	});
-
-	let paramsFieldView = view(({
-	    args,
-	    predicates,
-	    predicatesMetaInfo
-	}) => {
-	    return n('div', {
-	        'class': 'lambda-params'
-	    }, [
-	        map(args, ({
-	            name
-	        }) => {
-	            return n('fieldset', {
-	                style: {
-	                    padding: '4px'
-	                }
-	            }, [
-	                name && n('label', {
-	                    style: {
-	                        marginRight: 10
-	                    }
-	                }, name),
-
-	                expressionView({
-	                    predicatesMetaInfo,
-	                    predicates
-	                })
-	            ]);
-	        })
-	    ]);
-	});
-
 	let getExpressionType = (path) => {
 	    return path.split('.')[0];
 	};
-
-	let getPredicatePath = (path) => path.split('.').slice(1).join('.');
 
 	const id = v => v;
 
@@ -26855,6 +26806,102 @@
 	    exist,
 	    compact
 	};
+
+
+/***/ },
+/* 79 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    n, view
+	} = __webpack_require__(3);
+
+	let {
+	    get, map
+	} = __webpack_require__(32);
+
+	let {
+	    dsl
+	} = __webpack_require__(69);
+
+	let method = dsl.require;
+
+	module.exports = view(({
+	    path,
+	    predicatesMetaInfo,
+	    predicates,
+	    expressionView,
+	    onchange = id
+	}) => {
+	    let predicatePath = getPredicatePath(path);
+	    let {
+	        args
+	    } = get(predicatesMetaInfo, predicatePath);
+
+	    onchange(
+	        method(predicatePath)()
+	    );
+
+	    return n('div', [
+	        paramsFieldView({
+	            args,
+	            predicates,
+	            predicatesMetaInfo,
+	            expressionView,
+	            onchange: (params) => {
+	                onchange(
+	                    method(predicatePath)(...params)
+	                );
+	            }
+	        })
+	    ]);
+	});
+
+	let paramsFieldView = view(({
+	    args,
+	    predicates,
+	    predicatesMetaInfo,
+	    expressionView,
+	    onchange = id
+	}) => {
+	    let params = [];
+
+	    return () => n('div', {
+	        'class': 'lambda-params'
+	    }, [
+	        map(args, ({
+	            name
+	        }, index) => {
+	            return n('fieldset', {
+	                style: {
+	                    padding: '4px'
+	                }
+	            }, [
+	                name && n('label', {
+	                    style: {
+	                        marginRight: 10
+	                    }
+	                }, name),
+
+	                expressionView({
+	                    predicatesMetaInfo,
+	                    predicates,
+	                    onchange: (expressionValue) => {
+	                        params[index] = expressionValue;
+
+	                        onchange(params);
+	                    }
+	                })
+	            ]);
+	        })
+	    ]);
+	});
+
+	let getPredicatePath = (path) => path.split('.').slice(1).join('.');
+
+	const id = v => v;
 
 
 /***/ }
