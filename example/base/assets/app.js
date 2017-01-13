@@ -46,111 +46,55 @@
 
 	'use strict';
 
-	let LambdaUI = __webpack_require__(1);
-
-	let {
-	    dsl, interpreter
-	} = __webpack_require__(69);
-
-	let {
-	    getJson
-	} = dsl;
+	let LambdaRetView = __webpack_require__(81);
 
 	let {
 	    map
 	} = __webpack_require__(52);
 
 	let {
-	    n, view
+	    n
 	} = __webpack_require__(3);
-
-	let demo = view(() => {
-	    let predicates = {
-	        math: {
-	            '+': (x, y) => x + y
-	        },
-
-	        map
-	    };
-
-	    let run = interpreter(predicates);
-
-	    let updateShowView = null;
-
-	    let valueShowView = view(({
-	        value
-	    }, {
-	        update
-	    }) => {
-	        updateShowView = update;
-
-	        return n('div', {
-	            style: {
-	                marginTop: 10
-	            }
-	        }, [value]);
-	    });
-
-	    return () => n('div', [
-	        LambdaUI({
-	            predicatesMetaInfo: {
-	                math: {
-	                    '+': {
-	                        args: [{
-	                            type: 'number',
-	                            name: 'number'
-	                        }, {
-	                            type: 'number',
-	                            name: 'number'
-	                        }]
-	                    }
-	                },
-
-	                map: {
-	                    args: [{
-	                        type: 'Array',
-	                        name: 'list'
-	                    }, {
-	                        type: 'function',
-	                        name: 'handler'
-	                    }]
-	                }
-	            },
-
-	            predicates,
-
-	            onchange: (v) => {
-	                let getValue = (v) => {
-	                    if (v instanceof Error) {
-	                        return v;
-	                    }
-	                    try {
-	                        v = run(getJson(v));
-	                        if (v === null || v === undefined) return 'null';
-	                        return v.toString();
-	                    } catch (err) {
-	                        return err;
-	                    }
-	                };
-
-	                v = getValue(v);
-	                updateShowView('value', v && v instanceof Error ? n('pre', v.stack) : n('span', v));
-	            }
-	        }),
-
-	        valueShowView({
-	            value: n('span', '')
-	        })
-	    ]);
-	});
 
 	/**
 	 * type system
 	 *   basic type: number, string, boolean, function, object, array
 	 */
-	document.body.appendChild(demo({}));
+	document.body.appendChild(LambdaRetView({
+	    predicates: {
+	        math: {
+	            '+': (x, y) => x + y
+	        },
 
-	document.body.appendChild(LambdaUI({
+	        map
+	    },
+
+	    predicatesMetaInfo: {
+	        math: {
+	            '+': {
+	                args: [{
+	                    type: 'number',
+	                    name: 'number'
+	                }, {
+	                    type: 'number',
+	                    name: 'number'
+	                }]
+	            }
+	        },
+
+	        map: {
+	            args: [{
+	                type: 'Array',
+	                name: 'list'
+	            }, {
+	                type: 'function',
+	                name: 'handler'
+	            }]
+	        }
+	    }
+	}));
+
+	document.body.appendChild(LambdaRetView({
 	    predicates: {},
 	    predicatesMetaInfo: {},
 	    value: {
@@ -162,7 +106,7 @@
 
 	document.body.appendChild(n('p'));
 
-	document.body.appendChild(LambdaUI({
+	document.body.appendChild(LambdaRetView({
 	    predicates: {},
 	    predicatesMetaInfo: {},
 	    value: {
@@ -174,7 +118,7 @@
 
 	document.body.appendChild(n('p'));
 
-	document.body.appendChild(LambdaUI({
+	document.body.appendChild(LambdaRetView({
 	    predicates: {},
 	    predicatesMetaInfo: {},
 	    value: {
@@ -186,7 +130,7 @@
 
 	document.body.appendChild(n('p'));
 
-	document.body.appendChild(LambdaUI({
+	document.body.appendChild(LambdaRetView({
 	    predicates: {},
 	    predicatesMetaInfo: {},
 	    value: {
@@ -198,7 +142,7 @@
 
 	document.body.appendChild(n('p'));
 
-	document.body.appendChild(LambdaUI({
+	document.body.appendChild(LambdaRetView({
 	    predicates: {},
 	    predicatesMetaInfo: {},
 	    value: {
@@ -209,7 +153,7 @@
 
 	document.body.appendChild(n('p'));
 
-	document.body.appendChild(LambdaUI({
+	document.body.appendChild(LambdaRetView({
 	    predicates: {},
 	    predicatesMetaInfo: {},
 	    value: {
@@ -224,7 +168,7 @@
 
 	document.body.appendChild(n('p'));
 
-	document.body.appendChild(LambdaUI({
+	document.body.appendChild(LambdaRetView({
 	    predicates: {
 	        math: {
 	            '+': (x, y) => x + y
@@ -260,7 +204,7 @@
 
 	document.body.appendChild(n('p'));
 
-	document.body.appendChild(LambdaUI({
+	document.body.appendChild(LambdaRetView({
 	    predicates: {},
 	    predicatesMetaInfo: {},
 	    value: {
@@ -4569,7 +4513,11 @@
 	        value, onchange = id
 	    } = data;
 
-	    value = data.value = data.value || {};
+	    let getLambda = () => {
+	        return value.value;
+	    };
+
+	    onchange(getLambda());
 
 	    let onValueChanged = (v) => {
 	        value.value = v;
@@ -4599,6 +4547,7 @@
 	                    [JSON_TYPE]: 1,
 	                    [NULL]: 1
 	                },
+
 	                onselected: (v, path) => {
 	                    onValueChanged(DEFAULT_MAP[path]);
 
@@ -25503,12 +25452,14 @@
 	    let variables = value.variables || [],
 	        expression;
 
-	    let getAbstraction = () => {
+	    let getLambda = () => {
 	        if (expression === undefined) return new Error('expression is not defined in abstraction');
 	        if (expression instanceof Error) return expression;
 
 	        return r(...variables, expression);
 	    };
+
+	    onchange(getLambda());
 
 	    return () => n('div', {
 	        style: {
@@ -25522,7 +25473,7 @@
 	            onchange: (vars) => {
 	                variables = vars;
 
-	                onchange(getAbstraction());
+	                onchange(getLambda());
 	            },
 
 	            variables,
@@ -25547,7 +25498,7 @@
 	                    onchange: (lambda) => {
 	                        expression = lambda;
 
-	                        onchange(getAbstraction());
+	                        onchange(getLambda());
 	                    }
 	                })
 	            ])
@@ -27032,9 +26983,13 @@
 	        args
 	    } = get(predicatesMetaInfo, predicatePath);
 
-	    onchange(
-	        method(predicatePath)()
-	    );
+	    value.params = value.params || [];
+
+	    let getLambda = () => {
+	        return method(predicatePath)(...value.params);
+	    };
+
+	    onchange(getLambda());
 
 	    return n('div', {
 	        style: {
@@ -27045,17 +27000,16 @@
 	        }
 	    }, [
 	        ParamsFieldView({
+	            onchange: (params) => {
+	                value.params = params;
+	                onchange(getLambda());
+	            },
+
 	            args,
 	            predicates,
 	            predicatesMetaInfo,
 	            expressionView,
-	            params: value.params,
-	            onchange: (params) => {
-	                value.params = params;
-	                onchange(
-	                    method(predicatePath)(...params)
-	                );
-	            }
+	            params: value.params
 	        })
 	    ]);
 	});
@@ -27120,6 +27074,84 @@
 	});
 
 	const id = v => v;
+
+
+/***/ },
+/* 81 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let LambdaUI = __webpack_require__(1);
+
+	let {
+	    dsl, interpreter
+	} = __webpack_require__(69);
+
+	let {
+	    getJson
+	} = dsl;
+
+	let {
+	    n, view
+	} = __webpack_require__(3);
+
+	module.exports = view(({
+	    predicatesMetaInfo,
+	    predicates,
+	    value
+	}) => {
+
+	    let run = interpreter(predicates);
+
+	    let updateShowView = null;
+
+	    let valueShowView = view(({
+	        value
+	    }, {
+	        update
+	    }) => {
+	        updateShowView = update;
+
+	        return n('div', {
+	            style: {
+	                marginTop: 10
+	            }
+	        }, [value]);
+	    });
+
+	    return () => n('div', [
+	        valueShowView({
+	            value: n('span', '')
+	        }),
+
+	        LambdaUI({
+	            predicates,
+
+	            predicatesMetaInfo,
+
+	            value,
+
+	            onchange: (v) => {
+	                let getValue = (v) => {
+	                    if (v instanceof Error) {
+	                        return v;
+	                    }
+	                    try {
+	                        v = run(getJson(v));
+	                        if (v === null || v === undefined) return 'null';
+	                        return v.toString();
+	                    } catch (err) {
+	                        return err;
+	                    }
+	                };
+
+	                v = getValue(v);
+	                updateShowView('value', v && v instanceof Error ? n('pre', v.stack) : n('span', v));
+	            }
+	        })
+	    ]);
+	});
 
 
 /***/ }

@@ -28,12 +28,14 @@ module.exports = view(({
     let variables = value.variables || [],
         expression;
 
-    let getAbstraction = () => {
+    let getLambda = () => {
         if (expression === undefined) return new Error('expression is not defined in abstraction');
         if (expression instanceof Error) return expression;
 
         return r(...variables, expression);
     };
+
+    onchange(getLambda());
 
     return () => n('div', {
         style: {
@@ -47,7 +49,7 @@ module.exports = view(({
             onchange: (vars) => {
                 variables = vars;
 
-                onchange(getAbstraction());
+                onchange(getLambda());
             },
 
             variables,
@@ -72,7 +74,7 @@ module.exports = view(({
                     onchange: (lambda) => {
                         expression = lambda;
 
-                        onchange(getAbstraction());
+                        onchange(getLambda());
                     }
                 })
             ])

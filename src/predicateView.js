@@ -28,9 +28,13 @@ module.exports = view(({
         args
     } = get(predicatesMetaInfo, predicatePath);
 
-    onchange(
-        method(predicatePath)()
-    );
+    value.params = value.params || [];
+
+    let getLambda = () => {
+        return method(predicatePath)(...value.params);
+    };
+
+    onchange(getLambda());
 
     return n('div', {
         style: {
@@ -41,17 +45,16 @@ module.exports = view(({
         }
     }, [
         ParamsFieldView({
+            onchange: (params) => {
+                value.params = params;
+                onchange(getLambda());
+            },
+
             args,
             predicates,
             predicatesMetaInfo,
             expressionView,
-            params: value.params,
-            onchange: (params) => {
-                value.params = params;
-                onchange(
-                    method(predicatePath)(...params)
-                );
-            }
+            params: value.params
         })
     ]);
 });

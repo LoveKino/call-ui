@@ -40,7 +40,11 @@ module.exports = view((data, {
         value, onchange = id
     } = data;
 
-    value = data.value = data.value || {};
+    let getLambda = () => {
+        return value.value;
+    };
+
+    onchange(getLambda());
 
     let onValueChanged = (v) => {
         value.value = v;
@@ -70,6 +74,7 @@ module.exports = view((data, {
                     [JSON_TYPE]: 1,
                     [NULL]: 1
                 },
+
                 onselected: (v, path) => {
                     onValueChanged(DEFAULT_MAP[path]);
 
