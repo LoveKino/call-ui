@@ -19,12 +19,13 @@ let {
 } = dsl;
 
 module.exports = view(({
+    value,
     predicates,
     predicatesMetaInfo,
     expressionView,
     onchange = v => v
 }) => {
-    let variables = [],
+    let variables = value.variables || [],
         expression;
 
     let getAbstraction = () => {
@@ -43,12 +44,14 @@ module.exports = view(({
         }
     }, [
         VariableView({
-            title: VARIABLE,
             onchange: (vars) => {
                 variables = vars;
 
                 onchange(getAbstraction());
-            }
+            },
+
+            variables,
+            title: VARIABLE,
         }),
 
         n('div', [
@@ -63,6 +66,7 @@ module.exports = view(({
                 }
             }, [
                 expressionView({
+                    value: value.expression,
                     predicates,
                     predicatesMetaInfo,
                     onchange: (lambda) => {

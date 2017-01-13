@@ -114,7 +114,7 @@ document.body.appendChild(LambdaUI({
     }
 }));
 
-document.body.appendChild(n('br'));
+document.body.appendChild(n('p'));
 
 document.body.appendChild(LambdaUI({
     predicates: {},
@@ -126,7 +126,7 @@ document.body.appendChild(LambdaUI({
     }
 }));
 
-document.body.appendChild(n('br'));
+document.body.appendChild(n('p'));
 
 document.body.appendChild(LambdaUI({
     predicates: {},
@@ -135,5 +135,95 @@ document.body.appendChild(LambdaUI({
         type: 'boolean',
         value: false,
         path: 'data'
+    }
+}));
+
+document.body.appendChild(n('p'));
+
+document.body.appendChild(LambdaUI({
+    predicates: {},
+    predicatesMetaInfo: {},
+    value: {
+        type: 'string',
+        value: '12345',
+        path: 'data'
+    }
+}));
+
+document.body.appendChild(n('p'));
+
+document.body.appendChild(LambdaUI({
+    predicates: {},
+    predicatesMetaInfo: {},
+    value: {
+        type: 'null',
+        path: 'data'
+    }
+}));
+
+document.body.appendChild(n('p'));
+
+document.body.appendChild(LambdaUI({
+    predicates: {},
+    predicatesMetaInfo: {},
+    value: {
+        type: 'json',
+        value: {
+            a: 1,
+            b: 2
+        },
+        path: 'data'
+    }
+}));
+
+document.body.appendChild(n('p'));
+
+document.body.appendChild(LambdaUI({
+    predicates: {
+        math: {
+            '+': (x, y) => x + y
+        }
+    },
+    predicatesMetaInfo: {
+        math: {
+            '+': {
+                args: [{
+                    type: 'number',
+                    name: 'number'
+                }, {
+                    type: 'number',
+                    name: 'number'
+                }]
+            }
+        }
+    },
+
+    value: {
+        path: 'predicate.math.+',
+        params: [{
+            path: 'data',
+            type: 'number',
+            value: 1
+        }, {
+            path: 'data',
+            type: 'number',
+            value: 2
+        }]
+    }
+}));
+
+document.body.appendChild(n('p'));
+
+document.body.appendChild(LambdaUI({
+    predicates: {},
+    predicatesMetaInfo: {},
+    value: {
+        path: 'abstraction',
+        variables: ['x', 'y'],
+        expression: {
+            path: 'data',
+            type: 'number',
+            value: 10
+        }
     }
 }));

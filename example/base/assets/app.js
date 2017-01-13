@@ -160,7 +160,7 @@
 	    }
 	}));
 
-	document.body.appendChild(n('br'));
+	document.body.appendChild(n('p'));
 
 	document.body.appendChild(LambdaUI({
 	    predicates: {},
@@ -172,7 +172,7 @@
 	    }
 	}));
 
-	document.body.appendChild(n('br'));
+	document.body.appendChild(n('p'));
 
 	document.body.appendChild(LambdaUI({
 	    predicates: {},
@@ -181,6 +181,96 @@
 	        type: 'boolean',
 	        value: false,
 	        path: 'data'
+	    }
+	}));
+
+	document.body.appendChild(n('p'));
+
+	document.body.appendChild(LambdaUI({
+	    predicates: {},
+	    predicatesMetaInfo: {},
+	    value: {
+	        type: 'string',
+	        value: '12345',
+	        path: 'data'
+	    }
+	}));
+
+	document.body.appendChild(n('p'));
+
+	document.body.appendChild(LambdaUI({
+	    predicates: {},
+	    predicatesMetaInfo: {},
+	    value: {
+	        type: 'null',
+	        path: 'data'
+	    }
+	}));
+
+	document.body.appendChild(n('p'));
+
+	document.body.appendChild(LambdaUI({
+	    predicates: {},
+	    predicatesMetaInfo: {},
+	    value: {
+	        type: 'json',
+	        value: {
+	            a: 1,
+	            b: 2
+	        },
+	        path: 'data'
+	    }
+	}));
+
+	document.body.appendChild(n('p'));
+
+	document.body.appendChild(LambdaUI({
+	    predicates: {
+	        math: {
+	            '+': (x, y) => x + y
+	        }
+	    },
+	    predicatesMetaInfo: {
+	        math: {
+	            '+': {
+	                args: [{
+	                    type: 'number',
+	                    name: 'number'
+	                }, {
+	                    type: 'number',
+	                    name: 'number'
+	                }]
+	            }
+	        }
+	    },
+
+	    value: {
+	        path: 'predicate.math.+',
+	        params: [{
+	            path: 'data',
+	            type: 'number',
+	            value: 1
+	        }, {
+	            path: 'data',
+	            type: 'number',
+	            value: 2
+	        }]
+	    }
+	}));
+
+	document.body.appendChild(n('p'));
+
+	document.body.appendChild(LambdaUI({
+	    predicates: {},
+	    predicatesMetaInfo: {},
+	    value: {
+	        path: 'abstraction',
+	        variables: ['x', 'y'],
+	        expression: {
+	            path: 'data',
+	            type: 'number',
+	            value: 10
+	        }
 	    }
 	}));
 
@@ -311,7 +401,6 @@
 	        expressionType.variable = variables;
 	    }
 	    let expressionType = getExpressionType(value.path);
-	    console.log(value);
 
 	    return n('div', {
 	        style: {
@@ -336,7 +425,7 @@
 	        }) :
 
 	        expressionType === PREDICATE ? PredicateView({
-	            path: value.path,
+	            value,
 	            predicates,
 	            predicatesMetaInfo,
 	            expressionView,
@@ -344,6 +433,7 @@
 	        }) :
 
 	        expressionType === ABSTRACTION ? AbstractionView({
+	            value,
 	            predicates,
 	            predicatesMetaInfo,
 	            expressionView,
@@ -4488,8 +4578,8 @@
 
 	    return n('div', {
 	        style: {
-	            border: '1px solid rgba(200, 200, 200, 0.4)',
-	            marginLeft: 15,
+	            border: contain(INLINE_TYPES, value.type) ? '0' : '1px solid rgba(200, 200, 200, 0.4)',
+	            marginLeft: contain(INLINE_TYPES, value.type) ? -5 : 15,
 	            marginTop: 5,
 	            padding: 5,
 	            display: !value.type ? 'inline-block' : contain(INLINE_TYPES, value.type) ? 'inline-block' : 'block'
@@ -4557,7 +4647,7 @@
 	            }
 	        }, [
 	            editor({
-	                content: JSON.parse(value.value) || DEFAULT_MAP[value.type],
+	                content: JSON.stringify(value.value, null, 4) || DEFAULT_MAP[value.type],
 	                onchange: (v) => {
 	                    // TODO catch
 	                    try {
@@ -25404,12 +25494,13 @@
 	} = dsl;
 
 	module.exports = view(({
+	    value,
 	    predicates,
 	    predicatesMetaInfo,
 	    expressionView,
 	    onchange = v => v
 	}) => {
-	    let variables = [],
+	    let variables = value.variables || [],
 	        expression;
 
 	    let getAbstraction = () => {
@@ -25428,12 +25519,14 @@
 	        }
 	    }, [
 	        VariableView({
-	            title: VARIABLE,
 	            onchange: (vars) => {
 	                variables = vars;
 
 	                onchange(getAbstraction());
-	            }
+	            },
+
+	            variables,
+	            title: VARIABLE,
 	        }),
 
 	        n('div', [
@@ -25448,6 +25541,7 @@
 	                }
 	            }, [
 	                expressionView({
+	                    value: value.expression,
 	                    predicates,
 	                    predicatesMetaInfo,
 	                    onchange: (lambda) => {
@@ -26927,14 +27021,13 @@
 	let method = dsl.require;
 
 	module.exports = view(({
-	    path,
-	    params,
+	    value,
 	    predicatesMetaInfo,
 	    predicates,
 	    expressionView,
 	    onchange = id
 	}) => {
-	    let predicatePath = getPredicatePath(path);
+	    let predicatePath = getPredicatePath(value.path);
 	    let {
 	        args
 	    } = get(predicatesMetaInfo, predicatePath);
@@ -26956,8 +27049,9 @@
 	            predicates,
 	            predicatesMetaInfo,
 	            expressionView,
-	            params,
+	            params: value.params,
 	            onchange: (params) => {
+	                value.params = params;
 	                onchange(
 	                    method(predicatePath)(...params)
 	                );

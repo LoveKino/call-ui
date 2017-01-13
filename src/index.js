@@ -113,7 +113,6 @@ let expressionView = view((data, {
         expressionType.variable = variables;
     }
     let expressionType = getExpressionType(value.path);
-    console.log(value);
 
     return n('div', {
         style: {
@@ -138,7 +137,7 @@ let expressionView = view((data, {
         }) :
 
         expressionType === PREDICATE ? PredicateView({
-            path: value.path,
+            value,
             predicates,
             predicatesMetaInfo,
             expressionView,
@@ -146,6 +145,7 @@ let expressionView = view((data, {
         }) :
 
         expressionType === ABSTRACTION ? AbstractionView({
+            value,
             predicates,
             predicatesMetaInfo,
             expressionView,

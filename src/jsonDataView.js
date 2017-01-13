@@ -49,8 +49,8 @@ module.exports = view((data, {
 
     return n('div', {
         style: {
-            border: '1px solid rgba(200, 200, 200, 0.4)',
-            marginLeft: 15,
+            border: contain(INLINE_TYPES, value.type) ? '0' : '1px solid rgba(200, 200, 200, 0.4)',
+            marginLeft: contain(INLINE_TYPES, value.type) ? -5 : 15,
             marginTop: 5,
             padding: 5,
             display: !value.type ? 'inline-block' : contain(INLINE_TYPES, value.type) ? 'inline-block' : 'block'
@@ -118,7 +118,7 @@ module.exports = view((data, {
             }
         }, [
             editor({
-                content: JSON.parse(value.value) || DEFAULT_MAP[value.type],
+                content: JSON.stringify(value.value, null, 4) || DEFAULT_MAP[value.type],
                 onchange: (v) => {
                     // TODO catch
                     try {
