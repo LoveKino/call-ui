@@ -12,7 +12,7 @@ let TreeOptionView = require('./treeOptionView');
 
 let JsonDataView = require('./jsonDataView');
 
-let VariableView = require('./variableView');
+let AbstractionView = require('./abstractionView');
 
 /**
  * lambda UI editor
@@ -48,16 +48,18 @@ let VariableView = require('./variableView');
  *
  */
 
-// expression type
-const EXPRESSION_TYPES = ['variable', 'data', 'abstraction', 'predicate'];
-
-const [VARIABLE, JSON_DATA, ABSTRACTION, PREDICATE] = EXPRESSION_TYPES;
+let {
+    JSON_DATA,
+    ABSTRACTION,
+    PREDICATE
+} = require('./const');
 
 const LAMBDA_STYLE = `.lambda-variable fieldset{
     display: inline-block;
     border: 1px solid rgba(200, 200, 200, 0.4);
     padding: 1px 4px;
 }
+
 .lambda-variable input{
     width: 30px;
     outline: none;
@@ -76,7 +78,8 @@ const LAMBDA_STYLE = `.lambda-variable fieldset{
  */
 module.exports = view(({
     predicates,
-    predicatesMetaInfo
+    predicatesMetaInfo,
+    onchange
 }) => {
     document.getElementsByTagName('head')[0].appendChild(n('style', {
         type: 'text/css'
@@ -84,7 +87,8 @@ module.exports = view(({
 
     return expressionView({
         predicates,
-        predicatesMetaInfo
+        predicatesMetaInfo,
+        onchange
     });
 });
 
@@ -93,8 +97,7 @@ let expressionView = view(({
     predicatesMetaInfo,
     expressionType,
     path,
-    variables = [],
-        onchange = id
+    variables = [], onchange = id
 }, {
     update
 }) => {
@@ -143,40 +146,14 @@ let expressionView = view(({
                 path, predicates, predicatesMetaInfo
             }) :
 
-            expressionType === ABSTRACTION ? abstractionView({
+            expressionType === ABSTRACTION ? AbstractionView({
                 predicates,
-                predicatesMetaInfo
+                predicatesMetaInfo,
+                expressionView,
+                onchange
             }) :
 
             null
-        ])
-    ]);
-});
-
-let abstractionView = view(({
-    predicates,
-    predicatesMetaInfo
-}) => {
-    return n('div', [
-        VariableView({
-            title: VARIABLE
-        }),
-        n('div', [
-            n('div', {
-                style: {
-                    marginTop: 4
-                }
-            }, 'expression'),
-            n('div', {
-                style: {
-                    margin: '10px'
-                }
-            }, [
-                expressionView({
-                    predicates,
-                    predicatesMetaInfo
-                })
-            ])
         ])
     ]);
 });
