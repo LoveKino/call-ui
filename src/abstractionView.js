@@ -34,7 +34,14 @@ module.exports = view(({
         return r(...variables, expression);
     };
 
-    return () => n('div', [
+    return () => n('div', {
+        style: {
+            border: '1px solid rgba(200, 200, 200, 0.4)',
+            marginLeft: 15,
+            marginTop: 5,
+            padding: 5
+        }
+    }, [
         VariableView({
             title: VARIABLE,
             onchange: (vars) => {

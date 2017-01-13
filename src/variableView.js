@@ -7,19 +7,25 @@ let {
 let InputList = require('kabanery-dynamic-listview/lib/inputList');
 
 let {
-    reduce
+    reduce, map
 } = require('bolzano');
 
 // used to define variables
 module.exports = view(({
     title,
-    onchange = v => v
+    variables = [], onchange = v => v
+}, {
+    update
 }) => {
     return n('div', {
         'class': 'lambda-variable'
     }, [
         InputList({
-            listData: [],
+            listData: map(variables, (variable) => {
+                return {
+                    value: variable
+                };
+            }),
             title,
             onchange: (v) => {
                 // TODO check variable definition
@@ -27,6 +33,8 @@ module.exports = view(({
                     item.value && prev.push(item.value.trim());
                     return prev;
                 }, []));
+
+                update('variables', map(v, (item) => item.value));
             }
         })
     ]);

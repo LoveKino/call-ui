@@ -79,7 +79,9 @@ let demo = view(() => {
                         return v;
                     }
                     try {
-                        return run(getJson(v)).toString();
+                        v = run(getJson(v));
+                        if (v === null || v === undefined) return 'null';
+                        return v.toString();
                     } catch (err) {
                         return err;
                     }
@@ -101,3 +103,37 @@ let demo = view(() => {
  *   basic type: number, string, boolean, function, object, array
  */
 document.body.appendChild(demo({}));
+
+document.body.appendChild(LambdaUI({
+    predicates: {},
+    predicatesMetaInfo: {},
+    value: {
+        type: 'number',
+        value: 10,
+        path: 'data'
+    }
+}));
+
+document.body.appendChild(n('br'));
+
+document.body.appendChild(LambdaUI({
+    predicates: {},
+    predicatesMetaInfo: {},
+    value: {
+        type: 'boolean',
+        value: true,
+        path: 'data'
+    }
+}));
+
+document.body.appendChild(n('br'));
+
+document.body.appendChild(LambdaUI({
+    predicates: {},
+    predicatesMetaInfo: {},
+    value: {
+        type: 'boolean',
+        value: false,
+        path: 'data'
+    }
+}));

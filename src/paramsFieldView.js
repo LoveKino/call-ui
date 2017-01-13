@@ -13,10 +13,9 @@ module.exports = view(({
     predicates,
     predicatesMetaInfo,
     expressionView,
-    onchange = id
+    onchange = id,
+    params = []
 }) => {
-    let params = [];
-
     return () => n('div', {
         'class': 'lambda-params'
     }, [
@@ -37,6 +36,7 @@ module.exports = view(({
                 expressionView({
                     predicatesMetaInfo,
                     predicates,
+                    value: params[index],
                     onchange: (expressionValue) => {
                         params[index] = expressionValue;
 

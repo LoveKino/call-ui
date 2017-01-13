@@ -18,6 +18,7 @@ let method = dsl.require;
 
 module.exports = view(({
     path,
+    params,
     predicatesMetaInfo,
     predicates,
     expressionView,
@@ -32,12 +33,20 @@ module.exports = view(({
         method(predicatePath)()
     );
 
-    return n('div', [
+    return n('div', {
+        style: {
+            border: '1px solid rgba(200, 200, 200, 0.4)',
+            marginLeft: 15,
+            marginTop: 5,
+            padding: 5
+        }
+    }, [
         ParamsFieldView({
             args,
             predicates,
             predicatesMetaInfo,
             expressionView,
+            params,
             onchange: (params) => {
                 onchange(
                     method(predicatePath)(...params)

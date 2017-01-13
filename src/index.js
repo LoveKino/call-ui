@@ -77,7 +77,8 @@ const LAMBDA_STYLE = `.lambda-variable fieldset{
 module.exports = view(({
     predicates,
     predicatesMetaInfo,
-    onchange
+    onchange,
+    value
 }) => {
     document.getElementsByTagName('head')[0].appendChild(n('style', {
         type: 'text/css'
@@ -86,19 +87,23 @@ module.exports = view(({
     return expressionView({
         predicates,
         predicatesMetaInfo,
-        onchange
+        onchange,
+        value
     });
 });
 
-let expressionView = view(({
-    predicates,
-    predicatesMetaInfo,
-    expressionType,
-    path,
-    variables = [], onchange = id
-}, {
+let expressionView = view((data, {
     update
 }) => {
+    let {
+        value,
+        predicates,
+        predicatesMetaInfo,
+        variables = [], onchange = id
+    } = data;
+
+    value = data.value = data.value || {};
+
     let expressionTypes = {
         [JSON_DATA]: 1, // declare json data
         [ABSTRACTION]: 1, // declare function
@@ -107,6 +112,9 @@ let expressionView = view(({
     if (variables.length) {
         expressionType.variable = variables;
     }
+    let expressionType = getExpressionType(value.path);
+    console.log(value);
+
     return n('div', {
         style: {
             display: 'inline-block',
@@ -115,49 +123,40 @@ let expressionView = view(({
         }
     }, [
         TreeOptionView({
+            path: value.path,
             data: expressionTypes,
             onselected: (v, path) => {
                 update([
-                    ['path', path],
-                    ['expressionType', getExpressionType(path)]
+                    ['value.path', path]
                 ]);
             }
         }),
 
-        expressionType && n('div', {
-            style: {
-                border: '1px solid rgba(200, 200, 200, 0.4)',
-                marginLeft: 15,
-                marginTop: 5,
-                padding: 5
-            }
-        }, [
-            expressionType === JSON_DATA ? JsonDataView({
-                predicates, predicatesMetaInfo,
-                onchange
-            }) :
+        expressionType === JSON_DATA ? JsonDataView({
+            predicates, predicatesMetaInfo, value,
+            onchange
+        }) :
 
-            expressionType === PREDICATE ? PredicateView({
-                path,
-                predicates,
-                predicatesMetaInfo,
-                expressionView,
-                onchange
-            }) :
+        expressionType === PREDICATE ? PredicateView({
+            path: value.path,
+            predicates,
+            predicatesMetaInfo,
+            expressionView,
+            onchange
+        }) :
 
-            expressionType === ABSTRACTION ? AbstractionView({
-                predicates,
-                predicatesMetaInfo,
-                expressionView,
-                onchange
-            }) :
+        expressionType === ABSTRACTION ? AbstractionView({
+            predicates,
+            predicatesMetaInfo,
+            expressionView,
+            onchange
+        }) :
 
-            null
-        ])
+        null
     ]);
 });
 
-let getExpressionType = (path) => {
+let getExpressionType = (path = '') => {
     return path.split('.')[0];
 };
 

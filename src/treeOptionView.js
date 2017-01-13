@@ -16,7 +16,8 @@ module.exports = view(({
 }) => {
     return n('div', {
         style: {
-            position: 'relative'
+            position: 'relative',
+            display: 'inline-block'
         }
     }, [
         n('div', {

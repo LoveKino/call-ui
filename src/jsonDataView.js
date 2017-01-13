@@ -33,19 +33,36 @@ const DEFAULT_MAP = {
 /**
  * used to define json data
  */
-module.exports = view(({
-    type,
-    onchange = id
-}, {
+module.exports = view((data, {
     update
 }) => {
-    return n('div', [
+    let {
+        value, onchange = id
+    } = data;
+
+    value = data.value = data.value || {};
+
+    let onValueChanged = (v) => {
+        value.value = v;
+        onchange(v);
+    };
+
+    return n('div', {
+        style: {
+            border: '1px solid rgba(200, 200, 200, 0.4)',
+            marginLeft: 15,
+            marginTop: 5,
+            padding: 5,
+            display: !value.type ? 'inline-block' : contain(INLINE_TYPES, value.type) ? 'inline-block' : 'block'
+        }
+    }, [
         n('div', {
             style: {
-                display: !type ? 'block' : contain(INLINE_TYPES, type) ? 'inline-block' : 'block'
+                display: !value.type ? 'block' : contain(INLINE_TYPES, value.type) ? 'inline-block' : 'block'
             }
         }, [
             TreeOptionView({
+                path: value.type,
                 data: {
                     [NUMBER]: 1,
                     [BOOLEAN]: 1,
@@ -54,46 +71,46 @@ module.exports = view(({
                     [NULL]: 1
                 },
                 onselected: (v, path) => {
-                    onchange(DEFAULT_MAP[path]);
+                    onValueChanged(DEFAULT_MAP[path]);
 
                     update([
-                        ['type', path]
+                        ['value.type', path]
                     ]);
                 }
             })
         ]),
 
-        type === NUMBER && n('input type="number"', {
-            value: DEFAULT_MAP[type],
+        value.type === NUMBER && n('input type="number"', {
+            value: value.value || DEFAULT_MAP[value.type],
             oninput: (e) => {
                 let num = Number(e.target.value);
-                onchange(num);
+                onValueChanged(num);
             }
         }),
 
-        type === BOOLEAN && SelectView({
+        value.type === BOOLEAN && SelectView({
             options: [
                 ['true'],
                 ['false']
             ],
+            selected: value.value === true ? 'true' : 'false',
             onchange: (v) => {
                 let ret = false;
                 if (v === 'true') {
                     ret = true;
                 }
-
-                onchange(ret);
+                onValueChanged(ret);
             }
         }),
 
-        type === STRING && n('input type="text"', {
-            value: DEFAULT_MAP[type],
+        value.type === STRING && n('input type="text"', {
+            value: value.value || DEFAULT_MAP[value.type],
             oninput: (e) => {
-                onchange(e.target.value);
+                onValueChanged(e.target.value);
             }
         }),
 
-        type === JSON_TYPE && n('div', {
+        value.type === JSON_TYPE && n('div', {
             style: {
                 marginLeft: 15,
                 width: 600,
@@ -101,19 +118,19 @@ module.exports = view(({
             }
         }, [
             editor({
-                content: DEFAULT_MAP[type],
+                content: JSON.parse(value.value) || DEFAULT_MAP[value.type],
                 onchange: (v) => {
                     // TODO catch
                     try {
                         let jsonObject = JSON.parse(v);
-                        onchange(jsonObject);
+                        onValueChanged(jsonObject);
                     } catch (err) {
-                        onchange(err);
+                        onValueChanged(err);
                     }
                 }
             })
         ]),
 
-        type === NULL && n('span', 'null'),
+        value.type === NULL && n('span', 'null'),
     ]);
 });
