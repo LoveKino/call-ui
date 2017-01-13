@@ -25524,22 +25524,24 @@
 	} = __webpack_require__(52);
 
 	// used to define variables
-	module.exports = view(({
-	    title,
-	    variables = [], onchange = v => v
-	}, {
-	    update
-	}) => {
+	module.exports = view((data) => {
+	    let {
+	        title,
+	        variables = [], onchange = v => v
+	    } = data;
+
 	    return n('div', {
 	        'class': 'lambda-variable'
 	    }, [
 	        InputList({
 	            listData: map(variables, (variable) => {
 	                return {
-	                    value: variable
+	                    value: variable || ''
 	                };
 	            }),
+
 	            title,
+
 	            onchange: (v) => {
 	                // TODO check variable definition
 	                onchange(reduce(v, (prev, item) => {
@@ -25547,7 +25549,7 @@
 	                    return prev;
 	                }, []));
 
-	                update('variables', map(v, (item) => item.value));
+	                data.variables = map(v, (item) => item.value);
 	            }
 	        })
 	    ]);
