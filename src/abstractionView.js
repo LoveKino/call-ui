@@ -15,17 +15,21 @@ let {
 } = require('leta');
 
 let {
+    mergeMap
+} = require('bolzano');
+
+let {
     r
 } = dsl;
 
-module.exports = view(({
-    value,
-    predicates,
-    variables,
-    predicatesMetaInfo,
-    expressionView,
-    onchange = v => v
-}) => {
+module.exports = view((data) => {
+    let {
+        value,
+        variables,
+        expressionView,
+        onchange
+    } = data;
+
     let currentVariables = value.variables || [],
         expression;
 
@@ -38,17 +42,14 @@ module.exports = view(({
 
     onchange(getLambda());
 
-    let expressionViewObj = {
+    let expressionViewObj = mergeMap(data, {
         value: value.expression,
-        predicates,
-        predicatesMetaInfo,
         variables: variables.concat(currentVariables),
         onchange: (lambda) => {
             expression = lambda;
-
             onchange(getLambda());
         }
-    };
+    });
 
     return () => n('div', {
         style: {

@@ -5,17 +5,15 @@ let {
 } = require('kabanery');
 
 let {
-    map
+    map, mergeMap
 } = require('bolzano');
 
 module.exports = view(({
     args,
-    predicates,
-    variables,
-    predicatesMetaInfo,
+    expressionInfo,
     expressionView,
     onchange = id,
-    params = []
+        params = []
 }) => {
     return () => n('div', {
         'class': 'lambda-params'
@@ -34,17 +32,14 @@ module.exports = view(({
                     }
                 }, name),
 
-                expressionView({
-                    predicatesMetaInfo,
-                    predicates,
-                    variables,
+                expressionView(mergeMap(expressionInfo, {
                     value: params[index],
                     onchange: (expressionValue) => {
                         params[index] = expressionValue;
 
                         onchange(params);
                     }
-                })
+                }))
             ]);
         })
     ]);

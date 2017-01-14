@@ -16,14 +16,14 @@ let ParamsFieldView = require('./paramsFieldView');
 
 let method = dsl.require;
 
-module.exports = view(({
-    value,
-    predicatesMetaInfo,
-    predicates,
-    variables,
-    expressionView,
-    onchange = id
-}) => {
+module.exports = view((data) => {
+    let {
+        value,
+        predicatesMetaInfo,
+        expressionView,
+        onchange = id
+    } = data;
+
     let predicatePath = getPredicatePath(value.path);
     let {
         args
@@ -46,16 +46,13 @@ module.exports = view(({
         }
     }, [
         ParamsFieldView({
+            expressionInfo: data,
             onchange: (params) => {
                 value.params = params;
                 onchange(getLambda());
             },
-
             args,
-            predicates,
-            predicatesMetaInfo,
             expressionView,
-            variables,
             params: value.params
         })
     ]);

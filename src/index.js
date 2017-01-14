@@ -62,30 +62,30 @@ let {
  *
  */
 
-
 /**
  * expression user interface
  *
  * 1. user choses expression type
  * 2. define current expression type
  */
-module.exports = view(({
-    predicates,
-    predicatesMetaInfo,
-    onchange,
-    value
-}) => {
+module.exports = view((data) => {
     document.getElementsByTagName('head')[0].appendChild(n('style', {
         type: 'text/css'
     }, LAMBDA_STYLE));
 
-    return expressionView({
-        predicates,
-        predicatesMetaInfo,
-        onchange,
-        value
-    });
+    return n('div', {
+        'class': 'lambda-ui'
+    }, [
+        expressionView(data)
+    ]);
 });
+
+let expressionViewMap = {
+    [JSON_DATA]: JsonDataView,
+    [PREDICATE]: PredicateView,
+    [ABSTRACTION]: AbstractionView,
+    [VARIABLE]: VariableView
+};
 
 let expressionView = view((data, {
     update
@@ -118,11 +118,6 @@ let expressionView = view((data, {
 
         return types;
     };
-    let expressionType = getExpressionType(data.value.path);
-
-    let viewObject = mergeMap(data, {
-        expressionView
-    });
 
     return n('div', {
         style: {
@@ -141,15 +136,11 @@ let expressionView = view((data, {
             }
         }),
 
-        expressionType === JSON_DATA ? JsonDataView(viewObject) :
-
-        expressionType === PREDICATE ? PredicateView(viewObject) :
-
-        expressionType === ABSTRACTION ? AbstractionView(viewObject) :
-
-        expressionType === VARIABLE ? VariableView(viewObject) :
-
-        null
+        expressionViewMap[
+            getExpressionType(data.value.path)
+        ](mergeMap(data, {
+            expressionView
+        }))
     ]);
 });
 
