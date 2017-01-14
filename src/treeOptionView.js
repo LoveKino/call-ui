@@ -4,6 +4,10 @@ let {
     view, n
 } = require('kabanery');
 
+let {
+    isFunction
+} = require('basetype');
+
 let TreeSelect = require('kabanery-tree-select');
 
 module.exports = view(({
@@ -41,7 +45,7 @@ module.exports = view(({
             }
         }, [
             showSelectTree && TreeSelect({
-                data,
+                data: isFunction(data) ? data() : data,
                 onselected: (v, p) => {
                     onselected && onselected(v, p);
                     update([

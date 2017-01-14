@@ -98,9 +98,8 @@
 	    predicates: {},
 	    predicatesMetaInfo: {},
 	    value: {
-	        type: 'number',
 	        value: 10,
-	        path: 'data'
+	        path: 'data.number'
 	    }
 	}));
 
@@ -110,9 +109,8 @@
 	    predicates: {},
 	    predicatesMetaInfo: {},
 	    value: {
-	        type: 'boolean',
 	        value: true,
-	        path: 'data'
+	        path: 'data.boolean'
 	    }
 	}));
 
@@ -122,9 +120,8 @@
 	    predicates: {},
 	    predicatesMetaInfo: {},
 	    value: {
-	        type: 'boolean',
 	        value: false,
-	        path: 'data'
+	        path: 'data.boolean'
 	    }
 	}));
 
@@ -134,9 +131,8 @@
 	    predicates: {},
 	    predicatesMetaInfo: {},
 	    value: {
-	        type: 'string',
 	        value: '12345',
-	        path: 'data'
+	        path: 'data.string'
 	    }
 	}));
 
@@ -146,8 +142,7 @@
 	    predicates: {},
 	    predicatesMetaInfo: {},
 	    value: {
-	        type: 'null',
-	        path: 'data'
+	        path: 'data.null'
 	    }
 	}));
 
@@ -157,12 +152,11 @@
 	    predicates: {},
 	    predicatesMetaInfo: {},
 	    value: {
-	        type: 'json',
 	        value: {
 	            a: 1,
 	            b: 2
 	        },
-	        path: 'data'
+	        path: 'data.json'
 	    }
 	}));
 
@@ -191,12 +185,10 @@
 	    value: {
 	        path: 'predicate.math.+',
 	        params: [{
-	            path: 'data',
-	            type: 'number',
+	            path: 'data.number',
 	            value: 1
 	        }, {
-	            path: 'data',
-	            type: 'number',
+	            path: 'data.number',
 	            value: 2
 	        }]
 	    }
@@ -211,8 +203,7 @@
 	        path: 'abstraction',
 	        variables: ['x', 'y'],
 	        expression: {
-	            path: 'data',
-	            type: 'number',
+	            path: 'data.number',
 	            value: 10
 	        }
 	    }
@@ -243,6 +234,22 @@
 	let AbstractionView = __webpack_require__(62);
 
 	let PredicateView = __webpack_require__(79);
+
+	let VariableView = __webpack_require__(63);
+
+	const LAMBDA_STYLE = __webpack_require__(82);
+
+	let {
+	    JSON_DATA,
+	    ABSTRACTION,
+	    VARIABLE,
+	    PREDICATE,
+	    NUMBER, BOOLEAN, STRING, JSON_TYPE, NULL
+	} = __webpack_require__(68);
+
+	let {
+	    mergeMap, reduce
+	} = __webpack_require__(52);
 
 	/**
 	 * lambda UI editor
@@ -278,27 +285,6 @@
 	 *
 	 */
 
-	let {
-	    JSON_DATA,
-	    ABSTRACTION,
-	    PREDICATE
-	} = __webpack_require__(68);
-
-	const LAMBDA_STYLE = `.lambda-variable fieldset{
-	    display: inline-block;
-	    border: 1px solid rgba(200, 200, 200, 0.4);
-	    padding: 1px 4px;
-	}
-
-	.lambda-variable input{
-	    width: 30px;
-	    outline: none;
-	} 
-
-	.lambda-params fieldset{
-	    padding: 1px 4px;
-	    border: 0;
-	}`;
 
 	/**
 	 * expression user interface
@@ -328,23 +314,38 @@
 	    update
 	}) => {
 	    let {
-	        value,
 	        predicates,
-	        predicatesMetaInfo,
-	        variables = [], onchange = id
 	    } = data;
 
-	    value = data.value = data.value || {};
+	    data.value = data.value || {};
+	    data.variables = data.variables || [];
 
-	    let expressionTypes = {
-	        [JSON_DATA]: 1, // declare json data
-	        [ABSTRACTION]: 1, // declare function
-	        [PREDICATE]: predicates // declare function
+	    let expressionTypes = () => {
+	        let types = {
+	            [JSON_DATA]: {
+	                [NUMBER]: 1,
+	                [BOOLEAN]: 1,
+	                [STRING]: 1,
+	                [JSON_TYPE]: 1,
+	                [NULL]: 1
+	            }, // declare json data
+	            [ABSTRACTION]: 1, // declare function
+	            [PREDICATE]: predicates // declare function
+	        };
+	        if (data.variables.length) {
+	            types.variable = reduce(data.variables, (prev, cur) => {
+	                prev[cur] = 1;
+	                return prev;
+	            }, {});
+	        }
+
+	        return types;
 	    };
-	    if (variables.length) {
-	        expressionType.variable = variables;
-	    }
-	    let expressionType = getExpressionType(value.path);
+	    let expressionType = getExpressionType(data.value.path);
+
+	    let viewObject = mergeMap(data, {
+	        expressionView
+	    });
 
 	    return n('div', {
 	        style: {
@@ -354,7 +355,7 @@
 	        }
 	    }, [
 	        TreeOptionView({
-	            path: value.path,
+	            path: data.value.path,
 	            data: expressionTypes,
 	            onselected: (v, path) => {
 	                update([
@@ -363,26 +364,13 @@
 	            }
 	        }),
 
-	        expressionType === JSON_DATA ? JsonDataView({
-	            predicates, predicatesMetaInfo, value,
-	            onchange
-	        }) :
+	        expressionType === JSON_DATA ? JsonDataView(viewObject) :
 
-	        expressionType === PREDICATE ? PredicateView({
-	            value,
-	            predicates,
-	            predicatesMetaInfo,
-	            expressionView,
-	            onchange
-	        }) :
+	        expressionType === PREDICATE ? PredicateView(viewObject) :
 
-	        expressionType === ABSTRACTION ? AbstractionView({
-	            value,
-	            predicates,
-	            predicatesMetaInfo,
-	            expressionView,
-	            onchange
-	        }) :
+	        expressionType === ABSTRACTION ? AbstractionView(viewObject) :
+
+	        expressionType === VARIABLE ? VariableView(viewObject) :
 
 	        null
 	    ]);
@@ -391,8 +379,6 @@
 	let getExpressionType = (path = '') => {
 	    return path.split('.')[0];
 	};
-
-	const id = v => v;
 
 
 /***/ },
@@ -3026,6 +3012,10 @@
 	    view, n
 	} = __webpack_require__(3);
 
+	let {
+	    isFunction
+	} = __webpack_require__(8);
+
 	let TreeSelect = __webpack_require__(33);
 
 	module.exports = view(({
@@ -3063,7 +3053,7 @@
 	            }
 	        }, [
 	            showSelectTree && TreeSelect({
-	                data,
+	                data: isFunction(data) ? data() : data,
 	                onselected: (v, p) => {
 	                    onselected && onselected(v, p);
 	                    update([
@@ -4477,8 +4467,6 @@
 	    n, view
 	} = __webpack_require__(3);
 
-	let TreeOptionView = __webpack_require__(32);
-
 	let SelectView = __webpack_require__(48);
 
 	let {
@@ -4487,28 +4475,16 @@
 
 	let editor = __webpack_require__(55);
 
-	const DATA_TYPES = ['number', 'boolean', 'string', 'json', 'null'];
-
-	const [NUMBER, BOOLEAN, STRING, JSON_TYPE, NULL] = DATA_TYPES;
-
-	const INLINE_TYPES = [NUMBER, BOOLEAN, STRING, NULL];
+	const {
+	    NUMBER, BOOLEAN, STRING, JSON_TYPE, NULL, INLINE_TYPES, DEFAULT_DATA_MAP
+	} = __webpack_require__(68);
 
 	const id = v => v;
-
-	const DEFAULT_MAP = {
-	    [NUMBER]: 0,
-	    [BOOLEAN]: true,
-	    [STRING]: '',
-	    [JSON_TYPE]: '{\n\n}',
-	    [NULL]: null
-	};
 
 	/**
 	 * used to define json data
 	 */
-	module.exports = view((data, {
-	    update
-	}) => {
+	module.exports = view((data) => {
 	    let {
 	        value, onchange = id
 	    } = data;
@@ -4524,49 +4500,31 @@
 	        onchange(v);
 	    };
 
+	    let type = getDataTypePath(value.path);
+
 	    return n('div', {
 	        style: {
-	            border: contain(INLINE_TYPES, value.type) ? '0' : '1px solid rgba(200, 200, 200, 0.4)',
-	            marginLeft: contain(INLINE_TYPES, value.type) ? -5 : 15,
+	            border: contain(INLINE_TYPES, type) ? '0' : '1px solid rgba(200, 200, 200, 0.4)',
 	            marginTop: 5,
 	            padding: 5,
-	            display: !value.type ? 'inline-block' : contain(INLINE_TYPES, value.type) ? 'inline-block' : 'block'
+	            display: !type ? 'inline-block' : contain(INLINE_TYPES, type) ? 'inline-block' : 'block'
 	        }
 	    }, [
 	        n('div', {
 	            style: {
-	                display: !value.type ? 'block' : contain(INLINE_TYPES, value.type) ? 'inline-block' : 'block'
+	                display: !type ? 'block' : contain(INLINE_TYPES, type) ? 'inline-block' : 'block'
 	            }
-	        }, [
-	            TreeOptionView({
-	                path: value.type,
-	                data: {
-	                    [NUMBER]: 1,
-	                    [BOOLEAN]: 1,
-	                    [STRING]: 1,
-	                    [JSON_TYPE]: 1,
-	                    [NULL]: 1
-	                },
+	        }),
 
-	                onselected: (v, path) => {
-	                    onValueChanged(DEFAULT_MAP[path]);
-
-	                    update([
-	                        ['value.type', path]
-	                    ]);
-	                }
-	            })
-	        ]),
-
-	        value.type === NUMBER && n('input type="number"', {
-	            value: value.value || DEFAULT_MAP[value.type],
+	        type === NUMBER && n('input type="number"', {
+	            value: value.value || DEFAULT_DATA_MAP[type],
 	            oninput: (e) => {
 	                let num = Number(e.target.value);
 	                onValueChanged(num);
 	            }
 	        }),
 
-	        value.type === BOOLEAN && SelectView({
+	        type === BOOLEAN && SelectView({
 	            options: [
 	                ['true'],
 	                ['false']
@@ -4581,14 +4539,14 @@
 	            }
 	        }),
 
-	        value.type === STRING && n('input type="text"', {
-	            value: value.value || DEFAULT_MAP[value.type],
+	        type === STRING && n('input type="text"', {
+	            value: value.value || DEFAULT_DATA_MAP[type],
 	            oninput: (e) => {
 	                onValueChanged(e.target.value);
 	            }
 	        }),
 
-	        value.type === JSON_TYPE && n('div', {
+	        type === JSON_TYPE && n('div', {
 	            style: {
 	                marginLeft: 15,
 	                width: 600,
@@ -4596,7 +4554,7 @@
 	            }
 	        }, [
 	            editor({
-	                content: JSON.stringify(value.value, null, 4) || DEFAULT_MAP[value.type],
+	                content: JSON.stringify(value.value, null, 4) || DEFAULT_DATA_MAP[type],
 	                onchange: (v) => {
 	                    // TODO catch
 	                    try {
@@ -4609,9 +4567,11 @@
 	            })
 	        ]),
 
-	        value.type === NULL && n('span', 'null'),
+	        type === NULL && n('span', 'null'),
 	    ]);
 	});
+
+	let getDataTypePath = (path = '') => path.split('.').slice(1).join('.');
 
 
 /***/ },
@@ -25428,7 +25388,7 @@
 	    n, view
 	} = __webpack_require__(3);
 
-	let VariableView = __webpack_require__(63);
+	let VariableDeclareView = __webpack_require__(83);
 
 	let {
 	    VARIABLE
@@ -25445,21 +25405,34 @@
 	module.exports = view(({
 	    value,
 	    predicates,
+	    variables,
 	    predicatesMetaInfo,
 	    expressionView,
 	    onchange = v => v
 	}) => {
-	    let variables = value.variables || [],
+	    let currentVariables = value.variables || [],
 	        expression;
 
 	    let getLambda = () => {
 	        if (expression === undefined) return new Error('expression is not defined in abstraction');
 	        if (expression instanceof Error) return expression;
 
-	        return r(...variables, expression);
+	        return r(...currentVariables, expression);
 	    };
 
 	    onchange(getLambda());
+
+	    let expressionViewObj = {
+	        value: value.expression,
+	        predicates,
+	        predicatesMetaInfo,
+	        variables: variables.concat(currentVariables),
+	        onchange: (lambda) => {
+	            expression = lambda;
+
+	            onchange(getLambda());
+	        }
+	    };
 
 	    return () => n('div', {
 	        style: {
@@ -25469,14 +25442,15 @@
 	            padding: 5
 	        }
 	    }, [
-	        VariableView({
-	            onchange: (vars) => {
-	                variables = vars;
-
+	        VariableDeclareView({
+	            onchange: (v) => {
+	                currentVariables = v;
+	                expressionViewObj.variables = variables.concat(currentVariables);
 	                onchange(getLambda());
 	            },
 
-	            variables,
+	            variables: currentVariables,
+	            prevVariables: variables,
 	            title: VARIABLE,
 	        }),
 
@@ -25491,16 +25465,7 @@
 	                    margin: '10px'
 	                }
 	            }, [
-	                expressionView({
-	                    value: value.expression,
-	                    predicates,
-	                    predicatesMetaInfo,
-	                    onchange: (lambda) => {
-	                        expression = lambda;
-
-	                        onchange(getLambda());
-	                    }
-	                })
+	                expressionView(expressionViewObj)
 	            ])
 	        ])
 	    ]);
@@ -25517,43 +25482,32 @@
 	    n, view
 	} = __webpack_require__(3);
 
-	let InputList = __webpack_require__(64);
+	let {
+	    dsl
+	} = __webpack_require__(69);
 
 	let {
-	    reduce, map
-	} = __webpack_require__(52);
+	    v
+	} = dsl;
 
-	// used to define variables
-	module.exports = view((data) => {
-	    let {
-	        title,
-	        variables = [], onchange = v => v
-	    } = data;
+	module.exports = view(({
+	    value,
+	    onchange = v => v
+	}) => {
+	    let getLambda = () => {
+	        return v(getVariableName(value.path));
+	    };
 
-	    return n('div', {
-	        'class': 'lambda-variable'
-	    }, [
-	        InputList({
-	            listData: map(variables, (variable) => {
-	                return {
-	                    value: variable || ''
-	                };
-	            }),
+	    onchange(getLambda());
 
-	            title,
-
-	            onchange: (v) => {
-	                // TODO check variable definition
-	                onchange(reduce(v, (prev, item) => {
-	                    item.value && prev.push(item.value.trim());
-	                    return prev;
-	                }, []));
-
-	                data.variables = map(v, (item) => item.value);
-	            }
-	        })
-	    ]);
+	    return () => n('div');
 	});
+
+	let getVariableName = (path) => {
+	    let parts = path.split('.');
+	    parts.shift();
+	    return parts.join('.');
+	};
 
 
 /***/ },
@@ -25820,12 +25774,36 @@
 
 	const [VARIABLE, JSON_DATA, ABSTRACTION, PREDICATE] = EXPRESSION_TYPES;
 
+	const DATA_TYPES = ['number', 'boolean', 'string', 'json', 'null'];
+
+	const [NUMBER, BOOLEAN, STRING, JSON_TYPE, NULL] = DATA_TYPES;
+
+	const INLINE_TYPES = [NUMBER, BOOLEAN, STRING, NULL];
+
+	const DEFAULT_DATA_MAP = {
+	    [NUMBER]: 0,
+	    [BOOLEAN]: true,
+	    [STRING]: '',
+	    [JSON_TYPE]: '{\n\n}',
+	    [NULL]: null
+	};
+
 	module.exports = {
 	    EXPRESSION_TYPES,
 	    VARIABLE,
 	    JSON_DATA,
 	    ABSTRACTION,
-	    PREDICATE
+	    PREDICATE,
+
+	    DATA_TYPES,
+	    NUMBER,
+	    BOOLEAN,
+	    STRING,
+	    JSON_TYPE,
+	    NULL,
+	    INLINE_TYPES,
+
+	    DEFAULT_DATA_MAP
 	};
 
 
@@ -26977,6 +26955,7 @@
 	    value,
 	    predicatesMetaInfo,
 	    predicates,
+	    variables,
 	    expressionView,
 	    onchange = id
 	}) => {
@@ -27011,6 +26990,7 @@
 	            predicates,
 	            predicatesMetaInfo,
 	            expressionView,
+	            variables,
 	            params: value.params
 	        })
 	    ]);
@@ -27038,6 +27018,7 @@
 	module.exports = view(({
 	    args,
 	    predicates,
+	    variables,
 	    predicatesMetaInfo,
 	    expressionView,
 	    onchange = id,
@@ -27063,6 +27044,7 @@
 	                expressionView({
 	                    predicatesMetaInfo,
 	                    predicates,
+	                    variables,
 	                    value: params[index],
 	                    onchange: (expressionValue) => {
 	                        params[index] = expressionValue;
@@ -27150,6 +27132,79 @@
 
 	                v = getValue(v);
 	                updateShowView('value', v && v instanceof Error ? n('pre', v.stack) : n('span', v));
+	            }
+	        })
+	    ]);
+	});
+
+
+/***/ },
+/* 82 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = `.lambda-variable fieldset{
+	    display: inline-block;
+	    border: 1px solid rgba(200, 200, 200, 0.4);
+	    padding: 1px 4px;
+	}
+
+	.lambda-variable input{
+	    width: 30px;
+	    outline: none;
+	} 
+
+	.lambda-params fieldset{
+	    padding: 1px 4px;
+	    border: 0;
+	}`;
+
+
+/***/ },
+/* 83 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    n, view
+	} = __webpack_require__(3);
+
+	let InputList = __webpack_require__(64);
+
+	let {
+	    reduce, map
+	} = __webpack_require__(52);
+
+	// used to define variables
+	// TODO variables detect
+	module.exports = view((data) => {
+	    let {
+	        title,
+	        variables = [], onchange = v => v
+	    } = data;
+
+	    return n('div', {
+	        'class': 'lambda-variable'
+	    }, [
+	        InputList({
+	            listData: map(variables, (variable) => {
+	                return {
+	                    value: variable || ''
+	                };
+	            }),
+
+	            title,
+
+	            onchange: (v) => {
+	                // TODO check variable definition
+	                onchange(reduce(v, (prev, item) => {
+	                    item.value && prev.push(item.value.trim());
+	                    return prev;
+	                }, []));
+
+	                data.variables = map(v, (item) => item.value);
 	            }
 	        })
 	    ]);

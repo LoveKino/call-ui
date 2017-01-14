@@ -52,9 +52,8 @@ document.body.appendChild(LambdaRetView({
     predicates: {},
     predicatesMetaInfo: {},
     value: {
-        type: 'number',
         value: 10,
-        path: 'data'
+        path: 'data.number'
     }
 }));
 
@@ -64,9 +63,8 @@ document.body.appendChild(LambdaRetView({
     predicates: {},
     predicatesMetaInfo: {},
     value: {
-        type: 'boolean',
         value: true,
-        path: 'data'
+        path: 'data.boolean'
     }
 }));
 
@@ -76,9 +74,8 @@ document.body.appendChild(LambdaRetView({
     predicates: {},
     predicatesMetaInfo: {},
     value: {
-        type: 'boolean',
         value: false,
-        path: 'data'
+        path: 'data.boolean'
     }
 }));
 
@@ -88,9 +85,8 @@ document.body.appendChild(LambdaRetView({
     predicates: {},
     predicatesMetaInfo: {},
     value: {
-        type: 'string',
         value: '12345',
-        path: 'data'
+        path: 'data.string'
     }
 }));
 
@@ -100,8 +96,7 @@ document.body.appendChild(LambdaRetView({
     predicates: {},
     predicatesMetaInfo: {},
     value: {
-        type: 'null',
-        path: 'data'
+        path: 'data.null'
     }
 }));
 
@@ -111,12 +106,11 @@ document.body.appendChild(LambdaRetView({
     predicates: {},
     predicatesMetaInfo: {},
     value: {
-        type: 'json',
         value: {
             a: 1,
             b: 2
         },
-        path: 'data'
+        path: 'data.json'
     }
 }));
 
@@ -145,12 +139,10 @@ document.body.appendChild(LambdaRetView({
     value: {
         path: 'predicate.math.+',
         params: [{
-            path: 'data',
-            type: 'number',
+            path: 'data.number',
             value: 1
         }, {
-            path: 'data',
-            type: 'number',
+            path: 'data.number',
             value: 2
         }]
     }
@@ -165,8 +157,7 @@ document.body.appendChild(LambdaRetView({
         path: 'abstraction',
         variables: ['x', 'y'],
         expression: {
-            path: 'data',
-            type: 'number',
+            path: 'data.number',
             value: 10
         }
     }

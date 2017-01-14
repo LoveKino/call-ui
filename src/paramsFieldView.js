@@ -11,6 +11,7 @@ let {
 module.exports = view(({
     args,
     predicates,
+    variables,
     predicatesMetaInfo,
     expressionView,
     onchange = id,
@@ -36,6 +37,7 @@ module.exports = view(({
                 expressionView({
                     predicatesMetaInfo,
                     predicates,
+                    variables,
                     value: params[index],
                     onchange: (expressionValue) => {
                         params[index] = expressionValue;

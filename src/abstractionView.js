@@ -4,7 +4,7 @@ let {
     n, view
 } = require('kabanery');
 
-let VariableView = require('./variableView');
+let VariableDeclareView = require('./variableDeclareView');
 
 let {
     VARIABLE
@@ -21,21 +21,34 @@ let {
 module.exports = view(({
     value,
     predicates,
+    variables,
     predicatesMetaInfo,
     expressionView,
     onchange = v => v
 }) => {
-    let variables = value.variables || [],
+    let currentVariables = value.variables || [],
         expression;
 
     let getLambda = () => {
         if (expression === undefined) return new Error('expression is not defined in abstraction');
         if (expression instanceof Error) return expression;
 
-        return r(...variables, expression);
+        return r(...currentVariables, expression);
     };
 
     onchange(getLambda());
+
+    let expressionViewObj = {
+        value: value.expression,
+        predicates,
+        predicatesMetaInfo,
+        variables: variables.concat(currentVariables),
+        onchange: (lambda) => {
+            expression = lambda;
+
+            onchange(getLambda());
+        }
+    };
 
     return () => n('div', {
         style: {
@@ -45,14 +58,15 @@ module.exports = view(({
             padding: 5
         }
     }, [
-        VariableView({
-            onchange: (vars) => {
-                variables = vars;
-
+        VariableDeclareView({
+            onchange: (v) => {
+                currentVariables = v;
+                expressionViewObj.variables = variables.concat(currentVariables);
                 onchange(getLambda());
             },
 
-            variables,
+            variables: currentVariables,
+            prevVariables: variables,
             title: VARIABLE,
         }),
 
@@ -67,16 +81,7 @@ module.exports = view(({
                     margin: '10px'
                 }
             }, [
-                expressionView({
-                    value: value.expression,
-                    predicates,
-                    predicatesMetaInfo,
-                    onchange: (lambda) => {
-                        expression = lambda;
-
-                        onchange(getLambda());
-                    }
-                })
+                expressionView(expressionViewObj)
             ])
         ])
     ]);

@@ -4,8 +4,6 @@ let {
     n, view
 } = require('kabanery');
 
-let TreeOptionView = require('./treeOptionView');
-
 let SelectView = require('kabanery-select');
 
 let {
@@ -14,28 +12,16 @@ let {
 
 let editor = require('kabanery-editor');
 
-const DATA_TYPES = ['number', 'boolean', 'string', 'json', 'null'];
-
-const [NUMBER, BOOLEAN, STRING, JSON_TYPE, NULL] = DATA_TYPES;
-
-const INLINE_TYPES = [NUMBER, BOOLEAN, STRING, NULL];
+const {
+    NUMBER, BOOLEAN, STRING, JSON_TYPE, NULL, INLINE_TYPES, DEFAULT_DATA_MAP
+} = require('./const');
 
 const id = v => v;
-
-const DEFAULT_MAP = {
-    [NUMBER]: 0,
-    [BOOLEAN]: true,
-    [STRING]: '',
-    [JSON_TYPE]: '{\n\n}',
-    [NULL]: null
-};
 
 /**
  * used to define json data
  */
-module.exports = view((data, {
-    update
-}) => {
+module.exports = view((data) => {
     let {
         value, onchange = id
     } = data;
@@ -51,49 +37,31 @@ module.exports = view((data, {
         onchange(v);
     };
 
+    let type = getDataTypePath(value.path);
+
     return n('div', {
         style: {
-            border: contain(INLINE_TYPES, value.type) ? '0' : '1px solid rgba(200, 200, 200, 0.4)',
-            marginLeft: contain(INLINE_TYPES, value.type) ? -5 : 15,
+            border: contain(INLINE_TYPES, type) ? '0' : '1px solid rgba(200, 200, 200, 0.4)',
             marginTop: 5,
             padding: 5,
-            display: !value.type ? 'inline-block' : contain(INLINE_TYPES, value.type) ? 'inline-block' : 'block'
+            display: !type ? 'inline-block' : contain(INLINE_TYPES, type) ? 'inline-block' : 'block'
         }
     }, [
         n('div', {
             style: {
-                display: !value.type ? 'block' : contain(INLINE_TYPES, value.type) ? 'inline-block' : 'block'
+                display: !type ? 'block' : contain(INLINE_TYPES, type) ? 'inline-block' : 'block'
             }
-        }, [
-            TreeOptionView({
-                path: value.type,
-                data: {
-                    [NUMBER]: 1,
-                    [BOOLEAN]: 1,
-                    [STRING]: 1,
-                    [JSON_TYPE]: 1,
-                    [NULL]: 1
-                },
+        }),
 
-                onselected: (v, path) => {
-                    onValueChanged(DEFAULT_MAP[path]);
-
-                    update([
-                        ['value.type', path]
-                    ]);
-                }
-            })
-        ]),
-
-        value.type === NUMBER && n('input type="number"', {
-            value: value.value || DEFAULT_MAP[value.type],
+        type === NUMBER && n('input type="number"', {
+            value: value.value || DEFAULT_DATA_MAP[type],
             oninput: (e) => {
                 let num = Number(e.target.value);
                 onValueChanged(num);
             }
         }),
 
-        value.type === BOOLEAN && SelectView({
+        type === BOOLEAN && SelectView({
             options: [
                 ['true'],
                 ['false']
@@ -108,14 +76,14 @@ module.exports = view((data, {
             }
         }),
 
-        value.type === STRING && n('input type="text"', {
-            value: value.value || DEFAULT_MAP[value.type],
+        type === STRING && n('input type="text"', {
+            value: value.value || DEFAULT_DATA_MAP[type],
             oninput: (e) => {
                 onValueChanged(e.target.value);
             }
         }),
 
-        value.type === JSON_TYPE && n('div', {
+        type === JSON_TYPE && n('div', {
             style: {
                 marginLeft: 15,
                 width: 600,
@@ -123,7 +91,7 @@ module.exports = view((data, {
             }
         }, [
             editor({
-                content: JSON.stringify(value.value, null, 4) || DEFAULT_MAP[value.type],
+                content: JSON.stringify(value.value, null, 4) || DEFAULT_DATA_MAP[type],
                 onchange: (v) => {
                     // TODO catch
                     try {
@@ -136,6 +104,8 @@ module.exports = view((data, {
             })
         ]),
 
-        value.type === NULL && n('span', 'null'),
+        type === NULL && n('span', 'null'),
     ]);
 });
+
+let getDataTypePath = (path = '') => path.split('.').slice(1).join('.');

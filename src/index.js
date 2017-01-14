@@ -12,6 +12,22 @@ let AbstractionView = require('./abstractionView');
 
 let PredicateView = require('./predicateView');
 
+let VariableView = require('./variableView');
+
+const LAMBDA_STYLE = require('./style');
+
+let {
+    JSON_DATA,
+    ABSTRACTION,
+    VARIABLE,
+    PREDICATE,
+    NUMBER, BOOLEAN, STRING, JSON_TYPE, NULL
+} = require('./const');
+
+let {
+    mergeMap, reduce
+} = require('bolzano');
+
 /**
  * lambda UI editor
  *
@@ -46,27 +62,6 @@ let PredicateView = require('./predicateView');
  *
  */
 
-let {
-    JSON_DATA,
-    ABSTRACTION,
-    PREDICATE
-} = require('./const');
-
-const LAMBDA_STYLE = `.lambda-variable fieldset{
-    display: inline-block;
-    border: 1px solid rgba(200, 200, 200, 0.4);
-    padding: 1px 4px;
-}
-
-.lambda-variable input{
-    width: 30px;
-    outline: none;
-} 
-
-.lambda-params fieldset{
-    padding: 1px 4px;
-    border: 0;
-}`;
 
 /**
  * expression user interface
@@ -96,23 +91,38 @@ let expressionView = view((data, {
     update
 }) => {
     let {
-        value,
         predicates,
-        predicatesMetaInfo,
-        variables = [], onchange = id
     } = data;
 
-    value = data.value = data.value || {};
+    data.value = data.value || {};
+    data.variables = data.variables || [];
 
-    let expressionTypes = {
-        [JSON_DATA]: 1, // declare json data
-        [ABSTRACTION]: 1, // declare function
-        [PREDICATE]: predicates // declare function
+    let expressionTypes = () => {
+        let types = {
+            [JSON_DATA]: {
+                [NUMBER]: 1,
+                [BOOLEAN]: 1,
+                [STRING]: 1,
+                [JSON_TYPE]: 1,
+                [NULL]: 1
+            }, // declare json data
+            [ABSTRACTION]: 1, // declare function
+            [PREDICATE]: predicates // declare function
+        };
+        if (data.variables.length) {
+            types.variable = reduce(data.variables, (prev, cur) => {
+                prev[cur] = 1;
+                return prev;
+            }, {});
+        }
+
+        return types;
     };
-    if (variables.length) {
-        expressionType.variable = variables;
-    }
-    let expressionType = getExpressionType(value.path);
+    let expressionType = getExpressionType(data.value.path);
+
+    let viewObject = mergeMap(data, {
+        expressionView
+    });
 
     return n('div', {
         style: {
@@ -122,7 +132,7 @@ let expressionView = view((data, {
         }
     }, [
         TreeOptionView({
-            path: value.path,
+            path: data.value.path,
             data: expressionTypes,
             onselected: (v, path) => {
                 update([
@@ -131,26 +141,13 @@ let expressionView = view((data, {
             }
         }),
 
-        expressionType === JSON_DATA ? JsonDataView({
-            predicates, predicatesMetaInfo, value,
-            onchange
-        }) :
+        expressionType === JSON_DATA ? JsonDataView(viewObject) :
 
-        expressionType === PREDICATE ? PredicateView({
-            value,
-            predicates,
-            predicatesMetaInfo,
-            expressionView,
-            onchange
-        }) :
+        expressionType === PREDICATE ? PredicateView(viewObject) :
 
-        expressionType === ABSTRACTION ? AbstractionView({
-            value,
-            predicates,
-            predicatesMetaInfo,
-            expressionView,
-            onchange
-        }) :
+        expressionType === ABSTRACTION ? AbstractionView(viewObject) :
+
+        expressionType === VARIABLE ? VariableView(viewObject) :
 
         null
     ]);
@@ -159,5 +156,3 @@ let expressionView = view((data, {
 let getExpressionType = (path = '') => {
     return path.split('.')[0];
 };
-
-const id = v => v;

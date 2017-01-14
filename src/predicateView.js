@@ -20,6 +20,7 @@ module.exports = view(({
     value,
     predicatesMetaInfo,
     predicates,
+    variables,
     expressionView,
     onchange = id
 }) => {
@@ -54,6 +55,7 @@ module.exports = view(({
             predicates,
             predicatesMetaInfo,
             expressionView,
+            variables,
             params: value.params
         })
     ]);
