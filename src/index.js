@@ -90,10 +90,6 @@ let expressionViewMap = {
 let expressionView = view((data, {
     update
 }) => {
-    let {
-        predicates,
-    } = data;
-
     data.value = data.value || {};
     data.variables = data.variables || [];
 
@@ -107,7 +103,7 @@ let expressionView = view((data, {
                 [NULL]: 1
             }, // declare json data
             [ABSTRACTION]: 1, // declare function
-            [PREDICATE]: predicates // declare function
+            [PREDICATE]: data.predicates // declare function
         };
         if (data.variables.length) {
             types.variable = reduce(data.variables, (prev, cur) => {
