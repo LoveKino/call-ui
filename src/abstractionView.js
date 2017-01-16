@@ -27,6 +27,7 @@ module.exports = view((data) => {
         value,
         variables,
         expressionView,
+        optionsView,
         onchange
     } = data;
 
@@ -52,39 +53,43 @@ module.exports = view((data) => {
         }
     });
 
-    return () => n('div', {
-        style: {
-            marginLeft: 15,
-            marginTop: 5,
-            padding: 5
-        }
-    }, [
+    return () => n('div', [
+        optionsView,
+
         n('div', {
             style: {
-                border: '1px solid rgba(200, 200, 200, 0.4)',
-                borderRadius: 5,
+                marginLeft: 15,
+                marginTop: 5,
                 padding: 5
             }
         }, [
-            VariableDeclareView({
-                onchange: (v) => {
-                    currentVariables = v;
-                    expressionViewObj.variables = variables.concat(currentVariables);
-                    onchange(getLambda());
-                },
+            n('div', {
+                style: {
+                    border: '1px solid rgba(200, 200, 200, 0.4)',
+                    borderRadius: 5,
+                    padding: 5
+                }
+            }, [
+                VariableDeclareView({
+                    onchange: (v) => {
+                        currentVariables = v;
+                        expressionViewObj.variables = variables.concat(currentVariables);
+                        onchange(getLambda());
+                    },
 
-                variables: currentVariables,
-                prevVariables: variables,
-                title: VARIABLE,
-            })
-        ]),
+                    variables: currentVariables,
+                    prevVariables: variables,
+                    title: VARIABLE,
+                })
+            ]),
 
-        n('div', {
-            style: {
-                marginTop: 5
-            }
-        }, [
-            expressionView(expressionViewObj)
+            n('div', {
+                style: {
+                    marginTop: 5
+                }
+            }, [
+                expressionView(expressionViewObj)
+            ])
         ])
     ]);
 });

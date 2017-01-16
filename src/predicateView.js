@@ -21,6 +21,7 @@ module.exports = view((data) => {
         value,
         predicatesMetaInfo,
         expressionView,
+        optionsView,
         onchange = id
     } = data;
 
@@ -37,21 +38,25 @@ module.exports = view((data) => {
 
     onchange(getLambda());
 
-    return n('div', {
-        style: {
-            padding: 5
-        }
-    }, [
-        ParamsFieldView({
-            expressionInfo: data,
-            onchange: (params) => {
-                value.params = params;
-                onchange(getLambda());
-            },
-            args,
-            expressionView,
-            params: value.params
-        })
+    return n('div', [
+        optionsView,
+
+        n('div', {
+            style: {
+                padding: 5
+            }
+        }, [
+            ParamsFieldView({
+                expressionInfo: data,
+                onchange: (params) => {
+                    value.params = params;
+                    onchange(getLambda());
+                },
+                args,
+                expressionView,
+                params: value.params
+            })
+        ])
     ]);
 });
 

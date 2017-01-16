@@ -29,7 +29,7 @@ const {
  */
 module.exports = view((data) => {
     let {
-        value, onchange = id
+        value, onchange = id, optionsView
     } = data;
 
     let type = getDataTypePath(value.path);
@@ -112,10 +112,11 @@ module.exports = view((data) => {
     return n('div', {
         style: {
             border: contain(INLINE_TYPES, type) ? '0' : '1px solid rgba(200, 200, 200, 0.4)',
-            display: !type ? 'inline-block' : contain(INLINE_TYPES, type) ? 'inline-block' : 'block',
             minWidth: 160
         }
     }, [
+        optionsView,
+
         n('div', {
             style: {
                 display: !type ? 'block' : contain(INLINE_TYPES, type) ? 'inline-block' : 'block'
@@ -142,6 +143,7 @@ module.exports = view((data) => {
 
                 foldArrow(ops)
             ]),
+
             body: renderInputArea,
             hide: false
         }) : renderInputArea()

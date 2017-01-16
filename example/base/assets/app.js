@@ -435,7 +435,14 @@
 	}) => {
 	    data.value = data.value || {};
 	    data.variables = data.variables || [];
-	    let optionsView = TreeOptionView({
+
+	    let optionsView = n('div', {
+	        style: {
+	            color: '#9b9b9b',
+	            fontSize: 12,
+	            display: 'inline-block'
+	        }
+	    }, [TreeOptionView({
 	        title: data.title,
 	        path: data.value.path,
 	        data: () => expressionTypes(data),
@@ -444,8 +451,7 @@
 	                ['value.path', path]
 	            ]);
 	        }
-	    });
-
+	    })]);
 
 	    return n('div', {
 	        style: {
@@ -454,19 +460,13 @@
 	            border: '1px solid rgba(200, 200, 200, 0.4)',
 	            borderRadius: 5
 	        }
-	    }, [
-	        data.value.path ? n('div', {
-	            style: {
-	                display: 'inline-block',
-	                fontSize: 12,
-	                color: '#9b9b9b'
-	            }
-	        }, [optionsView]) : optionsView,
+	    }, [!data.value.path && optionsView,
 
 	        data.value.path && expressionViewMap[
 	            getExpressionType(data.value.path)
 	        ](mergeMap(data, {
-	            expressionView
+	            expressionView,
+	            optionsView
 	        }))
 	    ]);
 	});
@@ -487,6 +487,7 @@
 	        [ABSTRACTION]: 1, // declare function
 	        [PREDICATE]: data.predicates // declare function
 	    };
+
 	    if (data.variables.length) {
 	        types.variable = reduce(data.variables, (prev, cur) => {
 	            prev[cur] = 1;
@@ -4643,7 +4644,7 @@
 	 */
 	module.exports = view((data) => {
 	    let {
-	        value, onchange = id
+	        value, onchange = id, optionsView
 	    } = data;
 
 	    let type = getDataTypePath(value.path);
@@ -4726,10 +4727,11 @@
 	    return n('div', {
 	        style: {
 	            border: contain(INLINE_TYPES, type) ? '0' : '1px solid rgba(200, 200, 200, 0.4)',
-	            display: !type ? 'inline-block' : contain(INLINE_TYPES, type) ? 'inline-block' : 'block',
 	            minWidth: 160
 	        }
 	    }, [
+	        optionsView,
+
 	        n('div', {
 	            style: {
 	                display: !type ? 'block' : contain(INLINE_TYPES, type) ? 'inline-block' : 'block'
@@ -4756,6 +4758,7 @@
 
 	                foldArrow(ops)
 	            ]),
+
 	            body: renderInputArea,
 	            hide: false
 	        }) : renderInputArea()
@@ -25806,6 +25809,7 @@
 	        value,
 	        variables,
 	        expressionView,
+	        optionsView,
 	        onchange
 	    } = data;
 
@@ -25831,39 +25835,43 @@
 	        }
 	    });
 
-	    return () => n('div', {
-	        style: {
-	            marginLeft: 15,
-	            marginTop: 5,
-	            padding: 5
-	        }
-	    }, [
+	    return () => n('div', [
+	        optionsView,
+
 	        n('div', {
 	            style: {
-	                border: '1px solid rgba(200, 200, 200, 0.4)',
-	                borderRadius: 5,
+	                marginLeft: 15,
+	                marginTop: 5,
 	                padding: 5
 	            }
 	        }, [
-	            VariableDeclareView({
-	                onchange: (v) => {
-	                    currentVariables = v;
-	                    expressionViewObj.variables = variables.concat(currentVariables);
-	                    onchange(getLambda());
-	                },
+	            n('div', {
+	                style: {
+	                    border: '1px solid rgba(200, 200, 200, 0.4)',
+	                    borderRadius: 5,
+	                    padding: 5
+	                }
+	            }, [
+	                VariableDeclareView({
+	                    onchange: (v) => {
+	                        currentVariables = v;
+	                        expressionViewObj.variables = variables.concat(currentVariables);
+	                        onchange(getLambda());
+	                    },
 
-	                variables: currentVariables,
-	                prevVariables: variables,
-	                title: VARIABLE,
-	            })
-	        ]),
+	                    variables: currentVariables,
+	                    prevVariables: variables,
+	                    title: VARIABLE,
+	                })
+	            ]),
 
-	        n('div', {
-	            style: {
-	                marginTop: 5
-	            }
-	        }, [
-	            expressionView(expressionViewObj)
+	            n('div', {
+	                style: {
+	                    marginTop: 5
+	                }
+	            }, [
+	                expressionView(expressionViewObj)
+	            ])
 	        ])
 	    ]);
 	});
@@ -27326,6 +27334,7 @@
 	        value,
 	        predicatesMetaInfo,
 	        expressionView,
+	        optionsView,
 	        onchange = id
 	    } = data;
 
@@ -27342,21 +27351,25 @@
 
 	    onchange(getLambda());
 
-	    return n('div', {
-	        style: {
-	            padding: 5
-	        }
-	    }, [
-	        ParamsFieldView({
-	            expressionInfo: data,
-	            onchange: (params) => {
-	                value.params = params;
-	                onchange(getLambda());
-	            },
-	            args,
-	            expressionView,
-	            params: value.params
-	        })
+	    return n('div', [
+	        optionsView,
+
+	        n('div', {
+	            style: {
+	                padding: 5
+	            }
+	        }, [
+	            ParamsFieldView({
+	                expressionInfo: data,
+	                onchange: (params) => {
+	                    value.params = params;
+	                    onchange(getLambda());
+	                },
+	                args,
+	                expressionView,
+	                params: value.params
+	            })
+	        ])
 	    ]);
 	});
 

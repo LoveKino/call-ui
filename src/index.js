@@ -94,7 +94,14 @@ let expressionView = view((data, {
 }) => {
     data.value = data.value || {};
     data.variables = data.variables || [];
-    let optionsView = TreeOptionView({
+
+    let optionsView = n('div', {
+        style: {
+            color: '#9b9b9b',
+            fontSize: 12,
+            display: 'inline-block'
+        }
+    }, [TreeOptionView({
         title: data.title,
         path: data.value.path,
         data: () => expressionTypes(data),
@@ -103,8 +110,7 @@ let expressionView = view((data, {
                 ['value.path', path]
             ]);
         }
-    });
-
+    })]);
 
     return n('div', {
         style: {
@@ -113,19 +119,13 @@ let expressionView = view((data, {
             border: '1px solid rgba(200, 200, 200, 0.4)',
             borderRadius: 5
         }
-    }, [
-        data.value.path ? n('div', {
-            style: {
-                display: 'inline-block',
-                fontSize: 12,
-                color: '#9b9b9b'
-            }
-        }, [optionsView]) : optionsView,
+    }, [!data.value.path && optionsView,
 
         data.value.path && expressionViewMap[
             getExpressionType(data.value.path)
         ](mergeMap(data, {
-            expressionView
+            expressionView,
+            optionsView
         }))
     ]);
 });
@@ -146,6 +146,7 @@ let expressionTypes = (data) => {
         [ABSTRACTION]: 1, // declare function
         [PREDICATE]: data.predicates // declare function
     };
+
     if (data.variables.length) {
         types.variable = reduce(data.variables, (prev, cur) => {
             prev[cur] = 1;
