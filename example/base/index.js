@@ -49,8 +49,38 @@ document.body.appendChild(LambdaRetView({
 }));
 
 document.body.appendChild(LambdaRetView({
-    predicates: {},
-    predicatesMetaInfo: {},
+    predicates: {
+        math: {
+            '+': (x, y) => x + y
+        },
+
+        map
+    },
+
+    predicatesMetaInfo: {
+        math: {
+            '+': {
+                args: [{
+                    type: 'number',
+                    name: 'number'
+                }, {
+                    type: 'number',
+                    name: 'number'
+                }]
+            }
+        },
+
+        map: {
+            args: [{
+                type: 'Array',
+                name: 'list'
+            }, {
+                type: 'function',
+                name: 'handler'
+            }]
+        }
+    },
+
     value: {
         value: 10,
         path: 'data.number'

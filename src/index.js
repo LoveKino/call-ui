@@ -14,6 +14,8 @@ let PredicateView = require('./predicateView');
 
 let VariableView = require('./variableView');
 
+let ExpressionExpandor = require('./expressionExpandor');
+
 const LAMBDA_STYLE = require('./style');
 
 let {
@@ -94,40 +96,86 @@ let expressionView = view((data, {
 }) => {
     data.value = data.value || {};
     data.variables = data.variables || [];
+    data.funs = data.funs || [JSON_DATA, PREDICATE, ABSTRACTION, VARIABLE];
 
-    let optionsView = n('div', {
-        style: {
-            color: '#9b9b9b',
-            fontSize: 12,
-            display: 'inline-block'
-        }
-    }, [TreeOptionView({
-        title: data.title,
-        path: data.value.path,
-        data: () => expressionTypes(data),
-        onselected: (v, path) => {
-            update([
-                ['value.path', path]
-            ]);
-        }
-    })]);
+    let hideExpressionExpandor = true;
 
-    return n('div', {
-        style: {
-            display: 'inline-block',
-            padding: 8,
-            border: '1px solid rgba(200, 200, 200, 0.4)',
-            borderRadius: 5
-        }
-    }, [!data.value.path && optionsView,
+    return () => {
+        let optionsView = n('div', {
+            style: {
+                color: '#9b9b9b',
+                fontSize: 12,
+                display: 'inline-block'
+            }
+        }, [
+            TreeOptionView({
+                title: data.title,
+                path: data.value.path,
+                showSelectTree: data.showSelectTree,
+                data: () => expressionTypes(data),
+                onselected: (v, path) => {
+                    update([
+                        ['value.path', path]
+                    ]);
+                }
+            })
+        ]);
 
-        data.value.path && expressionViewMap[
-            getExpressionType(data.value.path)
-        ](mergeMap(data, {
-            expressionView,
-            optionsView
-        }))
-    ]);
+        return n('div', {
+            style: {
+                position: 'relative',
+                display: 'inline-block',
+                border: !hideExpressionExpandor ? '1px solid rgba(200, 200, 200, 0.4)' : '0',
+                padding: !hideExpressionExpandor ? 5 : 0,
+                borderRadius: 5
+            }
+        }, [
+            n('div', {
+                style: {
+                    display: 'inline-block',
+                    padding: 8,
+                    border: '1px solid rgba(200, 200, 200, 0.4)',
+                    borderRadius: 5
+                }
+            }, [!data.value.path && optionsView,
+
+                data.value.path && expressionViewMap[
+                    getExpressionType(data.value.path)
+                ](mergeMap(data, {
+                    expressionView,
+                    optionsView
+                }))
+            ]),
+
+            n('div', {
+                style: {
+                    display: 'inline-block'
+                }
+            }, [
+                data.value.path && ExpressionExpandor({
+                    body: () => {
+                        return n('div', {
+                            style: {
+                                display: 'inline-block',
+                                marginLeft: 15
+                            }
+                        }, expressionView(mergeMap(data, {
+                            value: {},
+                            funs: [PREDICATE],
+                            infix: true,
+                            title: 'operation'
+                        })));
+                    },
+
+                    hideExpressionExpandor: hideExpressionExpandor,
+                    onchange: (hide) => {
+                        hideExpressionExpandor = hide;
+                        update();
+                    }
+                })
+            ])
+        ]);
+    };
 });
 
 let getExpressionType = (path = '') => {
@@ -143,8 +191,8 @@ let expressionTypes = (data) => {
             [JSON_TYPE]: 1,
             [NULL]: 1
         }, // declare json data
-        [ABSTRACTION]: 1, // declare function
-        [PREDICATE]: data.predicates // declare function
+        [PREDICATE]: data.predicates, // declare function
+        [ABSTRACTION]: 1 // declare function
     };
 
     if (data.variables.length) {
@@ -154,5 +202,10 @@ let expressionTypes = (data) => {
         }, {});
     }
 
-    return types;
+    return reduce(data.funs, (prev, name) => {
+        if (types[name]) {
+            prev[name] = types[name];
+        }
+        return prev;
+    }, {});
 };

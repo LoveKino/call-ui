@@ -95,8 +95,38 @@
 	}));
 
 	document.body.appendChild(LambdaRetView({
-	    predicates: {},
-	    predicatesMetaInfo: {},
+	    predicates: {
+	        math: {
+	            '+': (x, y) => x + y
+	        },
+
+	        map
+	    },
+
+	    predicatesMetaInfo: {
+	        math: {
+	            '+': {
+	                args: [{
+	                    type: 'number',
+	                    name: 'number'
+	                }, {
+	                    type: 'number',
+	                    name: 'number'
+	                }]
+	            }
+	        },
+
+	        map: {
+	            args: [{
+	                type: 'Array',
+	                name: 'list'
+	            }, {
+	                type: 'function',
+	                name: 'handler'
+	            }]
+	        }
+	    },
+
 	    value: {
 	        value: 10,
 	        path: 'data.number'
@@ -383,6 +413,8 @@
 
 	let VariableView = __webpack_require__(77);
 
+	let ExpressionExpandor = __webpack_require__(90);
+
 	const LAMBDA_STYLE = __webpack_require__(78);
 
 	let {
@@ -463,40 +495,86 @@
 	}) => {
 	    data.value = data.value || {};
 	    data.variables = data.variables || [];
+	    data.funs = data.funs || [JSON_DATA, PREDICATE, ABSTRACTION, VARIABLE];
 
-	    let optionsView = n('div', {
-	        style: {
-	            color: '#9b9b9b',
-	            fontSize: 12,
-	            display: 'inline-block'
-	        }
-	    }, [TreeOptionView({
-	        title: data.title,
-	        path: data.value.path,
-	        data: () => expressionTypes(data),
-	        onselected: (v, path) => {
-	            update([
-	                ['value.path', path]
-	            ]);
-	        }
-	    })]);
+	    let hideExpressionExpandor = true;
 
-	    return n('div', {
-	        style: {
-	            display: 'inline-block',
-	            padding: 8,
-	            border: '1px solid rgba(200, 200, 200, 0.4)',
-	            borderRadius: 5
-	        }
-	    }, [!data.value.path && optionsView,
+	    return () => {
+	        let optionsView = n('div', {
+	            style: {
+	                color: '#9b9b9b',
+	                fontSize: 12,
+	                display: 'inline-block'
+	            }
+	        }, [
+	            TreeOptionView({
+	                title: data.title,
+	                path: data.value.path,
+	                showSelectTree: data.showSelectTree,
+	                data: () => expressionTypes(data),
+	                onselected: (v, path) => {
+	                    update([
+	                        ['value.path', path]
+	                    ]);
+	                }
+	            })
+	        ]);
 
-	        data.value.path && expressionViewMap[
-	            getExpressionType(data.value.path)
-	        ](mergeMap(data, {
-	            expressionView,
-	            optionsView
-	        }))
-	    ]);
+	        return n('div', {
+	            style: {
+	                position: 'relative',
+	                display: 'inline-block',
+	                border: !hideExpressionExpandor ? '1px solid rgba(200, 200, 200, 0.4)' : '0',
+	                padding: !hideExpressionExpandor ? 5 : 0,
+	                borderRadius: 5
+	            }
+	        }, [
+	            n('div', {
+	                style: {
+	                    display: 'inline-block',
+	                    padding: 8,
+	                    border: '1px solid rgba(200, 200, 200, 0.4)',
+	                    borderRadius: 5
+	                }
+	            }, [!data.value.path && optionsView,
+
+	                data.value.path && expressionViewMap[
+	                    getExpressionType(data.value.path)
+	                ](mergeMap(data, {
+	                    expressionView,
+	                    optionsView
+	                }))
+	            ]),
+
+	            n('div', {
+	                style: {
+	                    display: 'inline-block'
+	                }
+	            }, [
+	                data.value.path && ExpressionExpandor({
+	                    body: () => {
+	                        return n('div', {
+	                            style: {
+	                                display: 'inline-block',
+	                                marginLeft: 15
+	                            }
+	                        }, expressionView(mergeMap(data, {
+	                            value: {},
+	                            funs: [PREDICATE],
+	                            infix: true,
+	                            title: 'operation'
+	                        })));
+	                    },
+
+	                    hideExpressionExpandor: hideExpressionExpandor,
+	                    onchange: (hide) => {
+	                        hideExpressionExpandor = hide;
+	                        update();
+	                    }
+	                })
+	            ])
+	        ]);
+	    };
 	});
 
 	let getExpressionType = (path = '') => {
@@ -512,8 +590,8 @@
 	            [JSON_TYPE]: 1,
 	            [NULL]: 1
 	        }, // declare json data
-	        [ABSTRACTION]: 1, // declare function
-	        [PREDICATE]: data.predicates // declare function
+	        [PREDICATE]: data.predicates, // declare function
+	        [ABSTRACTION]: 1 // declare function
 	    };
 
 	    if (data.variables.length) {
@@ -523,7 +601,12 @@
 	        }, {});
 	    }
 
-	    return types;
+	    return reduce(data.funs, (prev, name) => {
+	        if (types[name]) {
+	            prev[name] = types[name];
+	        }
+	        return prev;
+	    }, {});
 	};
 
 
@@ -3224,9 +3307,10 @@
 	            n('div', {
 	                style: mergeMap(triangle({
 	                    direction: 'down',
-	                    top: 10,
+	                    top: 5,
 	                    left: 5,
-	                    right: 5
+	                    right: 5,
+	                    color: '#737373'
 	                }), {
 	                    display: 'inline-block',
 	                    'float': 'right',
@@ -27651,6 +27735,67 @@
 	module.exports = {
 	    getLambda
 	};
+
+
+/***/ },
+/* 90 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    view, n
+	} = __webpack_require__(4);
+
+	let fold = __webpack_require__(65);
+
+	let triangle = __webpack_require__(51);
+
+	let {
+	    mergeMap
+	} = __webpack_require__(34);
+
+	module.exports = view(({
+	    body,
+	    onchange,
+	    hideExpressionExpandor
+	}) => {
+	    return () => fold({
+	        head: (ops) => {
+	            return n('div', {
+	                style: mergeMap(
+	                    ops.isHide() ? triangle({
+	                        direction: 'right',
+	                        top: 5,
+	                        bottom: 5,
+	                        left: 5,
+	                        color: '#737373'
+	                    }) : triangle({
+	                        direction: 'left',
+	                        top: 5,
+	                        bottom: 5,
+	                        right: 5,
+	                        color: '#737373'
+	                    }), {
+	                        position: 'absolute',
+	                        bottom: 0,
+	                        marginLeft: 5,
+	                        cursor: 'pointer'
+	                    }
+	                ),
+
+	                onclick: () => {
+	                    ops.toggle();
+	                    onchange && onchange(ops.isHide());
+	                }
+	            });
+	        },
+
+	        hide: hideExpressionExpandor,
+
+	        body
+	    });
+	});
 
 
 /***/ }

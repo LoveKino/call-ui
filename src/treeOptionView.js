@@ -70,9 +70,10 @@ module.exports = view(({
             n('div', {
                 style: mergeMap(triangle({
                     direction: 'down',
-                    top: 10,
+                    top: 5,
                     left: 5,
-                    right: 5
+                    right: 5,
+                    color: '#737373'
                 }), {
                     display: 'inline-block',
                     'float': 'right',
