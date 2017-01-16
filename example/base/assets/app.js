@@ -3142,6 +3142,10 @@
 
 	let triangle = __webpack_require__(88);
 
+	let {
+	    PREDICATE
+	} = __webpack_require__(67);
+
 	const DEFAULT_TITLE = 'please select';
 
 	module.exports = view(({
@@ -3163,7 +3167,7 @@
 	            style: {
 	                fontSize: 14
 	            }
-	        },title),
+	        }, title),
 
 	        n('div', {
 	            style: {
@@ -3183,7 +3187,11 @@
 	                overflow: 'auto'
 	            }
 	        }, [
-	            n('span', title || DEFAULT_TITLE),
+	            n('span', {
+	                style: {
+	                    fontSize: 14
+	                }
+	            }, title || DEFAULT_TITLE),
 
 	            n('div', {
 	                style: mergeMap(triangle({
@@ -3226,7 +3234,19 @@
 	 * @param path string
 	 */
 	let renderGuideLine = (path) => {
-	    return n('span', `> ${path.split('.').join(' > ')}`);
+	    let parts = path.split('.');
+	    let last = parts.pop();
+	    let type = parts[0];
+
+	    return n('span', [
+	        n('span', last),
+
+	        type === PREDICATE && parts.length && n('span', {
+	            style: {
+	                paddingLeft: 10
+	            }
+	        }, `(${parts.join(' > ')})`)
+	    ]);
 	};
 
 
