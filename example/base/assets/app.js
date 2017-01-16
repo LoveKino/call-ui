@@ -209,6 +209,46 @@
 	    }
 	}));
 
+	document.body.appendChild(n('p'));
+
+	document.body.appendChild(LambdaRetView({
+	    predicates: {
+	        math: {
+	            '+': (x, y) => x + y
+	        }
+	    },
+	    predicatesMetaInfo: {
+	        math: {
+	            '+': {
+	                args: [{
+	                    type: 'number',
+	                    name: 'number'
+	                }, {
+	                    type: 'number',
+	                    name: 'number'
+	                }]
+	            }
+	        }
+	    },
+
+	    value: {
+	        path: 'predicate.math.+',
+	        params: [{
+	            path: 'predicate.math.+',
+	            params: [{
+	                path: 'data.number',
+	                value: 1
+	            }, {
+	                path: 'data.number',
+	                value: 3
+	            }]
+	        }, {
+	            path: 'data.number',
+	            value: 2
+	        }]
+	    }
+	}));
+
 
 /***/ },
 /* 1 */
@@ -400,16 +440,18 @@
 	        style: {
 	            display: 'inline-block',
 	            padding: 8,
-	            border: '1px solid rgba(200, 200, 200, 0.4)'
+	            border: '1px solid rgba(200, 200, 200, 0.4)',
+	            borderRadius: 5
 	        }
 	    }, [
 	        data.value.path ? n('div', {
 	            style: {
 	                fontSize: 12,
-	                color: '#3f51b5'
+	                color: '#9b9b9b'
 	            }
 	        }, [
 	            TreeOptionView({
+	                defaultTitle: data.defaultTitle,
 	                path: data.value.path,
 	                data: () => expressionTypes(data),
 	                onselected: (v, path) => {
@@ -419,6 +461,7 @@
 	                }
 	            })
 	        ]) : TreeOptionView({
+	            defaultTitle: data.defaultTitle,
 	            path: data.value.path,
 	            data: () => expressionTypes(data),
 	            onselected: (v, path) => {
@@ -3095,19 +3138,29 @@
 	} = __webpack_require__(4);
 
 	let {
+	    mergeMap
+	} = __webpack_require__(53);
+
+	let {
 	    isFunction
 	} = __webpack_require__(9);
 
 	let TreeSelect = __webpack_require__(34);
 
+	let triangle = __webpack_require__(88);
+
+	const DEFAULT_TITLE = 'please select';
+
 	module.exports = view(({
 	    path,
 	    data,
 	    showSelectTree,
-	    onselected
+	    onselected,
+	    defaultTitle
 	}, {
 	    update
 	}) => {
+	    defaultTitle = defaultTitle || DEFAULT_TITLE;
 	    return n('label', {
 	        style: {
 	            position: 'relative',
@@ -3116,11 +3169,9 @@
 	    }, [
 	        n('div', {
 	            style: {
-	                border: !path ? '1px solid rgba(200, 200, 200, 0.8)' : 'none',
-	                backgroundColor: showSelectTree ? '#F5F5F5' : 'transparent',
-	                borderRadius: 6,
 	                padding: 5,
-	                cursor: 'pointer'
+	                cursor: 'pointer',
+	                backgroundColor: showSelectTree ? 'rgba(200, 200, 200, .12)' : 'none'
 	            },
 
 	            'class': 'lambda-ui-hover',
@@ -3128,13 +3179,35 @@
 	            onclick: () => {
 	                update('showSelectTree', !showSelectTree);
 	            }
-	        }, path ? renderGuideLine(path) : n('span', 'please select')),
+	        }, path ? renderGuideLine(path) : n('div class="input-style"', {
+	            style: {
+	                color: '#9b9b9b',
+	                overflow: 'auto'
+	            }
+	        }, [
+	            n('span', defaultTitle),
+
+	            n('div', {
+	                style: mergeMap(triangle({
+	                    direction: 'down',
+	                    top: 10,
+	                    left: 5,
+	                    right: 5
+	                }), {
+	                    display: 'inline-block',
+	                    'float': 'right',
+	                    position: 'relative',
+	                    top: 5
+	                })
+	            })
+	        ])),
 
 	        n('div', {
 	            style: {
 	                position: 'absolute',
 	                backgroundColor: 'white',
-	                zIndex: 10000
+	                zIndex: 10000,
+	                fontSize: 14
 	            }
 	        }, [
 	            showSelectTree && TreeSelect({
@@ -25760,7 +25833,6 @@
 
 	    return () => n('div', {
 	        style: {
-	            border: '1px solid rgba(200, 200, 200, 0.4)',
 	            marginLeft: 15,
 	            marginTop: 5,
 	            padding: 5
@@ -27266,7 +27338,6 @@
 
 	    return n('div', {
 	        style: {
-	            border: '1px solid rgba(200, 200, 200, 0.4)',
 	            marginLeft: 15,
 	            marginTop: 5,
 	            padding: 5
@@ -27322,13 +27393,8 @@
 	                    padding: '4px'
 	                }
 	            }, [
-	                name && n('label', {
-	                    style: {
-	                        marginRight: 10
-	                    }
-	                }, name),
-
 	                expressionView(mergeMap(expressionInfo, {
+	                    defaultTitle: name,
 	                    value: params[index],
 	                    onchange: (expressionValue) => {
 	                        params[index] = expressionValue;
@@ -27438,7 +27504,67 @@
 	    height: 27px;
 	    border-bottom: 2px solid #3f51b5;
 	}
+
+	.lambda-ui .input-style {
+	    border: 0;
+	    display: inline-block;
+	    border-bottom: 1px solid rgba(0,0,0,.12);
+	    outline: none;
+	    height: 28px;
+	    min-width: 160px;
+	}
 	`;
+
+
+/***/ },
+/* 88 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	/**
+	 * @param direction string
+	 *  direction = up | down | left | right
+	 */
+	module.exports = ({
+	    left = 0, right = 0, top = 0, bottom = 0, color = 'black', direction = 'up'
+	}) => {
+	    if (direction === 'up') {
+	        return {
+	            width: 0,
+	            height: 0,
+	            'border-left': `${left}px solid transparent`,
+	            'border-right': `${right}px solid transparent`,
+	            'border-bottom': `${bottom}px solid ${color}`
+	        };
+	    } else if (direction === 'down') {
+	        return {
+	            width: 0,
+	            height: 0,
+	            'border-left': `${left}px solid transparent`,
+	            'border-right': `${right}px solid transparent`,
+	            'border-top': `${top}px solid ${color}`
+	        };
+	    } else if (direction === 'left') {
+	        return {
+	            width: 0,
+	            height: 0,
+	            'border-top': `${top}px solid transparent`,
+	            'border-bottom': `${bottom}px solid transparent`,
+	            'border-right': `${right}px solid ${color}`
+	        };
+	    } else if (direction === 'right') {
+	        return {
+	            width: 0,
+	            height: 0,
+	            'border-top': `${top}px solid transparent`,
+	            'border-bottom': `${bottom}px solid transparent`,
+	            'border-left': `${left}px solid ${color}`
+	        };
+	    } else {
+	        throw new Error(`unexpeced direction ${direction}`);
+	    }
+	};
 
 
 /***/ }

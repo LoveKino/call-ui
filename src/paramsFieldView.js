@@ -26,13 +26,8 @@ module.exports = view(({
                     padding: '4px'
                 }
             }, [
-                name && n('label', {
-                    style: {
-                        marginRight: 10
-                    }
-                }, name),
-
                 expressionView(mergeMap(expressionInfo, {
+                    defaultTitle: name,
                     value: params[index],
                     onchange: (expressionValue) => {
                         params[index] = expressionValue;

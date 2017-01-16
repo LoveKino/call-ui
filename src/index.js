@@ -99,16 +99,18 @@ let expressionView = view((data, {
         style: {
             display: 'inline-block',
             padding: 8,
-            border: '1px solid rgba(200, 200, 200, 0.4)'
+            border: '1px solid rgba(200, 200, 200, 0.4)',
+            borderRadius: 5
         }
     }, [
         data.value.path ? n('div', {
             style: {
                 fontSize: 12,
-                color: '#3f51b5'
+                color: '#9b9b9b'
             }
         }, [
             TreeOptionView({
+                defaultTitle: data.defaultTitle,
                 path: data.value.path,
                 data: () => expressionTypes(data),
                 onselected: (v, path) => {
@@ -118,6 +120,7 @@ let expressionView = view((data, {
                 }
             })
         ]) : TreeOptionView({
+            defaultTitle: data.defaultTitle,
             path: data.value.path,
             data: () => expressionTypes(data),
             onselected: (v, path) => {

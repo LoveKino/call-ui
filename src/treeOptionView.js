@@ -5,19 +5,29 @@ let {
 } = require('kabanery');
 
 let {
+    mergeMap
+} = require('bolzano');
+
+let {
     isFunction
 } = require('basetype');
 
 let TreeSelect = require('kabanery-tree-select');
 
+let triangle = require('css-shapes-object/lib/triangle');
+
+const DEFAULT_TITLE = 'please select';
+
 module.exports = view(({
     path,
     data,
     showSelectTree,
-    onselected
+    onselected,
+    defaultTitle
 }, {
     update
 }) => {
+    defaultTitle = defaultTitle || DEFAULT_TITLE;
     return n('label', {
         style: {
             position: 'relative',
@@ -26,11 +36,9 @@ module.exports = view(({
     }, [
         n('div', {
             style: {
-                border: !path ? '1px solid rgba(200, 200, 200, 0.8)' : 'none',
-                backgroundColor: showSelectTree ? '#F5F5F5' : 'transparent',
-                borderRadius: 6,
                 padding: 5,
-                cursor: 'pointer'
+                cursor: 'pointer',
+                backgroundColor: showSelectTree ? 'rgba(200, 200, 200, .12)' : 'none'
             },
 
             'class': 'lambda-ui-hover',
@@ -38,13 +46,35 @@ module.exports = view(({
             onclick: () => {
                 update('showSelectTree', !showSelectTree);
             }
-        }, path ? renderGuideLine(path) : n('span', 'please select')),
+        }, path ? renderGuideLine(path) : n('div class="input-style"', {
+            style: {
+                color: '#9b9b9b',
+                overflow: 'auto'
+            }
+        }, [
+            n('span', defaultTitle),
+
+            n('div', {
+                style: mergeMap(triangle({
+                    direction: 'down',
+                    top: 10,
+                    left: 5,
+                    right: 5
+                }), {
+                    display: 'inline-block',
+                    'float': 'right',
+                    position: 'relative',
+                    top: 5
+                })
+            })
+        ])),
 
         n('div', {
             style: {
                 position: 'absolute',
                 backgroundColor: 'white',
-                zIndex: 10000
+                zIndex: 10000,
+                fontSize: 14
             }
         }, [
             showSelectTree && TreeSelect({

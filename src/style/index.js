@@ -50,4 +50,13 @@ module.exports = `
     height: 27px;
     border-bottom: 2px solid #3f51b5;
 }
+
+.lambda-ui .input-style {
+    border: 0;
+    display: inline-block;
+    border-bottom: 1px solid rgba(0,0,0,.12);
+    outline: none;
+    height: 28px;
+    min-width: 160px;
+}
 `;

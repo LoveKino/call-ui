@@ -39,7 +39,6 @@ module.exports = view((data) => {
 
     return n('div', {
         style: {
-            border: '1px solid rgba(200, 200, 200, 0.4)',
             marginLeft: 15,
             marginTop: 5,
             padding: 5

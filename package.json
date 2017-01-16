@@ -28,6 +28,7 @@
   "dependencies": {
     "basetype": "^0.1.4",
     "bolzano": "^0.1.0",
+    "css-shapes-object": "0.0.3",
     "kabanery": "^0.1.2",
     "kabanery-dynamic-listview": "0.0.2",
     "kabanery-editor": "0.0.2",

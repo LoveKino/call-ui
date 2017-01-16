@@ -162,3 +162,43 @@ document.body.appendChild(LambdaRetView({
         }
     }
 }));
+
+document.body.appendChild(n('p'));
+
+document.body.appendChild(LambdaRetView({
+    predicates: {
+        math: {
+            '+': (x, y) => x + y
+        }
+    },
+    predicatesMetaInfo: {
+        math: {
+            '+': {
+                args: [{
+                    type: 'number',
+                    name: 'number'
+                }, {
+                    type: 'number',
+                    name: 'number'
+                }]
+            }
+        }
+    },
+
+    value: {
+        path: 'predicate.math.+',
+        params: [{
+            path: 'predicate.math.+',
+            params: [{
+                path: 'data.number',
+                value: 1
+            }, {
+                path: 'data.number',
+                value: 3
+            }]
+        }, {
+            path: 'data.number',
+            value: 2
+        }]
+    }
+}));
