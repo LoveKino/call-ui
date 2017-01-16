@@ -3160,7 +3160,6 @@
 	}, {
 	    update
 	}) => {
-	    defaultTitle = defaultTitle || DEFAULT_TITLE;
 	    return n('label', {
 	        style: {
 	            position: 'relative',
@@ -3179,13 +3178,13 @@
 	            onclick: () => {
 	                update('showSelectTree', !showSelectTree);
 	            }
-	        }, path ? renderGuideLine(path) : n('div class="input-style"', {
+	        }, path ? (defaultTitle ? defaultTitle : renderGuideLine(path)) : n('div class="input-style"', {
 	            style: {
 	                color: '#9b9b9b',
 	                overflow: 'auto'
 	            }
 	        }, [
-	            n('span', defaultTitle),
+	            n('span', defaultTitle || DEFAULT_TITLE),
 
 	            n('div', {
 	                style: mergeMap(triangle({
@@ -4649,8 +4648,10 @@
 	        value, onchange = id
 	    } = data;
 
+	    let type = getDataTypePath(value.path);
+
 	    let getLambda = () => {
-	        return value.value;
+	        return value.value || DEFAULT_DATA_MAP[type];
 	    };
 
 	    onchange(getLambda());
@@ -4660,11 +4661,12 @@
 	        onchange(v);
 	    };
 
-	    let type = getDataTypePath(value.path);
-
 	    let renderInputArea = () => {
 	        return [
 	            type === NUMBER && n('input type="number"', {
+	                style: {
+	                    marginTop: -10
+	                },
 	                value: value.value || DEFAULT_DATA_MAP[type],
 	                oninput: (e) => {
 	                    let num = Number(e.target.value);
@@ -4688,6 +4690,10 @@
 	            }),
 
 	            type === STRING && n('input type="text"', {
+	                style: {
+	                    marginTop: -10
+	                },
+
 	                value: value.value || DEFAULT_DATA_MAP[type],
 	                oninput: (e) => {
 	                    onValueChanged(e.target.value);
@@ -4722,7 +4728,8 @@
 	    return n('div', {
 	        style: {
 	            border: contain(INLINE_TYPES, type) ? '0' : '1px solid rgba(200, 200, 200, 0.4)',
-	            display: !type ? 'inline-block' : contain(INLINE_TYPES, type) ? 'inline-block' : 'block'
+	            display: !type ? 'inline-block' : contain(INLINE_TYPES, type) ? 'inline-block' : 'block',
+	            minWidth: 120
 	        }
 	    }, [
 	        n('div', {
@@ -4750,7 +4757,7 @@
 
 	                ops.isHide() && n('span', {
 	                    style: {
-	                        color: '#666666',
+	                        color: '#9b9b9b',
 	                        paddingRight: 60
 	                    }
 	                }, abbreText(value.value)),
@@ -4759,7 +4766,16 @@
 	            ]),
 	            body: renderInputArea,
 	            hide: false
-	        }) : renderInputArea()
+	        }) : renderInputArea(),
+
+	        // input field helper text
+	        n('div', [n('div', {
+	            style: {
+	                fontSize: 10,
+	                color: '#9b9b9b',
+	                'float': 'right'
+	            }
+	        }, type)])
 	    ]);
 	});
 

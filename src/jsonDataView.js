@@ -32,8 +32,10 @@ module.exports = view((data) => {
         value, onchange = id
     } = data;
 
+    let type = getDataTypePath(value.path);
+
     let getLambda = () => {
-        return value.value;
+        return value.value || DEFAULT_DATA_MAP[type];
     };
 
     onchange(getLambda());
@@ -43,11 +45,12 @@ module.exports = view((data) => {
         onchange(v);
     };
 
-    let type = getDataTypePath(value.path);
-
     let renderInputArea = () => {
         return [
             type === NUMBER && n('input type="number"', {
+                style: {
+                    marginTop: -10
+                },
                 value: value.value || DEFAULT_DATA_MAP[type],
                 oninput: (e) => {
                     let num = Number(e.target.value);
@@ -71,6 +74,10 @@ module.exports = view((data) => {
             }),
 
             type === STRING && n('input type="text"', {
+                style: {
+                    marginTop: -10
+                },
+
                 value: value.value || DEFAULT_DATA_MAP[type],
                 oninput: (e) => {
                     onValueChanged(e.target.value);
@@ -105,7 +112,8 @@ module.exports = view((data) => {
     return n('div', {
         style: {
             border: contain(INLINE_TYPES, type) ? '0' : '1px solid rgba(200, 200, 200, 0.4)',
-            display: !type ? 'inline-block' : contain(INLINE_TYPES, type) ? 'inline-block' : 'block'
+            display: !type ? 'inline-block' : contain(INLINE_TYPES, type) ? 'inline-block' : 'block',
+            minWidth: 120
         }
     }, [
         n('div', {
@@ -133,7 +141,7 @@ module.exports = view((data) => {
 
                 ops.isHide() && n('span', {
                     style: {
-                        color: '#666666',
+                        color: '#9b9b9b',
                         paddingRight: 60
                     }
                 }, abbreText(value.value)),
@@ -142,7 +150,16 @@ module.exports = view((data) => {
             ]),
             body: renderInputArea,
             hide: false
-        }) : renderInputArea()
+        }) : renderInputArea(),
+
+        // input field helper text
+        n('div', [n('div', {
+            style: {
+                fontSize: 10,
+                color: '#9b9b9b',
+                'float': 'right'
+            }
+        }, type)])
     ]);
 });
 

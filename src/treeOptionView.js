@@ -27,7 +27,6 @@ module.exports = view(({
 }, {
     update
 }) => {
-    defaultTitle = defaultTitle || DEFAULT_TITLE;
     return n('label', {
         style: {
             position: 'relative',
@@ -46,13 +45,13 @@ module.exports = view(({
             onclick: () => {
                 update('showSelectTree', !showSelectTree);
             }
-        }, path ? renderGuideLine(path) : n('div class="input-style"', {
+        }, path ? (defaultTitle ? defaultTitle : renderGuideLine(path)) : n('div class="input-style"', {
             style: {
                 color: '#9b9b9b',
                 overflow: 'auto'
             }
         }, [
-            n('span', defaultTitle),
+            n('span', defaultTitle || DEFAULT_TITLE),
 
             n('div', {
                 style: mergeMap(triangle({
