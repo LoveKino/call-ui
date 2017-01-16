@@ -27,10 +27,10 @@ module.exports = view(({
         n('div', {
             style: {
                 border: !path ? '1px solid rgba(200, 200, 200, 0.8)' : 'none',
-                borderRadius: 6,
-                padding: 5,
-                cursor: 'pointer'
+                backgroundColor: showSelectTree ? '#F5F5F5' : 'transparent'
             },
+
+            'class': 'lambda-guide-line',
 
             onclick: () => {
                 update('showSelectTree', !showSelectTree);

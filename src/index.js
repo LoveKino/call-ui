@@ -69,9 +69,11 @@ let {
  * 2. define current expression type
  */
 module.exports = view((data) => {
-    document.getElementsByTagName('head')[0].appendChild(n('style', {
-        type: 'text/css'
-    }, LAMBDA_STYLE));
+    let $style = document.getElementById('lambda-style');
+    if (!$style) {
+        $style = n('style id=lambda-style type="text/css"', LAMBDA_STYLE);
+        document.getElementsByTagName('head')[0].appendChild($style);
+    }
 
     return n('div', {
         'class': 'lambda-ui'
@@ -93,28 +95,6 @@ let expressionView = view((data, {
     data.value = data.value || {};
     data.variables = data.variables || [];
 
-    let expressionTypes = () => {
-        let types = {
-            [JSON_DATA]: {
-                [NUMBER]: 1,
-                [BOOLEAN]: 1,
-                [STRING]: 1,
-                [JSON_TYPE]: 1,
-                [NULL]: 1
-            }, // declare json data
-            [ABSTRACTION]: 1, // declare function
-            [PREDICATE]: data.predicates // declare function
-        };
-        if (data.variables.length) {
-            types.variable = reduce(data.variables, (prev, cur) => {
-                prev[cur] = 1;
-                return prev;
-            }, {});
-        }
-
-        return types;
-    };
-
     return n('div', {
         style: {
             display: 'inline-block',
@@ -124,7 +104,7 @@ let expressionView = view((data, {
     }, [
         TreeOptionView({
             path: data.value.path,
-            data: expressionTypes,
+            data: () => expressionTypes(data),
             onselected: (v, path) => {
                 update([
                     ['value.path', path]
@@ -132,7 +112,7 @@ let expressionView = view((data, {
             }
         }),
 
-        expressionViewMap[
+        data.value.path && expressionViewMap[
             getExpressionType(data.value.path)
         ](mergeMap(data, {
             expressionView
@@ -142,4 +122,26 @@ let expressionView = view((data, {
 
 let getExpressionType = (path = '') => {
     return path.split('.')[0];
+};
+
+let expressionTypes = (data) => {
+    let types = {
+        [JSON_DATA]: {
+            [NUMBER]: 1,
+            [BOOLEAN]: 1,
+            [STRING]: 1,
+            [JSON_TYPE]: 1,
+            [NULL]: 1
+        }, // declare json data
+        [ABSTRACTION]: 1, // declare function
+        [PREDICATE]: data.predicates // declare function
+    };
+    if (data.variables.length) {
+        types.variable = reduce(data.variables, (prev, cur) => {
+            prev[cur] = 1;
+            return prev;
+        }, {});
+    }
+
+    return types;
 };

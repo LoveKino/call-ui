@@ -370,9 +370,11 @@
 	 * 2. define current expression type
 	 */
 	module.exports = view((data) => {
-	    document.getElementsByTagName('head')[0].appendChild(n('style', {
-	        type: 'text/css'
-	    }, LAMBDA_STYLE));
+	    let $style = document.getElementById('lambda-style');
+	    if (!$style) {
+	        $style = n('style id=lambda-style type="text/css"', LAMBDA_STYLE);
+	        document.getElementsByTagName('head')[0].appendChild($style);
+	    }
 
 	    return n('div', {
 	        'class': 'lambda-ui'
@@ -394,28 +396,6 @@
 	    data.value = data.value || {};
 	    data.variables = data.variables || [];
 
-	    let expressionTypes = () => {
-	        let types = {
-	            [JSON_DATA]: {
-	                [NUMBER]: 1,
-	                [BOOLEAN]: 1,
-	                [STRING]: 1,
-	                [JSON_TYPE]: 1,
-	                [NULL]: 1
-	            }, // declare json data
-	            [ABSTRACTION]: 1, // declare function
-	            [PREDICATE]: data.predicates // declare function
-	        };
-	        if (data.variables.length) {
-	            types.variable = reduce(data.variables, (prev, cur) => {
-	                prev[cur] = 1;
-	                return prev;
-	            }, {});
-	        }
-
-	        return types;
-	    };
-
 	    return n('div', {
 	        style: {
 	            display: 'inline-block',
@@ -425,7 +405,7 @@
 	    }, [
 	        TreeOptionView({
 	            path: data.value.path,
-	            data: expressionTypes,
+	            data: () => expressionTypes(data),
 	            onselected: (v, path) => {
 	                update([
 	                    ['value.path', path]
@@ -433,7 +413,7 @@
 	            }
 	        }),
 
-	        expressionViewMap[
+	        data.value.path && expressionViewMap[
 	            getExpressionType(data.value.path)
 	        ](mergeMap(data, {
 	            expressionView
@@ -443,6 +423,28 @@
 
 	let getExpressionType = (path = '') => {
 	    return path.split('.')[0];
+	};
+
+	let expressionTypes = (data) => {
+	    let types = {
+	        [JSON_DATA]: {
+	            [NUMBER]: 1,
+	            [BOOLEAN]: 1,
+	            [STRING]: 1,
+	            [JSON_TYPE]: 1,
+	            [NULL]: 1
+	        }, // declare json data
+	        [ABSTRACTION]: 1, // declare function
+	        [PREDICATE]: data.predicates // declare function
+	    };
+	    if (data.variables.length) {
+	        types.variable = reduce(data.variables, (prev, cur) => {
+	            prev[cur] = 1;
+	            return prev;
+	        }, {});
+	    }
+
+	    return types;
 	};
 
 
@@ -3100,10 +3102,10 @@
 	        n('div', {
 	            style: {
 	                border: !path ? '1px solid rgba(200, 200, 200, 0.8)' : 'none',
-	                borderRadius: 6,
-	                padding: 5,
-	                cursor: 'pointer'
+	                backgroundColor: showSelectTree ? '#F5F5F5' : 'transparent'
 	            },
+
+	            'class': 'lambda-guide-line',
 
 	            onclick: () => {
 	                update('showSelectTree', !showSelectTree);
@@ -4540,11 +4542,13 @@
 
 	let editor = __webpack_require__(56);
 
+	let fold = __webpack_require__(84);
+
+	let foldArrow = __webpack_require__(85);
+
 	const {
 	    NUMBER, BOOLEAN, STRING, JSON_TYPE, NULL, INLINE_TYPES, DEFAULT_DATA_MAP
 	} = __webpack_require__(63);
-
-	const id = v => v;
 
 	/**
 	 * used to define json data
@@ -4567,6 +4571,63 @@
 
 	    let type = getDataTypePath(value.path);
 
+	    let renderInputArea = () => {
+	        return [
+	            type === NUMBER && n('input type="number"', {
+	                value: value.value || DEFAULT_DATA_MAP[type],
+	                oninput: (e) => {
+	                    let num = Number(e.target.value);
+	                    onValueChanged(num);
+	                }
+	            }),
+
+	            type === BOOLEAN && SelectView({
+	                options: [
+	                    ['true'],
+	                    ['false']
+	                ],
+	                selected: value.value === true ? 'true' : 'false',
+	                onchange: (v) => {
+	                    let ret = false;
+	                    if (v === 'true') {
+	                        ret = true;
+	                    }
+	                    onValueChanged(ret);
+	                }
+	            }),
+
+	            type === STRING && n('input type="text"', {
+	                value: value.value || DEFAULT_DATA_MAP[type],
+	                oninput: (e) => {
+	                    onValueChanged(e.target.value);
+	                }
+	            }),
+
+	            type === JSON_TYPE && n('div', {
+	                style: {
+	                    marginLeft: 15,
+	                    width: 600,
+	                    height: 500
+	                }
+	            }, [
+	                editor({
+	                    content: JSON.stringify(value.value, null, 4) || DEFAULT_DATA_MAP[type],
+	                    onchange: (v) => {
+	                        // TODO catch
+	                        try {
+	                            let jsonObject = JSON.parse(v);
+	                            onValueChanged(jsonObject);
+	                        } catch (err) {
+	                            onValueChanged(err);
+	                        }
+	                    }
+	                })
+	            ]),
+
+	            type === NULL && n('span', 'null')
+	        ];
+	    };
+
 	    return n('div', {
 	        style: {
 	            border: contain(INLINE_TYPES, type) ? '0' : '1px solid rgba(200, 200, 200, 0.4)',
@@ -4581,62 +4642,27 @@
 	            }
 	        }),
 
-	        type === NUMBER && n('input type="number"', {
-	            value: value.value || DEFAULT_DATA_MAP[type],
-	            oninput: (e) => {
-	                let num = Number(e.target.value);
-	                onValueChanged(num);
-	            }
-	        }),
-
-	        type === BOOLEAN && SelectView({
-	            options: [
-	                ['true'],
-	                ['false']
-	            ],
-	            selected: value.value === true ? 'true' : 'false',
-	            onchange: (v) => {
-	                let ret = false;
-	                if (v === 'true') {
-	                    ret = true;
+	        !contain(INLINE_TYPES, type) ? fold({
+	            head: (ops) => n('div', {
+	                style: {
+	                    textAlign: 'right',
+	                    cursor: 'pointer'
+	                },
+	                onclick: () => {
+	                    ops.toggle();
 	                }
-	                onValueChanged(ret);
-	            }
-	        }),
-
-	        type === STRING && n('input type="text"', {
-	            value: value.value || DEFAULT_DATA_MAP[type],
-	            oninput: (e) => {
-	                onValueChanged(e.target.value);
-	            }
-	        }),
-
-	        type === JSON_TYPE && n('div', {
-	            style: {
-	                marginLeft: 15,
-	                width: 600,
-	                height: 500
-	            }
-	        }, [
-	            editor({
-	                content: JSON.stringify(value.value, null, 4) || DEFAULT_DATA_MAP[type],
-	                onchange: (v) => {
-	                    // TODO catch
-	                    try {
-	                        let jsonObject = JSON.parse(v);
-	                        onValueChanged(jsonObject);
-	                    } catch (err) {
-	                        onValueChanged(err);
-	                    }
-	                }
-	            })
-	        ]),
-
-	        type === NULL && n('span', 'null'),
+	            }, [
+	                foldArrow(ops)
+	            ]),
+	            body: renderInputArea,
+	            hide: false
+	        }) : renderInputArea()
 	    ]);
 	});
 
 	let getDataTypePath = (path = '') => path.split('.').slice(1).join('.');
+
+	const id = v => v;
 
 
 /***/ },
@@ -27188,7 +27214,77 @@
 	.lambda-params fieldset{
 	    padding: 1px 4px;
 	    border: 0;
-	}`;
+	}
+
+	.lambda-guide-line {
+	    border-radius: 6px;
+	    padding: 5px;
+	    cursor: pointer;
+	}
+
+	.lambda-guide-line:hover{
+	    background-color: #f5f5f5 !important;
+	}
+
+	`;
+
+
+/***/ },
+/* 84 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    n, view
+	} = __webpack_require__(4);
+
+	/**
+	 * data = {
+	 *    hide,
+	 *    head,
+	 *    body
+	 * }
+	 */
+	module.exports = view((data, {
+	    update
+	}) => {
+	    if (data.hide === undefined) data.hide = true;
+
+	    let hide = () => update('hide', true);
+	    let show = () => update('hide', false);
+	    let toggle = () => update('hide', !data.hide);
+	    let isHide = () => data.hide;
+
+	    let ops = {
+	        hide, show, toggle, isHide
+	    };
+
+	    return n('div', [
+	        data.head(ops), !isHide() && data.body(ops)
+	    ]);
+	});
+
+
+/***/ },
+/* 85 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    n
+	} = __webpack_require__(4);
+
+	module.exports = (ops) => {
+	    return n('span', {
+	        style: {
+	            display: 'inline-block',
+	            paddingRight: 8,
+	            transform: ops.isHide()?'translateY(5px) rotate(90deg)':null
+	        }
+	    }, '>');
+	};
 
 
 /***/ }

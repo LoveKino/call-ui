@@ -14,4 +14,16 @@ module.exports = `.lambda-variable fieldset{
 .lambda-params fieldset{
     padding: 1px 4px;
     border: 0;
-}`;
+}
+
+.lambda-guide-line {
+    border-radius: 6px;
+    padding: 5px;
+    cursor: pointer;
+}
+
+.lambda-guide-line:hover{
+    background-color: #f5f5f5 !important;
+}
+
+`;
