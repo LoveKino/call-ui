@@ -18,7 +18,7 @@ module.exports = view(({
 }, {
     update
 }) => {
-    return n('div', {
+    return n('label', {
         style: {
             position: 'relative',
             display: 'inline-block'
@@ -65,9 +65,5 @@ module.exports = view(({
  * @param path string
  */
 let renderGuideLine = (path) => {
-    return n('span', {
-        style: {
-            color: '#85981f'
-        }
-    }, `> ${path.split('.').join(' > ')}`);
+    return n('span', `> ${path.split('.').join(' > ')}`);
 };

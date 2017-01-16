@@ -220,7 +220,7 @@
 
 	let {
 	    dsl, interpreter
-	} = __webpack_require__(70);
+	} = __webpack_require__(74);
 
 	let {
 	    getJson
@@ -309,13 +309,13 @@
 
 	let JsonDataView = __webpack_require__(48);
 
-	let AbstractionView = __webpack_require__(64);
+	let AbstractionView = __webpack_require__(68);
 
-	let PredicateView = __webpack_require__(80);
+	let PredicateView = __webpack_require__(84);
 
-	let VariableView = __webpack_require__(82);
+	let VariableView = __webpack_require__(86);
 
-	const LAMBDA_STYLE = __webpack_require__(83);
+	const LAMBDA_STYLE = __webpack_require__(87);
 
 	let {
 	    JSON_DATA,
@@ -323,7 +323,7 @@
 	    VARIABLE,
 	    PREDICATE,
 	    NUMBER, BOOLEAN, STRING, JSON_TYPE, NULL
-	} = __webpack_require__(63);
+	} = __webpack_require__(67);
 
 	let {
 	    mergeMap, reduce
@@ -403,7 +403,22 @@
 	            border: '1px solid rgba(200, 200, 200, 0.4)'
 	        }
 	    }, [
-	        TreeOptionView({
+	        data.value.path ? n('div', {
+	            style: {
+	                fontSize: 12,
+	                color: '#3f51b5'
+	            }
+	        }, [
+	            TreeOptionView({
+	                path: data.value.path,
+	                data: () => expressionTypes(data),
+	                onselected: (v, path) => {
+	                    update([
+	                        ['value.path', path]
+	                    ]);
+	                }
+	            })
+	        ]) : TreeOptionView({
 	            path: data.value.path,
 	            data: () => expressionTypes(data),
 	            onselected: (v, path) => {
@@ -3093,7 +3108,7 @@
 	}, {
 	    update
 	}) => {
-	    return n('div', {
+	    return n('label', {
 	        style: {
 	            position: 'relative',
 	            display: 'inline-block'
@@ -3140,11 +3155,7 @@
 	 * @param path string
 	 */
 	let renderGuideLine = (path) => {
-	    return n('span', {
-	        style: {
-	            color: '#85981f'
-	        }
-	    }, `> ${path.split('.').join(' > ')}`);
+	    return n('span', `> ${path.split('.').join(' > ')}`);
 	};
 
 
@@ -4545,9 +4556,9 @@
 
 	let editor = __webpack_require__(56);
 
-	let fold = __webpack_require__(84);
+	let fold = __webpack_require__(63);
 
-	let foldArrow = __webpack_require__(85);
+	let foldArrow = __webpack_require__(64);
 
 	let {
 	    isObject
@@ -4555,7 +4566,7 @@
 
 	const {
 	    NUMBER, BOOLEAN, STRING, JSON_TYPE, NULL, INLINE_TYPES, DEFAULT_DATA_MAP
-	} = __webpack_require__(63);
+	} = __webpack_require__(67);
 
 	/**
 	 * used to define json data
@@ -4638,8 +4649,6 @@
 	    return n('div', {
 	        style: {
 	            border: contain(INLINE_TYPES, type) ? '0' : '1px solid rgba(200, 200, 200, 0.4)',
-	            marginTop: 5,
-	            padding: 5,
 	            display: !type ? 'inline-block' : contain(INLINE_TYPES, type) ? 'inline-block' : 'block'
 	        }
 	    }, [
@@ -4669,7 +4678,6 @@
 	                ops.isHide() && n('span', {
 	                    style: {
 	                        color: '#666666',
-	                        fontSize: 12,
 	                        paddingRight: 60
 	                    }
 	                }, abbreText(value.value)),
@@ -25504,6 +25512,153 @@
 
 /***/ },
 /* 63 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    n, view
+	} = __webpack_require__(4);
+
+	/**
+	 * data = {
+	 *    hide,
+	 *    head,
+	 *    body
+	 * }
+	 */
+	module.exports = view((data, {
+	    update
+	}) => {
+	    if (data.hide === undefined) data.hide = true;
+
+	    let hide = () => update('hide', true);
+	    let show = () => update('hide', false);
+	    let toggle = () => update('hide', !data.hide);
+	    let isHide = () => data.hide;
+
+	    let ops = {
+	        hide, show, toggle, isHide
+	    };
+
+	    return n('div', [
+	        data.head(ops), !isHide() && data.body(ops)
+	    ]);
+	});
+
+
+/***/ },
+/* 64 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    n
+	} = __webpack_require__(4);
+
+	let angle = __webpack_require__(65);
+
+	module.exports = (ops) => {
+	    return n('span', {
+	        style: {
+	            display: 'inline-block',
+	            paddingRight: 8
+	        }
+	    }, angle({
+	        direction: ops.isHide() ? 'bottom' : 'top',
+	        length: 5,
+	        color: '#666666'
+	    }));
+	};
+
+
+/***/ },
+/* 65 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let line = __webpack_require__(66);
+	let {
+	    n
+	} = __webpack_require__(4);
+
+	module.exports = ({
+	    length = 10, bold = 1, color = 'black', angle = 0, direction
+	} = {}) => {
+	    if (direction === 'left') {
+	        angle = 45;
+	    } else if (direction === 'top') {
+	        angle = 135;
+	    } else if (direction === 'right') {
+	        angle = 225;
+	    } else if (direction === 'bottom') {
+	        angle = 315;
+	    }
+	    return n('div', {
+	        style: {
+	            display: 'inline-block',
+	            transform: `rotate(${angle}deg)`
+	        }
+	    }, [
+	        line({
+	            color,
+	            bold,
+	            length
+	        }),
+
+	        n('div', {
+	            style: {
+	                marginLeft: length / 2 - bold / 2,
+	                marginTop: -1 * length / 2 - bold / 2
+	            }
+	        }, [
+	            line({
+	                color,
+	                bold,
+	                length,
+	                angle: 90
+	            })
+	        ])
+	    ]);
+	};
+
+
+/***/ },
+/* 66 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    n
+	} = __webpack_require__(4);
+
+	module.exports = ({
+	    color = 'black', bold = 3, length = 20, direction = 'vertical', angle = 0
+	} = {}) => {
+	    return direction === 'vertical' ?
+	        n('div', {
+	            style: {
+	                width: bold,
+	                height: length,
+	                backgroundColor: color,
+	                transform: `rotate(${angle}deg)`
+	            }
+	        }) : n('div', {
+	            style: {
+	                height: bold,
+	                width: length,
+	                backgroundColor: color,
+	                transform: `rotate(${angle}deg)`
+	            }
+	        });
+	};
+
+
+/***/ },
+/* 67 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -25547,7 +25702,7 @@
 
 
 /***/ },
-/* 64 */
+/* 68 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -25556,15 +25711,15 @@
 	    n, view
 	} = __webpack_require__(4);
 
-	let VariableDeclareView = __webpack_require__(65);
+	let VariableDeclareView = __webpack_require__(69);
 
 	let {
 	    VARIABLE
-	} = __webpack_require__(63);
+	} = __webpack_require__(67);
 
 	let {
 	    dsl
-	} = __webpack_require__(70);
+	} = __webpack_require__(74);
 
 	let {
 	    mergeMap
@@ -25642,7 +25797,7 @@
 
 
 /***/ },
-/* 65 */
+/* 69 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -25651,7 +25806,7 @@
 	    n, view
 	} = __webpack_require__(4);
 
-	let InputList = __webpack_require__(66);
+	let InputList = __webpack_require__(70);
 
 	let {
 	    reduce, map
@@ -25692,12 +25847,12 @@
 
 
 /***/ },
-/* 66 */
+/* 70 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	let dynamicList = __webpack_require__(67);
+	let dynamicList = __webpack_require__(71);
 
 	let {
 	    map, mergeMap
@@ -25707,9 +25862,9 @@
 	    n
 	} = __webpack_require__(4);
 
-	let plus = __webpack_require__(68);
+	let plus = __webpack_require__(72);
 
-	let line = __webpack_require__(69);
+	let line = __webpack_require__(73);
 
 	module.exports = ({
 	    listData,
@@ -25789,7 +25944,7 @@
 
 
 /***/ },
-/* 67 */
+/* 71 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -25858,7 +26013,7 @@
 
 
 /***/ },
-/* 68 */
+/* 72 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -25867,7 +26022,7 @@
 	    n
 	} = __webpack_require__(4);
 
-	let line = __webpack_require__(69);
+	let line = __webpack_require__(73);
 
 	module.exports = ({
 	    width,
@@ -25915,7 +26070,7 @@
 
 
 /***/ },
-/* 69 */
+/* 73 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -25945,7 +26100,7 @@
 
 
 /***/ },
-/* 70 */
+/* 74 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -25977,8 +26132,8 @@
 	 *      predicate: add
 	 */
 
-	let dsl = __webpack_require__(71);
-	let interpreter = __webpack_require__(75);
+	let dsl = __webpack_require__(75);
+	let interpreter = __webpack_require__(79);
 
 	module.exports = {
 	    dsl,
@@ -25987,7 +26142,7 @@
 
 
 /***/ },
-/* 71 */
+/* 75 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -26054,7 +26209,7 @@
 
 	let {
 	    map
-	} = __webpack_require__(72);
+	} = __webpack_require__(76);
 
 	let {
 	    isFunction
@@ -26116,7 +26271,7 @@
 
 
 /***/ },
-/* 72 */
+/* 76 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -26125,11 +26280,11 @@
 	    isObject, funType, or, isString, isFalsy, likeArray
 	} = __webpack_require__(9);
 
-	let iterate = __webpack_require__(73);
+	let iterate = __webpack_require__(77);
 
 	let {
 	    map, reduce, find, findIndex, forEach, filter, any, exist, compact
-	} = __webpack_require__(74);
+	} = __webpack_require__(78);
 
 	let contain = (list, item, fopts) => findIndex(list, item, fopts) !== -1;
 
@@ -26225,7 +26380,7 @@
 
 
 /***/ },
-/* 73 */
+/* 77 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -26370,14 +26525,14 @@
 
 
 /***/ },
-/* 74 */
+/* 78 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 	let {
 	    iterate
-	} = __webpack_require__(73);
+	} = __webpack_require__(77);
 
 	let defauls = {
 	    eq: (v1, v2) => v1 === v2
@@ -26476,14 +26631,14 @@
 
 
 /***/ },
-/* 75 */
+/* 79 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 	let {
 	    map, reduce
-	} = __webpack_require__(72);
+	} = __webpack_require__(76);
 
 	let {
 	    funType, isObject, isFunction
@@ -26491,7 +26646,7 @@
 
 	let {
 	    hasOwnProperty, get
-	} = __webpack_require__(76);
+	} = __webpack_require__(80);
 
 	/**
 	 * used to interpret lambda json
@@ -26588,14 +26743,14 @@
 
 
 /***/ },
-/* 76 */
+/* 80 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 	let {
 	    reduce
-	} = __webpack_require__(77);
+	} = __webpack_require__(81);
 	let {
 	    funType, isObject, or, isString, isFalsy
 	} = __webpack_require__(9);
@@ -26748,7 +26903,7 @@
 
 
 /***/ },
-/* 77 */
+/* 81 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -26757,11 +26912,11 @@
 	    isObject, funType, or, isString, isFalsy, likeArray
 	} = __webpack_require__(9);
 
-	let iterate = __webpack_require__(78);
+	let iterate = __webpack_require__(82);
 
 	let {
 	    map, reduce, find, findIndex, forEach, filter, any, exist, compact
-	} = __webpack_require__(79);
+	} = __webpack_require__(83);
 
 	let contain = (list, item, fopts) => findIndex(list, item, fopts) !== -1;
 
@@ -26857,7 +27012,7 @@
 
 
 /***/ },
-/* 78 */
+/* 82 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -26963,12 +27118,12 @@
 
 
 /***/ },
-/* 79 */
+/* 83 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	let iterate = __webpack_require__(78);
+	let iterate = __webpack_require__(82);
 
 	let defauls = {
 	    eq: (v1, v2) => v1 === v2
@@ -27067,7 +27222,7 @@
 
 
 /***/ },
-/* 80 */
+/* 84 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -27082,9 +27237,9 @@
 
 	let {
 	    dsl
-	} = __webpack_require__(70);
+	} = __webpack_require__(74);
 
-	let ParamsFieldView = __webpack_require__(81);
+	let ParamsFieldView = __webpack_require__(85);
 
 	let method = dsl.require;
 
@@ -27136,7 +27291,7 @@
 
 
 /***/ },
-/* 81 */
+/* 85 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -27190,7 +27345,7 @@
 
 
 /***/ },
-/* 82 */
+/* 86 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -27201,7 +27356,7 @@
 
 	let {
 	    dsl
-	} = __webpack_require__(70);
+	} = __webpack_require__(74);
 
 	let {
 	    v
@@ -27228,7 +27383,7 @@
 
 
 /***/ },
-/* 83 */
+/* 87 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -27257,65 +27412,33 @@
 	.lambda-ui-hover:hover{
 	    background-color: #f5f5f5 !important;
 	}
+
+	.lambda-ui input[type=text]{
+	    border: 0;
+	    border-bottom: 1px solid rgba(0,0,0,.12);
+	    outline: none;
+	    height: 28px;
+	}
+
+	.lambda-ui input[type=text]:focus{
+	    border: 0;
+	    height: 27px;
+	    border-bottom: 2px solid #3f51b5;
+	}
+
+	.lambda-ui input[type=number]{
+	    border: 0;
+	    border-bottom: 1px solid rgba(0,0,0,.12);
+	    outline: none;
+	    height: 28px;
+	}
+
+	.lambda-ui input[type=number]:focus{
+	    border: 0;
+	    height: 27px;
+	    border-bottom: 2px solid #3f51b5;
+	}
 	`;
-
-
-/***/ },
-/* 84 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	let {
-	    n, view
-	} = __webpack_require__(4);
-
-	/**
-	 * data = {
-	 *    hide,
-	 *    head,
-	 *    body
-	 * }
-	 */
-	module.exports = view((data, {
-	    update
-	}) => {
-	    if (data.hide === undefined) data.hide = true;
-
-	    let hide = () => update('hide', true);
-	    let show = () => update('hide', false);
-	    let toggle = () => update('hide', !data.hide);
-	    let isHide = () => data.hide;
-
-	    let ops = {
-	        hide, show, toggle, isHide
-	    };
-
-	    return n('div', [
-	        data.head(ops), !isHide() && data.body(ops)
-	    ]);
-	});
-
-
-/***/ },
-/* 85 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	let {
-	    n
-	} = __webpack_require__(4);
-
-	module.exports = (ops) => {
-	    return n('span', {
-	        style: {
-	            display: 'inline-block',
-	            paddingRight: 8,
-	            transform: ops.isHide()?'translateY(5px) rotate(90deg)':null
-	        }
-	    }, '>');
-	};
 
 
 /***/ }

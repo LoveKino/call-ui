@@ -102,7 +102,22 @@ let expressionView = view((data, {
             border: '1px solid rgba(200, 200, 200, 0.4)'
         }
     }, [
-        TreeOptionView({
+        data.value.path ? n('div', {
+            style: {
+                fontSize: 12,
+                color: '#3f51b5'
+            }
+        }, [
+            TreeOptionView({
+                path: data.value.path,
+                data: () => expressionTypes(data),
+                onselected: (v, path) => {
+                    update([
+                        ['value.path', path]
+                    ]);
+                }
+            })
+        ]) : TreeOptionView({
             path: data.value.path,
             data: () => expressionTypes(data),
             onselected: (v, path) => {

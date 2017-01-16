@@ -105,8 +105,6 @@ module.exports = view((data) => {
     return n('div', {
         style: {
             border: contain(INLINE_TYPES, type) ? '0' : '1px solid rgba(200, 200, 200, 0.4)',
-            marginTop: 5,
-            padding: 5,
             display: !type ? 'inline-block' : contain(INLINE_TYPES, type) ? 'inline-block' : 'block'
         }
     }, [
@@ -136,7 +134,6 @@ module.exports = view((data) => {
                 ops.isHide() && n('span', {
                     style: {
                         color: '#666666',
-                        fontSize: 12,
                         paddingRight: 60
                     }
                 }, abbreText(value.value)),
