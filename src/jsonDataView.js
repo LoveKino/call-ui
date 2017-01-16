@@ -16,6 +16,10 @@ let fold = require('kabanery-fold');
 
 let foldArrow = require('kabanery-fold/lib/foldArrow');
 
+let {
+    isObject
+} = require('basetype');
+
 const {
     NUMBER, BOOLEAN, STRING, JSON_TYPE, NULL, INLINE_TYPES, DEFAULT_DATA_MAP
 } = require('./const');
@@ -118,10 +122,25 @@ module.exports = view((data) => {
                     textAlign: 'right',
                     cursor: 'pointer'
                 },
+                'class': 'lambda-ui-hover',
                 onclick: () => {
                     ops.toggle();
                 }
             }, [
+                ops.isHide() && n('label', {
+                    style: {
+                        paddingRight: 10
+                    }
+                }, 'abbreviation'),
+
+                ops.isHide() && n('span', {
+                    style: {
+                        color: '#666666',
+                        fontSize: 12,
+                        paddingRight: 60
+                    }
+                }, abbreText(value.value)),
+
                 foldArrow(ops)
             ]),
             body: renderInputArea,
@@ -131,5 +150,16 @@ module.exports = view((data) => {
 });
 
 let getDataTypePath = (path = '') => path.split('.').slice(1).join('.');
+
+let abbreText = (data) => {
+    let str = data;
+    if (isObject(data)) {
+        str = JSON.stringify(data);
+    }
+    if (str.length > 30) {
+        return str.substring(0, 27) + '...';
+    }
+    return str;
+};
 
 const id = v => v;

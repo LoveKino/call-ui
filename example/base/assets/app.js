@@ -3102,10 +3102,13 @@
 	        n('div', {
 	            style: {
 	                border: !path ? '1px solid rgba(200, 200, 200, 0.8)' : 'none',
-	                backgroundColor: showSelectTree ? '#F5F5F5' : 'transparent'
+	                backgroundColor: showSelectTree ? '#F5F5F5' : 'transparent',
+	                borderRadius: 6,
+	                padding: 5,
+	                cursor: 'pointer'
 	            },
 
-	            'class': 'lambda-guide-line',
+	            'class': 'lambda-ui-hover',
 
 	            onclick: () => {
 	                update('showSelectTree', !showSelectTree);
@@ -4546,6 +4549,10 @@
 
 	let foldArrow = __webpack_require__(85);
 
+	let {
+	    isObject
+	} = __webpack_require__(9);
+
 	const {
 	    NUMBER, BOOLEAN, STRING, JSON_TYPE, NULL, INLINE_TYPES, DEFAULT_DATA_MAP
 	} = __webpack_require__(63);
@@ -4648,10 +4655,25 @@
 	                    textAlign: 'right',
 	                    cursor: 'pointer'
 	                },
+	                'class': 'lambda-ui-hover',
 	                onclick: () => {
 	                    ops.toggle();
 	                }
 	            }, [
+	                ops.isHide() && n('label', {
+	                    style: {
+	                        paddingRight: 10
+	                    }
+	                }, 'abbreviation'),
+
+	                ops.isHide() && n('span', {
+	                    style: {
+	                        color: '#666666',
+	                        fontSize: 12,
+	                        paddingRight: 60
+	                    }
+	                }, abbreText(value.value)),
+
 	                foldArrow(ops)
 	            ]),
 	            body: renderInputArea,
@@ -4661,6 +4683,17 @@
 	});
 
 	let getDataTypePath = (path = '') => path.split('.').slice(1).join('.');
+
+	let abbreText = (data) => {
+	    let str = data;
+	    if (isObject(data)) {
+	        str = JSON.stringify(data);
+	    }
+	    if (str.length > 30) {
+	        return str.substring(0, 27) + '...';
+	    }
+	    return str;
+	};
 
 	const id = v => v;
 
@@ -27200,7 +27233,12 @@
 
 	'use strict';
 
-	module.exports = `.lambda-variable fieldset{
+	module.exports = `
+	.lambda-ui {
+	    font-size: 14px;
+	}
+
+	.lambda-variable fieldset{
 	    display: inline-block;
 	    border: 1px solid rgba(200, 200, 200, 0.4);
 	    padding: 1px 4px;
@@ -27216,16 +27254,9 @@
 	    border: 0;
 	}
 
-	.lambda-guide-line {
-	    border-radius: 6px;
-	    padding: 5px;
-	    cursor: pointer;
-	}
-
-	.lambda-guide-line:hover{
+	.lambda-ui-hover:hover{
 	    background-color: #f5f5f5 !important;
 	}
-
 	`;
 
 

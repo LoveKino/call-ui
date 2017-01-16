@@ -27,10 +27,13 @@ module.exports = view(({
         n('div', {
             style: {
                 border: !path ? '1px solid rgba(200, 200, 200, 0.8)' : 'none',
-                backgroundColor: showSelectTree ? '#F5F5F5' : 'transparent'
+                backgroundColor: showSelectTree ? '#F5F5F5' : 'transparent',
+                borderRadius: 6,
+                padding: 5,
+                cursor: 'pointer'
             },
 
-            'class': 'lambda-guide-line',
+            'class': 'lambda-ui-hover',
 
             onclick: () => {
                 update('showSelectTree', !showSelectTree);

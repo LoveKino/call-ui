@@ -1,6 +1,11 @@
 'use strict';
 
-module.exports = `.lambda-variable fieldset{
+module.exports = `
+.lambda-ui {
+    font-size: 14px;
+}
+
+.lambda-variable fieldset{
     display: inline-block;
     border: 1px solid rgba(200, 200, 200, 0.4);
     padding: 1px 4px;
@@ -16,14 +21,7 @@ module.exports = `.lambda-variable fieldset{
     border: 0;
 }
 
-.lambda-guide-line {
-    border-radius: 6px;
-    padding: 5px;
-    cursor: pointer;
-}
-
-.lambda-guide-line:hover{
+.lambda-ui-hover:hover{
     background-color: #f5f5f5 !important;
 }
-
 `;
