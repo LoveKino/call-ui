@@ -14,6 +14,10 @@ let {
     n, view
 } = require('kabanery');
 
+let {
+    getLambda
+} = require('../../src/model');
+
 module.exports = view(({
     predicatesMetaInfo,
     predicates,
@@ -51,6 +55,8 @@ module.exports = view(({
             value,
 
             onchange: (v) => {
+                v = getLambda(v);
+
                 let getValue = (v) => {
                     if (v instanceof Error) {
                         return v;
@@ -65,6 +71,7 @@ module.exports = view(({
                 };
 
                 v = getValue(v);
+
                 updateShowView('value', v && v instanceof Error ? n('pre', v.stack) : n('span', v));
             }
         })

@@ -34,16 +34,12 @@ module.exports = view((data) => {
 
     let type = getDataTypePath(value.path);
 
-    let getLambda = () => {
-        return value.value || DEFAULT_DATA_MAP[type];
-    };
-
-    onchange(getLambda());
-
     let onValueChanged = (v) => {
         value.value = v;
-        onchange(v);
+        onchange(value);
     };
+
+    onchange(value);
 
     let renderInputArea = () => {
         return [

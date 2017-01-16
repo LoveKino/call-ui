@@ -11,16 +11,8 @@ let {
 } = require('./const');
 
 let {
-    dsl
-} = require('leta');
-
-let {
     mergeMap
 } = require('bolzano');
-
-let {
-    r
-} = dsl;
 
 module.exports = view((data) => {
     let {
@@ -31,25 +23,17 @@ module.exports = view((data) => {
         onchange
     } = data;
 
-    let currentVariables = value.variables || [],
-        expression;
+    value.currentVariables = value.variables || [];
 
-    let getLambda = () => {
-        if (expression === undefined) return new Error('expression is not defined in abstraction');
-        if (expression instanceof Error) return expression;
-
-        return r(...currentVariables, expression);
-    };
-
-    onchange(getLambda());
+    onchange(value);
 
     let expressionViewObj = mergeMap(data, {
         title: 'expression',
         value: value.expression,
-        variables: variables.concat(currentVariables),
+        variables: variables.concat(value.currentVariables),
         onchange: (lambda) => {
-            expression = lambda;
-            onchange(getLambda());
+            value.expression = lambda;
+            onchange(value);
         }
     });
 
@@ -72,12 +56,12 @@ module.exports = view((data) => {
             }, [
                 VariableDeclareView({
                     onchange: (v) => {
-                        currentVariables = v;
-                        expressionViewObj.variables = variables.concat(currentVariables);
-                        onchange(getLambda());
+                        value.currentVariables = v;
+                        expressionViewObj.variables = variables.concat(value.currentVariables);
+                        onchange(value);
                     },
 
-                    variables: currentVariables,
+                    variables: value.currentVariables,
                     prevVariables: variables,
                     title: VARIABLE,
                 })

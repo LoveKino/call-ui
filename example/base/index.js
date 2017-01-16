@@ -151,14 +151,35 @@ document.body.appendChild(LambdaRetView({
 document.body.appendChild(n('p'));
 
 document.body.appendChild(LambdaRetView({
-    predicates: {},
-    predicatesMetaInfo: {},
+    predicates: {
+        math: {
+            '+': (x, y) => x + y
+        }
+    },
+    predicatesMetaInfo: {
+        math: {
+            '+': {
+                args: [{
+                    type: 'number',
+                    name: 'number'
+                }, {
+                    type: 'number',
+                    name: 'number'
+                }]
+            }
+        }
+    },
+
     value: {
         path: 'abstraction',
         variables: ['x', 'y'],
         expression: {
-            path: 'data.number',
-            value: 10
+            path: 'predicate.math.+',
+            params: [{
+                path: 'variable.x'
+            }, {
+                path: 'variable.y'
+            }]
         }
     }
 }));

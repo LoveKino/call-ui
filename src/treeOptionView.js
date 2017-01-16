@@ -17,7 +17,7 @@ let TreeSelect = require('kabanery-tree-select');
 let triangle = require('css-shapes-object/lib/triangle');
 
 let {
-    PREDICATE
+    PREDICATE, VARIABLE
 } = require('./const');
 
 const DEFAULT_TITLE = 'please select';
@@ -115,7 +115,7 @@ let renderGuideLine = (path) => {
     return n('span', [
         n('span', last),
 
-        type === PREDICATE && parts.length && n('span', {
+        (type === PREDICATE || type === VARIABLE) && parts.length && n('span', {
             style: {
                 paddingLeft: 10
             }

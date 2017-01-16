@@ -8,13 +8,7 @@ let {
     get
 } = require('bolzano');
 
-let {
-    dsl
-} = require('leta');
-
 let ParamsFieldView = require('./paramsFieldView');
-
-let method = dsl.require;
 
 module.exports = view((data) => {
     let {
@@ -32,11 +26,7 @@ module.exports = view((data) => {
 
     value.params = value.params || [];
 
-    let getLambda = () => {
-        return method(predicatePath)(...value.params);
-    };
-
-    onchange(getLambda());
+    onchange(value);
 
     return n('div', [
         optionsView,
@@ -50,7 +40,7 @@ module.exports = view((data) => {
                 expressionInfo: data,
                 onchange: (params) => {
                     value.params = params;
-                    onchange(getLambda());
+                    onchange(value);
                 },
                 args,
                 expressionView,
