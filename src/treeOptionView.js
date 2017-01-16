@@ -23,7 +23,7 @@ module.exports = view(({
     data,
     showSelectTree,
     onselected,
-    defaultTitle
+    title
 }, {
     update
 }) => {
@@ -33,6 +33,12 @@ module.exports = view(({
             display: 'inline-block'
         }
     }, [
+        path && title && n('div', {
+            style: {
+                fontSize: 14
+            }
+        },title),
+
         n('div', {
             style: {
                 padding: 5,
@@ -45,13 +51,13 @@ module.exports = view(({
             onclick: () => {
                 update('showSelectTree', !showSelectTree);
             }
-        }, path ? (defaultTitle ? defaultTitle : renderGuideLine(path)) : n('div class="input-style"', {
+        }, path ? renderGuideLine(path) : n('div class="input-style"', {
             style: {
                 color: '#9b9b9b',
                 overflow: 'auto'
             }
         }, [
-            n('span', defaultTitle || DEFAULT_TITLE),
+            n('span', title || DEFAULT_TITLE),
 
             n('div', {
                 style: mergeMap(triangle({

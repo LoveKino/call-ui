@@ -28,7 +28,12 @@ module.exports = view((data) => {
                 };
             }),
 
-            title,
+            title: n('span', {
+                style: {
+                    color: '#9b9b9b',
+                    fontSize: 14
+                }
+            },title),
 
             onchange: (v) => {
                 // TODO check variable definition

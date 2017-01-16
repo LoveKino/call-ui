@@ -113,7 +113,7 @@ module.exports = view((data) => {
         style: {
             border: contain(INLINE_TYPES, type) ? '0' : '1px solid rgba(200, 200, 200, 0.4)',
             display: !type ? 'inline-block' : contain(INLINE_TYPES, type) ? 'inline-block' : 'block',
-            minWidth: 120
+            minWidth: 160
         }
     }, [
         n('div', {
@@ -133,12 +133,6 @@ module.exports = view((data) => {
                     ops.toggle();
                 }
             }, [
-                ops.isHide() && n('label', {
-                    style: {
-                        paddingRight: 10
-                    }
-                }, 'abbreviation'),
-
                 ops.isHide() && n('span', {
                     style: {
                         color: '#9b9b9b',
@@ -150,16 +144,7 @@ module.exports = view((data) => {
             ]),
             body: renderInputArea,
             hide: false
-        }) : renderInputArea(),
-
-        // input field helper text
-        n('div', [n('div', {
-            style: {
-                fontSize: 10,
-                color: '#9b9b9b',
-                'float': 'right'
-            }
-        }, type)])
+        }) : renderInputArea()
     ]);
 });
 

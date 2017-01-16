@@ -94,6 +94,17 @@ let expressionView = view((data, {
 }) => {
     data.value = data.value || {};
     data.variables = data.variables || [];
+    let optionsView = TreeOptionView({
+        title: data.title,
+        path: data.value.path,
+        data: () => expressionTypes(data),
+        onselected: (v, path) => {
+            update([
+                ['value.path', path]
+            ]);
+        }
+    });
+
 
     return n('div', {
         style: {
@@ -105,30 +116,11 @@ let expressionView = view((data, {
     }, [
         data.value.path ? n('div', {
             style: {
+                display: 'inline-block',
                 fontSize: 12,
                 color: '#9b9b9b'
             }
-        }, [
-            TreeOptionView({
-                defaultTitle: data.defaultTitle,
-                path: data.value.path,
-                data: () => expressionTypes(data),
-                onselected: (v, path) => {
-                    update([
-                        ['value.path', path]
-                    ]);
-                }
-            })
-        ]) : TreeOptionView({
-            defaultTitle: data.defaultTitle,
-            path: data.value.path,
-            data: () => expressionTypes(data),
-            onselected: (v, path) => {
-                update([
-                    ['value.path', path]
-                ]);
-            }
-        }),
+        }, [optionsView]) : optionsView,
 
         data.value.path && expressionViewMap[
             getExpressionType(data.value.path)

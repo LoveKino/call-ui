@@ -8,11 +8,13 @@ module.exports = `
 .lambda-variable fieldset{
     display: inline-block;
     border: 1px solid rgba(200, 200, 200, 0.4);
-    padding: 1px 4px;
+    border-radius: 5px;
+    padding: 3px 4px;
 }
 
 .lambda-variable input{
-    width: 30px;
+    width: 30px !important;
+    min-width: 30px !important;
     outline: none;
 } 
 
@@ -30,6 +32,7 @@ module.exports = `
     border-bottom: 1px solid rgba(0,0,0,.12);
     outline: none;
     height: 28px;
+    min-width: 160px;
 }
 
 .lambda-ui input[type=text]:focus{
@@ -43,6 +46,7 @@ module.exports = `
     border-bottom: 1px solid rgba(0,0,0,.12);
     outline: none;
     height: 28px;
+    min-width: 160px;
 }
 
 .lambda-ui input[type=number]:focus{

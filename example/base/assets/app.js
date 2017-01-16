@@ -435,6 +435,17 @@
 	}) => {
 	    data.value = data.value || {};
 	    data.variables = data.variables || [];
+	    let optionsView = TreeOptionView({
+	        title: data.title,
+	        path: data.value.path,
+	        data: () => expressionTypes(data),
+	        onselected: (v, path) => {
+	            update([
+	                ['value.path', path]
+	            ]);
+	        }
+	    });
+
 
 	    return n('div', {
 	        style: {
@@ -446,30 +457,11 @@
 	    }, [
 	        data.value.path ? n('div', {
 	            style: {
+	                display: 'inline-block',
 	                fontSize: 12,
 	                color: '#9b9b9b'
 	            }
-	        }, [
-	            TreeOptionView({
-	                defaultTitle: data.defaultTitle,
-	                path: data.value.path,
-	                data: () => expressionTypes(data),
-	                onselected: (v, path) => {
-	                    update([
-	                        ['value.path', path]
-	                    ]);
-	                }
-	            })
-	        ]) : TreeOptionView({
-	            defaultTitle: data.defaultTitle,
-	            path: data.value.path,
-	            data: () => expressionTypes(data),
-	            onselected: (v, path) => {
-	                update([
-	                    ['value.path', path]
-	                ]);
-	            }
-	        }),
+	        }, [optionsView]) : optionsView,
 
 	        data.value.path && expressionViewMap[
 	            getExpressionType(data.value.path)
@@ -3156,7 +3148,7 @@
 	    data,
 	    showSelectTree,
 	    onselected,
-	    defaultTitle
+	    title
 	}, {
 	    update
 	}) => {
@@ -3166,6 +3158,12 @@
 	            display: 'inline-block'
 	        }
 	    }, [
+	        path && title && n('div', {
+	            style: {
+	                fontSize: 14
+	            }
+	        },title),
+
 	        n('div', {
 	            style: {
 	                padding: 5,
@@ -3178,13 +3176,13 @@
 	            onclick: () => {
 	                update('showSelectTree', !showSelectTree);
 	            }
-	        }, path ? (defaultTitle ? defaultTitle : renderGuideLine(path)) : n('div class="input-style"', {
+	        }, path ? renderGuideLine(path) : n('div class="input-style"', {
 	            style: {
 	                color: '#9b9b9b',
 	                overflow: 'auto'
 	            }
 	        }, [
-	            n('span', defaultTitle || DEFAULT_TITLE),
+	            n('span', title || DEFAULT_TITLE),
 
 	            n('div', {
 	                style: mergeMap(triangle({
@@ -4729,7 +4727,7 @@
 	        style: {
 	            border: contain(INLINE_TYPES, type) ? '0' : '1px solid rgba(200, 200, 200, 0.4)',
 	            display: !type ? 'inline-block' : contain(INLINE_TYPES, type) ? 'inline-block' : 'block',
-	            minWidth: 120
+	            minWidth: 160
 	        }
 	    }, [
 	        n('div', {
@@ -4749,12 +4747,6 @@
 	                    ops.toggle();
 	                }
 	            }, [
-	                ops.isHide() && n('label', {
-	                    style: {
-	                        paddingRight: 10
-	                    }
-	                }, 'abbreviation'),
-
 	                ops.isHide() && n('span', {
 	                    style: {
 	                        color: '#9b9b9b',
@@ -4766,16 +4758,7 @@
 	            ]),
 	            body: renderInputArea,
 	            hide: false
-	        }) : renderInputArea(),
-
-	        // input field helper text
-	        n('div', [n('div', {
-	            style: {
-	                fontSize: 10,
-	                color: '#9b9b9b',
-	                'float': 'right'
-	            }
-	        }, type)])
+	        }) : renderInputArea()
 	    ]);
 	});
 
@@ -25839,6 +25822,7 @@
 	    onchange(getLambda());
 
 	    let expressionViewObj = mergeMap(data, {
+	        title: 'expression',
 	        value: value.expression,
 	        variables: variables.concat(currentVariables),
 	        onchange: (lambda) => {
@@ -25854,31 +25838,32 @@
 	            padding: 5
 	        }
 	    }, [
-	        VariableDeclareView({
-	            onchange: (v) => {
-	                currentVariables = v;
-	                expressionViewObj.variables = variables.concat(currentVariables);
-	                onchange(getLambda());
-	            },
+	        n('div', {
+	            style: {
+	                border: '1px solid rgba(200, 200, 200, 0.4)',
+	                borderRadius: 5,
+	                padding: 5
+	            }
+	        }, [
+	            VariableDeclareView({
+	                onchange: (v) => {
+	                    currentVariables = v;
+	                    expressionViewObj.variables = variables.concat(currentVariables);
+	                    onchange(getLambda());
+	                },
 
-	            variables: currentVariables,
-	            prevVariables: variables,
-	            title: VARIABLE,
-	        }),
+	                variables: currentVariables,
+	                prevVariables: variables,
+	                title: VARIABLE,
+	            })
+	        ]),
 
-	        n('div', [
-	            n('div', {
-	                style: {
-	                    marginTop: 4
-	                }
-	            }, 'expression'),
-	            n('div', {
-	                style: {
-	                    margin: '10px'
-	                }
-	            }, [
-	                expressionView(expressionViewObj)
-	            ])
+	        n('div', {
+	            style: {
+	                marginTop: 5
+	            }
+	        }, [
+	            expressionView(expressionViewObj)
 	        ])
 	    ]);
 	});
@@ -25918,7 +25903,12 @@
 	                };
 	            }),
 
-	            title,
+	            title: n('span', {
+	                style: {
+	                    color: '#9b9b9b',
+	                    fontSize: 14
+	                }
+	            },title),
 
 	            onchange: (v) => {
 	                // TODO check variable definition
@@ -27354,8 +27344,6 @@
 
 	    return n('div', {
 	        style: {
-	            marginLeft: 15,
-	            marginTop: 5,
 	            padding: 5
 	        }
 	    }, [
@@ -27395,8 +27383,7 @@
 	    args,
 	    expressionInfo,
 	    expressionView,
-	    onchange = id,
-	        params = []
+	    onchange = id, params = []
 	}) => {
 	    return () => n('div', {
 	        'class': 'lambda-params'
@@ -27410,8 +27397,8 @@
 	                }
 	            }, [
 	                expressionView(mergeMap(expressionInfo, {
-	                    defaultTitle: name,
 	                    value: params[index],
+	                    title: name,
 	                    onchange: (expressionValue) => {
 	                        params[index] = expressionValue;
 
@@ -27478,11 +27465,13 @@
 	.lambda-variable fieldset{
 	    display: inline-block;
 	    border: 1px solid rgba(200, 200, 200, 0.4);
-	    padding: 1px 4px;
+	    border-radius: 5px;
+	    padding: 3px 4px;
 	}
 
 	.lambda-variable input{
-	    width: 30px;
+	    width: 30px !important;
+	    min-width: 30px !important;
 	    outline: none;
 	} 
 
@@ -27500,6 +27489,7 @@
 	    border-bottom: 1px solid rgba(0,0,0,.12);
 	    outline: none;
 	    height: 28px;
+	    min-width: 160px;
 	}
 
 	.lambda-ui input[type=text]:focus{
@@ -27513,6 +27503,7 @@
 	    border-bottom: 1px solid rgba(0,0,0,.12);
 	    outline: none;
 	    height: 28px;
+	    min-width: 160px;
 	}
 
 	.lambda-ui input[type=number]:focus{

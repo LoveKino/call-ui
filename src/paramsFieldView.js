@@ -12,8 +12,7 @@ module.exports = view(({
     args,
     expressionInfo,
     expressionView,
-    onchange = id,
-        params = []
+    onchange = id, params = []
 }) => {
     return () => n('div', {
         'class': 'lambda-params'
@@ -27,8 +26,8 @@ module.exports = view(({
                 }
             }, [
                 expressionView(mergeMap(expressionInfo, {
-                    defaultTitle: name,
                     value: params[index],
+                    title: name,
                     onchange: (expressionValue) => {
                         params[index] = expressionValue;
 

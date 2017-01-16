@@ -39,8 +39,6 @@ module.exports = view((data) => {
 
     return n('div', {
         style: {
-            marginLeft: 15,
-            marginTop: 5,
             padding: 5
         }
     }, [

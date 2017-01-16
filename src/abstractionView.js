@@ -43,6 +43,7 @@ module.exports = view((data) => {
     onchange(getLambda());
 
     let expressionViewObj = mergeMap(data, {
+        title: 'expression',
         value: value.expression,
         variables: variables.concat(currentVariables),
         onchange: (lambda) => {
@@ -58,31 +59,32 @@ module.exports = view((data) => {
             padding: 5
         }
     }, [
-        VariableDeclareView({
-            onchange: (v) => {
-                currentVariables = v;
-                expressionViewObj.variables = variables.concat(currentVariables);
-                onchange(getLambda());
-            },
+        n('div', {
+            style: {
+                border: '1px solid rgba(200, 200, 200, 0.4)',
+                borderRadius: 5,
+                padding: 5
+            }
+        }, [
+            VariableDeclareView({
+                onchange: (v) => {
+                    currentVariables = v;
+                    expressionViewObj.variables = variables.concat(currentVariables);
+                    onchange(getLambda());
+                },
 
-            variables: currentVariables,
-            prevVariables: variables,
-            title: VARIABLE,
-        }),
+                variables: currentVariables,
+                prevVariables: variables,
+                title: VARIABLE,
+            })
+        ]),
 
-        n('div', [
-            n('div', {
-                style: {
-                    marginTop: 4
-                }
-            }, 'expression'),
-            n('div', {
-                style: {
-                    margin: '10px'
-                }
-            }, [
-                expressionView(expressionViewObj)
-            ])
+        n('div', {
+            style: {
+                marginTop: 5
+            }
+        }, [
+            expressionView(expressionViewObj)
         ])
     ]);
 });
