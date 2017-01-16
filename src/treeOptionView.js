@@ -113,7 +113,11 @@ let renderGuideLine = (path) => {
     let type = parts[0];
 
     return n('span', [
-        n('span', last),
+        n('span', {
+            style: {
+                fontWeight: (type === PREDICATE || type === VARIABLE) ? 'bold' : 'inherit'
+            }
+        }, last),
 
         (type === PREDICATE || type === VARIABLE) && parts.length && n('span', {
             style: {

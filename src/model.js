@@ -14,13 +14,12 @@ let {
 let method = dsl.require;
 
 let {
-    PREDICATE, VARIABLE, JSON_DATA, ABSTRACTION, DEFAULT_DATA_MAP
+    PREDICATE, VARIABLE, JSON_DATA, ABSTRACTION
 } = require('./const');
 
 let getLambda = (value) => {
     let expressionType = getExpressionType(value.path);
     let predicatePath = getPredicatePath(value.path);
-    let type = getDataTypePath(value.path);
 
     switch (expressionType) {
         case VARIABLE:
@@ -32,7 +31,7 @@ let getLambda = (value) => {
         case PREDICATE:
             return method(predicatePath)(...map(value.params, getLambda));
         case JSON_DATA:
-            return value.value || DEFAULT_DATA_MAP[type];
+            return value.value;
     }
 };
 
@@ -47,8 +46,6 @@ let getExpressionType = (path = '') => {
 };
 
 let getPredicatePath = (path) => path.split('.').slice(1).join('.');
-
-let getDataTypePath = (path = '') => path.split('.').slice(1).join('.');
 
 module.exports = {
     getLambda

@@ -3267,7 +3267,11 @@
 	    let type = parts[0];
 
 	    return n('span', [
-	        n('span', last),
+	        n('span', {
+	            style: {
+	                fontWeight: (type === PREDICATE || type === VARIABLE) ? 'bold' : 'inherit'
+	            }
+	        }, last),
 
 	        (type === PREDICATE || type === VARIABLE) && parts.length && n('span', {
 	            style: {
@@ -5098,7 +5102,7 @@
 	    [NUMBER]: 0,
 	    [BOOLEAN]: true,
 	    [STRING]: '',
-	    [JSON_TYPE]: '{\n\n}',
+	    [JSON_TYPE]: {},
 	    [NULL]: null
 	};
 
@@ -5161,6 +5165,8 @@
 
 	    let type = getDataTypePath(value.path);
 
+	    value.value = value.value === undefined ? DEFAULT_DATA_MAP[type] : value.value;
+
 	    let onValueChanged = (v) => {
 	        value.value = v;
 	        onchange(value);
@@ -5192,6 +5198,7 @@
 	                    if (v === 'true') {
 	                        ret = true;
 	                    }
+
 	                    onValueChanged(ret);
 	                }
 	            }),
@@ -27608,13 +27615,12 @@
 	let method = dsl.require;
 
 	let {
-	    PREDICATE, VARIABLE, JSON_DATA, ABSTRACTION, DEFAULT_DATA_MAP
+	    PREDICATE, VARIABLE, JSON_DATA, ABSTRACTION
 	} = __webpack_require__(52);
 
 	let getLambda = (value) => {
 	    let expressionType = getExpressionType(value.path);
 	    let predicatePath = getPredicatePath(value.path);
-	    let type = getDataTypePath(value.path);
 
 	    switch (expressionType) {
 	        case VARIABLE:
@@ -27626,7 +27632,7 @@
 	        case PREDICATE:
 	            return method(predicatePath)(...map(value.params, getLambda));
 	        case JSON_DATA:
-	            return value.value || DEFAULT_DATA_MAP[type];
+	            return value.value;
 	    }
 	};
 
@@ -27641,8 +27647,6 @@
 	};
 
 	let getPredicatePath = (path) => path.split('.').slice(1).join('.');
-
-	let getDataTypePath = (path = '') => path.split('.').slice(1).join('.');
 
 	module.exports = {
 	    getLambda

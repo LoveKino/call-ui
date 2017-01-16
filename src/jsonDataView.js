@@ -34,6 +34,8 @@ module.exports = view((data) => {
 
     let type = getDataTypePath(value.path);
 
+    value.value = value.value === undefined ? DEFAULT_DATA_MAP[type] : value.value;
+
     let onValueChanged = (v) => {
         value.value = v;
         onchange(value);
@@ -65,6 +67,7 @@ module.exports = view((data) => {
                     if (v === 'true') {
                         ret = true;
                     }
+
                     onValueChanged(ret);
                 }
             }),

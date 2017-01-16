@@ -15,7 +15,7 @@ const DEFAULT_DATA_MAP = {
     [NUMBER]: 0,
     [BOOLEAN]: true,
     [STRING]: '',
-    [JSON_TYPE]: '{\n\n}',
+    [JSON_TYPE]: {},
     [NULL]: null
 };
 
