@@ -10,7 +10,7 @@ let {
 
 module.exports = view(({
     args,
-    expressionInfo,
+    context,
     expressionView,
     onchange = id, params = []
 }) => {
@@ -20,17 +20,18 @@ module.exports = view(({
         map(args, ({
             name
         }, index) => {
+            let value = params[index] || {};
+            value.title = name;
+
             return n('fieldset', {
                 style: {
                     padding: '4px'
                 }
             }, [
-                expressionView(mergeMap(expressionInfo, {
-                    value: params[index],
-                    title: name,
+                expressionView(mergeMap(context, {
+                    value,
                     onchange: (expressionValue) => {
                         params[index] = expressionValue;
-
                         onchange(params);
                     }
                 }))

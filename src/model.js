@@ -3,19 +3,25 @@
 let {
     map
 } = require('bolzano');
+
 let {
     dsl
 } = require('leta');
+
+let {
+    PREDICATE, VARIABLE, JSON_DATA, ABSTRACTION,
+    NUMBER, BOOLEAN, STRING, JSON_TYPE, NULL
+} = require('./const');
+
+let {
+    reduce, get
+} = require('bolzano');
 
 let {
     v, r
 } = dsl;
 
 let method = dsl.require;
-
-let {
-    PREDICATE, VARIABLE, JSON_DATA, ABSTRACTION
-} = require('./const');
 
 let getLambda = (value) => {
     let expressionType = getExpressionType(value.path);
@@ -47,6 +53,56 @@ let getExpressionType = (path = '') => {
 
 let getPredicatePath = (path) => path.split('.').slice(1).join('.');
 
+let expressionTypes = ({
+    predicates,
+    variables,
+    funs
+}) => {
+    let types = {
+        [JSON_DATA]: {
+            [NUMBER]: 1,
+            [BOOLEAN]: 1,
+            [STRING]: 1,
+            [JSON_TYPE]: 1,
+            [NULL]: 1
+        }, // declare json data
+        [PREDICATE]: predicates, // declare function
+        [ABSTRACTION]: 1 // declare function
+    };
+
+    if (variables.length) {
+        types.variable = reduce(variables, (prev, cur) => {
+            prev[cur] = 1;
+            return prev;
+        }, {});
+    }
+
+    return reduce(funs, (prev, name) => {
+        if (types[name]) {
+            prev[name] = types[name];
+        }
+        return prev;
+    }, {});
+};
+
+let infixTypes = ({
+    predicates
+}) => {
+    return {
+        [PREDICATE]: predicates
+    };
+};
+
+let getPredicateMetaInfo = (predicatesMetaInfo, predicatePath) => {
+    return get(predicatesMetaInfo, predicatePath);
+};
+
 module.exports = {
-    getLambda
+    getLambda,
+    getExpressionType,
+    getPredicatePath,
+    getVariableName,
+    expressionTypes,
+    infixTypes,
+    getPredicateMetaInfo
 };

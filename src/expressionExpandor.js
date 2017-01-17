@@ -8,13 +8,20 @@ let fold = require('kabanery-fold');
 
 let triangle = require('css-shapes-object/lib/triangle');
 
+let TreeSelect = require('kabanery-tree-select');
+
+let {
+    infixTypes
+} = require('./model');
+
 let {
     mergeMap
 } = require('bolzano');
 
 module.exports = view(({
-    body,
-    onchange,
+    predicates,
+    onExpand,
+    onselected,
     hideExpressionExpandor
 }) => {
     return () => fold({
@@ -43,13 +50,29 @@ module.exports = view(({
 
                 onclick: () => {
                     ops.toggle();
-                    onchange && onchange(ops.isHide());
+                    onExpand && onExpand(ops.isHide());
                 }
             });
         },
 
         hide: hideExpressionExpandor,
 
-        body
+        body: () => {
+            return n('div', {
+                style: {
+                    display: 'inline-block',
+                    marginLeft: 15,
+                    position: 'absolute',
+                    bottom: 0
+                }
+            }, TreeSelect({
+                data: infixTypes({
+                    predicates
+                }),
+                onselected: (v, path) => {
+                    onselected && onselected(v, path);
+                }
+            }));
+        }
     });
 });

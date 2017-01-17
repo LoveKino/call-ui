@@ -4,11 +4,11 @@ let {
     n, view
 } = require('kabanery');
 
-let {
-    get
-} = require('bolzano');
-
 let ParamsFieldView = require('./paramsFieldView');
+
+let {
+    getPredicatePath, getPredicateMetaInfo
+} = require('./model');
 
 module.exports = view((data) => {
     let {
@@ -22,34 +22,58 @@ module.exports = view((data) => {
     let predicatePath = getPredicatePath(value.path);
     let {
         args
-    } = get(predicatesMetaInfo, predicatePath);
+    } = getPredicateMetaInfo(predicatesMetaInfo, predicatePath);
 
     value.params = value.params || [];
+
+    value.infix = value.infix || 0;
 
     onchange(value);
 
     return n('div', [
+        ParamsFieldView({
+            expressionInfo: data,
+            onchange: (params) => {
+                value.params = value.params.slice(0, value.infix).concat(params);
+                onchange(value);
+            },
+            args: args.slice(0, value.infix),
+            expressionView,
+            params: value.params.slice(0, value.infix)
+        }),
+
         optionsView,
 
         n('div', {
             style: {
-                padding: 5
+                padding: 5,
+                display: value.infix ? 'inline-block' : 'block'
             }
         }, [
             ParamsFieldView({
-                expressionInfo: data,
+                context: getParamContext(data),
                 onchange: (params) => {
-                    value.params = params;
+                    value.params = value.params.slice(0, value.infix).concat(params);
                     onchange(value);
                 },
-                args,
+                args: args.slice(value.infix),
                 expressionView,
-                params: value.params
+                params: value.params.slice(value.infix)
             })
         ])
     ]);
 });
 
-let getPredicatePath = (path) => path.split('.').slice(1).join('.');
+let getParamContext = ({
+    predicates,
+    predicatesMetaInfo,
+    variables
+}) => {
+    return {
+        predicates,
+        predicatesMetaInfo,
+        variables
+    };
+};
 
 const id = v => v;

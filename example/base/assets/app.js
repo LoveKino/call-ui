@@ -415,18 +415,28 @@
 
 	let ExpressionExpandor = __webpack_require__(90);
 
+	let {
+	    mergeMap
+	} = __webpack_require__(34);
+
 	const LAMBDA_STYLE = __webpack_require__(78);
 
 	let {
 	    JSON_DATA,
 	    ABSTRACTION,
 	    VARIABLE,
-	    PREDICATE,
-	    NUMBER, BOOLEAN, STRING, JSON_TYPE, NULL
+	    PREDICATE
 	} = __webpack_require__(52);
 
 	let {
-	    mergeMap, reduce
+	    getExpressionType,
+	    expressionTypes,
+	    getPredicateMetaInfo,
+	    getPredicatePath
+	} = __webpack_require__(89);
+
+	let {
+	    get
 	} = __webpack_require__(34);
 
 	/**
@@ -497,116 +507,125 @@
 	    data.variables = data.variables || [];
 	    data.funs = data.funs || [JSON_DATA, PREDICATE, ABSTRACTION, VARIABLE];
 
-	    let hideExpressionExpandor = true;
+	    let {
+	        predicates, predicatesMetaInfo
+	    } = data;
 
-	    return () => {
-	        let optionsView = n('div', {
-	            style: {
-	                color: '#9b9b9b',
-	                fontSize: 12,
-	                display: 'inline-block'
-	            }
-	        }, [
-	            TreeOptionView({
-	                title: data.title,
-	                path: data.value.path,
-	                showSelectTree: data.showSelectTree,
-	                data: () => expressionTypes(data),
-	                onselected: (v, path) => {
-	                    update([
-	                        ['value.path', path]
-	                    ]);
-	                }
-	            })
-	        ]);
+	    return data.value.infixPath ? expressionView({
+	        value: {
+	            path: data.value.infixPath,
+	            infix: 1,
+	            params: [{
+	                path: data.value.path
+	            }]
+	        },
 
-	        return n('div', {
+	        predicates,
+
+	        predicatesMetaInfo,
+
+	        prevExpressionViews: [getPrevExpressionView({
+	            data, update
+	        })],
+
+	        expressionView,
+	        optionsView: getOptionsView({
+	            data, update
+	        })
+	    }) : getPrevExpressionView({
+	        data, update
+	    });
+	});
+
+	let getPrevExpressionView = ({
+	    data, update
+	}) => {
+	    let optionsView = getOptionsView({
+	        data, update
+	    });
+
+	    return n('div', {
+	        style: {
+	            position: 'relative',
+	            display: 'inline-block',
+	            borderRadius: 5
+	        }
+	    }, [
+	        n('div', {
 	            style: {
-	                position: 'relative',
 	                display: 'inline-block',
-	                border: !hideExpressionExpandor ? '1px solid rgba(200, 200, 200, 0.4)' : '0',
-	                padding: !hideExpressionExpandor ? 5 : 0,
+	                padding: 8,
+	                border: '1px solid rgba(200, 200, 200, 0.4)',
 	                borderRadius: 5
 	            }
 	        }, [
-	            n('div', {
-	                style: {
-	                    display: 'inline-block',
-	                    padding: 8,
-	                    border: '1px solid rgba(200, 200, 200, 0.4)',
-	                    borderRadius: 5
-	                }
-	            }, [!data.value.path && optionsView,
 
-	                data.value.path && expressionViewMap[
-	                    getExpressionType(data.value.path)
-	                ](mergeMap(data, {
-	                    expressionView,
-	                    optionsView
-	                }))
-	            ]),
+	            !data.value.path && optionsView,
 
-	            n('div', {
-	                style: {
-	                    display: 'inline-block'
-	                }
-	            }, [
-	                data.value.path && ExpressionExpandor({
-	                    body: () => {
-	                        return n('div', {
-	                            style: {
-	                                display: 'inline-block',
-	                                marginLeft: 15
-	                            }
-	                        }, expressionView(mergeMap(data, {
-	                            value: {},
-	                            funs: [PREDICATE],
-	                            infix: true,
-	                            title: 'operation'
-	                        })));
-	                    },
+	            data.value.path && expressionViewMap[
+	                getExpressionType(data.value.path)
+	            ](mergeMap(data, {
+	                expressionView,
+	                optionsView
+	            }))
+	        ]),
 
-	                    hideExpressionExpandor: hideExpressionExpandor,
-	                    onchange: (hide) => {
-	                        hideExpressionExpandor = hide;
-	                        update();
+	        n('div', {
+	            style: {
+	                display: 'inline-block'
+	            }
+	        }, [
+	            data.value.path && ExpressionExpandor({
+	                predicates: data.predicates,
+	                hideExpressionExpandor: data.value.hideExpressionExpandor,
+	                onExpand: (hide) => {
+	                    if (data.value.infixPath) {
+	                        data.value.hideExpressionExpandor = true;
+	                    } else {
+	                        data.value.hideExpressionExpandor = hide;
 	                    }
-	                })
-	            ])
-	        ]);
-	    };
-	});
+	                    data.value.infixPath = null;
+	                    data.value.title = null;
+	                    update();
+	                },
 
-	let getExpressionType = (path = '') => {
-	    return path.split('.')[0];
+	                onselected: (v, path) => {
+	                    data.value.infixPath = path;
+	                    let {
+	                        args
+	                    } = getPredicateMetaInfo(data.predicatesMetaInfo, getPredicatePath(path));
+	                    args = args || [];
+	                    data.value.title = get(args, '0.name');
+	                    data.value.hideExpressionExpandor = true;
+	                    update();
+	                }
+	            })
+	        ])
+	    ]);
 	};
 
-	let expressionTypes = (data) => {
-	    let types = {
-	        [JSON_DATA]: {
-	            [NUMBER]: 1,
-	            [BOOLEAN]: 1,
-	            [STRING]: 1,
-	            [JSON_TYPE]: 1,
-	            [NULL]: 1
-	        }, // declare json data
-	        [PREDICATE]: data.predicates, // declare function
-	        [ABSTRACTION]: 1 // declare function
-	    };
-
-	    if (data.variables.length) {
-	        types.variable = reduce(data.variables, (prev, cur) => {
-	            prev[cur] = 1;
-	            return prev;
-	        }, {});
-	    }
-
-	    return reduce(data.funs, (prev, name) => {
-	        if (types[name]) {
-	            prev[name] = types[name];
+	let getOptionsView = ({
+	    data, update
+	}) => {
+	    return n('div', {
+	        style: {
+	            color: '#9b9b9b',
+	            fontSize: 12,
+	            display: 'inline-block'
 	        }
-	        return prev;
-	    }, {});
+	    }, [
+	        TreeOptionView({
+	            title: data.value.title,
+	            path: data.value.path,
+	            showSelectTree: data.value.showSelectTree,
+	            data: () => expressionTypes(data),
+	            onselected: (v, path) => {
+	                update([
+	                    ['value.path', path]
+	                ]);
+	            }
+	        })
+	    ]);
 	};
 
 
@@ -26365,11 +26384,11 @@
 	    n, view
 	} = __webpack_require__(4);
 
-	let {
-	    get
-	} = __webpack_require__(34);
-
 	let ParamsFieldView = __webpack_require__(76);
+
+	let {
+	    getPredicatePath, getPredicateMetaInfo
+	} = __webpack_require__(89);
 
 	module.exports = view((data) => {
 	    let {
@@ -26383,35 +26402,59 @@
 	    let predicatePath = getPredicatePath(value.path);
 	    let {
 	        args
-	    } = get(predicatesMetaInfo, predicatePath);
+	    } = getPredicateMetaInfo(predicatesMetaInfo, predicatePath);
 
 	    value.params = value.params || [];
+
+	    value.infix = value.infix || 0;
 
 	    onchange(value);
 
 	    return n('div', [
+	        ParamsFieldView({
+	            expressionInfo: data,
+	            onchange: (params) => {
+	                value.params = value.params.slice(0, value.infix).concat(params);
+	                onchange(value);
+	            },
+	            args: args.slice(0, value.infix),
+	            expressionView,
+	            params: value.params.slice(0, value.infix)
+	        }),
+
 	        optionsView,
 
 	        n('div', {
 	            style: {
-	                padding: 5
+	                padding: 5,
+	                display: value.infix ? 'inline-block' : 'block'
 	            }
 	        }, [
 	            ParamsFieldView({
-	                expressionInfo: data,
+	                context: getParamContext(data),
 	                onchange: (params) => {
-	                    value.params = params;
+	                    value.params = value.params.slice(0, value.infix).concat(params);
 	                    onchange(value);
 	                },
-	                args,
+	                args: args.slice(value.infix),
 	                expressionView,
-	                params: value.params
+	                params: value.params.slice(value.infix)
 	            })
 	        ])
 	    ]);
 	});
 
-	let getPredicatePath = (path) => path.split('.').slice(1).join('.');
+	let getParamContext = ({
+	    predicates,
+	    predicatesMetaInfo,
+	    variables
+	}) => {
+	    return {
+	        predicates,
+	        predicatesMetaInfo,
+	        variables
+	    };
+	};
 
 	const id = v => v;
 
@@ -26432,7 +26475,7 @@
 
 	module.exports = view(({
 	    args,
-	    expressionInfo,
+	    context,
 	    expressionView,
 	    onchange = id, params = []
 	}) => {
@@ -26442,17 +26485,18 @@
 	        map(args, ({
 	            name
 	        }, index) => {
+	            let value = params[index] || {};
+	            value.title = name;
+
 	            return n('fieldset', {
 	                style: {
 	                    padding: '4px'
 	                }
 	            }, [
-	                expressionView(mergeMap(expressionInfo, {
-	                    value: params[index],
-	                    title: name,
+	                expressionView(mergeMap(context, {
+	                    value,
 	                    onchange: (expressionValue) => {
 	                        params[index] = expressionValue;
-
 	                        onchange(params);
 	                    }
 	                }))
@@ -27688,19 +27732,25 @@
 	let {
 	    map
 	} = __webpack_require__(34);
+
 	let {
 	    dsl
 	} = __webpack_require__(79);
+
+	let {
+	    PREDICATE, VARIABLE, JSON_DATA, ABSTRACTION,
+	    NUMBER, BOOLEAN, STRING, JSON_TYPE, NULL
+	} = __webpack_require__(52);
+
+	let {
+	    reduce, get
+	} = __webpack_require__(34);
 
 	let {
 	    v, r
 	} = dsl;
 
 	let method = dsl.require;
-
-	let {
-	    PREDICATE, VARIABLE, JSON_DATA, ABSTRACTION
-	} = __webpack_require__(52);
 
 	let getLambda = (value) => {
 	    let expressionType = getExpressionType(value.path);
@@ -27732,8 +27782,58 @@
 
 	let getPredicatePath = (path) => path.split('.').slice(1).join('.');
 
+	let expressionTypes = ({
+	    predicates,
+	    variables,
+	    funs
+	}) => {
+	    let types = {
+	        [JSON_DATA]: {
+	            [NUMBER]: 1,
+	            [BOOLEAN]: 1,
+	            [STRING]: 1,
+	            [JSON_TYPE]: 1,
+	            [NULL]: 1
+	        }, // declare json data
+	        [PREDICATE]: predicates, // declare function
+	        [ABSTRACTION]: 1 // declare function
+	    };
+
+	    if (variables.length) {
+	        types.variable = reduce(variables, (prev, cur) => {
+	            prev[cur] = 1;
+	            return prev;
+	        }, {});
+	    }
+
+	    return reduce(funs, (prev, name) => {
+	        if (types[name]) {
+	            prev[name] = types[name];
+	        }
+	        return prev;
+	    }, {});
+	};
+
+	let infixTypes = ({
+	    predicates
+	}) => {
+	    return {
+	        [PREDICATE]: predicates
+	    };
+	};
+
+	let getPredicateMetaInfo = (predicatesMetaInfo, predicatePath) => {
+	    return get(predicatesMetaInfo, predicatePath);
+	};
+
 	module.exports = {
-	    getLambda
+	    getLambda,
+	    getExpressionType,
+	    getPredicatePath,
+	    getVariableName,
+	    expressionTypes,
+	    infixTypes,
+	    getPredicateMetaInfo
 	};
 
 
@@ -27751,13 +27851,20 @@
 
 	let triangle = __webpack_require__(51);
 
+	let TreeSelect = __webpack_require__(37);
+
+	let {
+	    infixTypes
+	} = __webpack_require__(89);
+
 	let {
 	    mergeMap
 	} = __webpack_require__(34);
 
 	module.exports = view(({
-	    body,
-	    onchange,
+	    predicates,
+	    onExpand,
+	    onselected,
 	    hideExpressionExpandor
 	}) => {
 	    return () => fold({
@@ -27786,14 +27893,30 @@
 
 	                onclick: () => {
 	                    ops.toggle();
-	                    onchange && onchange(ops.isHide());
+	                    onExpand && onExpand(ops.isHide());
 	                }
 	            });
 	        },
 
 	        hide: hideExpressionExpandor,
 
-	        body
+	        body: () => {
+	            return n('div', {
+	                style: {
+	                    display: 'inline-block',
+	                    marginLeft: 15,
+	                    position: 'absolute',
+	                    bottom: 0
+	                }
+	            }, TreeSelect({
+	                data: infixTypes({
+	                    predicates
+	                }),
+	                onselected: (v, path) => {
+	                    onselected && onselected(v, path);
+	                }
+	            }));
+	        }
 	    });
 	});
 

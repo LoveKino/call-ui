@@ -16,18 +16,28 @@ let VariableView = require('./variableView');
 
 let ExpressionExpandor = require('./expressionExpandor');
 
+let {
+    mergeMap
+} = require('bolzano');
+
 const LAMBDA_STYLE = require('./style');
 
 let {
     JSON_DATA,
     ABSTRACTION,
     VARIABLE,
-    PREDICATE,
-    NUMBER, BOOLEAN, STRING, JSON_TYPE, NULL
+    PREDICATE
 } = require('./const');
 
 let {
-    mergeMap, reduce
+    getExpressionType,
+    expressionTypes,
+    getPredicateMetaInfo,
+    getPredicatePath
+} = require('./model');
+
+let {
+    get
 } = require('bolzano');
 
 /**
@@ -98,114 +108,123 @@ let expressionView = view((data, {
     data.variables = data.variables || [];
     data.funs = data.funs || [JSON_DATA, PREDICATE, ABSTRACTION, VARIABLE];
 
-    let hideExpressionExpandor = true;
+    let {
+        predicates, predicatesMetaInfo
+    } = data;
 
-    return () => {
-        let optionsView = n('div', {
-            style: {
-                color: '#9b9b9b',
-                fontSize: 12,
-                display: 'inline-block'
-            }
-        }, [
-            TreeOptionView({
-                title: data.title,
-                path: data.value.path,
-                showSelectTree: data.showSelectTree,
-                data: () => expressionTypes(data),
-                onselected: (v, path) => {
-                    update([
-                        ['value.path', path]
-                    ]);
-                }
-            })
-        ]);
+    return data.value.infixPath ? expressionView({
+        value: {
+            path: data.value.infixPath,
+            infix: 1,
+            params: [{
+                path: data.value.path
+            }]
+        },
 
-        return n('div', {
+        predicates,
+
+        predicatesMetaInfo,
+
+        prevExpressionViews: [getPrevExpressionView({
+            data, update
+        })],
+
+        expressionView,
+        optionsView: getOptionsView({
+            data, update
+        })
+    }) : getPrevExpressionView({
+        data, update
+    });
+});
+
+let getPrevExpressionView = ({
+    data, update
+}) => {
+    let optionsView = getOptionsView({
+        data, update
+    });
+
+    return n('div', {
+        style: {
+            position: 'relative',
+            display: 'inline-block',
+            borderRadius: 5
+        }
+    }, [
+        n('div', {
             style: {
-                position: 'relative',
                 display: 'inline-block',
-                border: !hideExpressionExpandor ? '1px solid rgba(200, 200, 200, 0.4)' : '0',
-                padding: !hideExpressionExpandor ? 5 : 0,
+                padding: 8,
+                border: '1px solid rgba(200, 200, 200, 0.4)',
                 borderRadius: 5
             }
         }, [
-            n('div', {
-                style: {
-                    display: 'inline-block',
-                    padding: 8,
-                    border: '1px solid rgba(200, 200, 200, 0.4)',
-                    borderRadius: 5
-                }
-            }, [!data.value.path && optionsView,
 
-                data.value.path && expressionViewMap[
-                    getExpressionType(data.value.path)
-                ](mergeMap(data, {
-                    expressionView,
-                    optionsView
-                }))
-            ]),
+            !data.value.path && optionsView,
 
-            n('div', {
-                style: {
-                    display: 'inline-block'
-                }
-            }, [
-                data.value.path && ExpressionExpandor({
-                    body: () => {
-                        return n('div', {
-                            style: {
-                                display: 'inline-block',
-                                marginLeft: 15
-                            }
-                        }, expressionView(mergeMap(data, {
-                            value: {},
-                            funs: [PREDICATE],
-                            infix: true,
-                            title: 'operation'
-                        })));
-                    },
+            data.value.path && expressionViewMap[
+                getExpressionType(data.value.path)
+            ](mergeMap(data, {
+                expressionView,
+                optionsView
+            }))
+        ]),
 
-                    hideExpressionExpandor: hideExpressionExpandor,
-                    onchange: (hide) => {
-                        hideExpressionExpandor = hide;
-                        update();
+        n('div', {
+            style: {
+                display: 'inline-block'
+            }
+        }, [
+            data.value.path && ExpressionExpandor({
+                predicates: data.predicates,
+                hideExpressionExpandor: data.value.hideExpressionExpandor,
+                onExpand: (hide) => {
+                    if (data.value.infixPath) {
+                        data.value.hideExpressionExpandor = true;
+                    } else {
+                        data.value.hideExpressionExpandor = hide;
                     }
-                })
-            ])
-        ]);
-    };
-});
+                    data.value.infixPath = null;
+                    data.value.title = null;
+                    update();
+                },
 
-let getExpressionType = (path = '') => {
-    return path.split('.')[0];
+                onselected: (v, path) => {
+                    data.value.infixPath = path;
+                    let {
+                        args
+                    } = getPredicateMetaInfo(data.predicatesMetaInfo, getPredicatePath(path));
+                    args = args || [];
+                    data.value.title = get(args, '0.name');
+                    data.value.hideExpressionExpandor = true;
+                    update();
+                }
+            })
+        ])
+    ]);
 };
 
-let expressionTypes = (data) => {
-    let types = {
-        [JSON_DATA]: {
-            [NUMBER]: 1,
-            [BOOLEAN]: 1,
-            [STRING]: 1,
-            [JSON_TYPE]: 1,
-            [NULL]: 1
-        }, // declare json data
-        [PREDICATE]: data.predicates, // declare function
-        [ABSTRACTION]: 1 // declare function
-    };
-
-    if (data.variables.length) {
-        types.variable = reduce(data.variables, (prev, cur) => {
-            prev[cur] = 1;
-            return prev;
-        }, {});
-    }
-
-    return reduce(data.funs, (prev, name) => {
-        if (types[name]) {
-            prev[name] = types[name];
+let getOptionsView = ({
+    data, update
+}) => {
+    return n('div', {
+        style: {
+            color: '#9b9b9b',
+            fontSize: 12,
+            display: 'inline-block'
         }
-        return prev;
-    }, {});
+    }, [
+        TreeOptionView({
+            title: data.value.title,
+            path: data.value.path,
+            showSelectTree: data.value.showSelectTree,
+            data: () => expressionTypes(data),
+            onselected: (v, path) => {
+                update([
+                    ['value.path', path]
+                ]);
+            }
+        })
+    ]);
 };
