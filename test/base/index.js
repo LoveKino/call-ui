@@ -344,3 +344,40 @@ test('infix:deep', {
         infix: 1
     }
 }, (v) => assert.equal(v, 9));
+
+test('infix: one params', {
+    predicates: {
+        math: {
+            'succ': (x) => x + 1
+        }
+    },
+
+    predicatesMetaInfo: {
+        math: {
+            'succ': {
+                args: [{
+                    type: 'number',
+                    name: 'source'
+                }]
+            }
+        }
+    },
+
+    value: {
+        path: 'predicate.math.succ',
+        params: [{
+            path: 'data.number',
+            value: 2
+
+        }],
+        infix: 1
+    },
+
+    nameMap: {
+        'abstraction': 'define function'
+    },
+
+    pathMapping: (parts) => {
+        return parts.join('.');
+    }
+}, (v) => assert.equal(v, 3));
