@@ -33,7 +33,8 @@ let {
     getExpressionType,
     expressionTypes,
     getPredicateMetaInfo,
-    getPredicatePath
+    getPredicatePath,
+    getContext
 } = require('./model');
 
 let {
@@ -108,32 +109,27 @@ let expressionView = view((data, {
     data.variables = data.variables || [];
     data.funs = data.funs || [JSON_DATA, PREDICATE, ABSTRACTION, VARIABLE];
 
-    let {
-        predicates, predicatesMetaInfo
-    } = data;
-
-    return data.value.infixPath ? expressionView({
+    return data.infixPath ? expressionView(mergeMap(getContext(data), {
         value: {
-            path: data.value.infixPath,
-            infix: 1,
-            params: [{
-                path: data.value.path
-            }]
+            path: data.infixPath,
+            params: [data.value]
         },
 
-        predicates,
+        infix: 1,
 
-        predicatesMetaInfo,
+        onexpandchange: () => {
+            // close infix mode
+            update('infixPath', null);
+        },
 
-        prevExpressionViews: [getPrevExpressionView({
-            data, update
-        })],
+        onchange: data.onchange,
 
         expressionView,
+
         optionsView: getOptionsView({
             data, update
         })
-    }) : getPrevExpressionView({
+    })) : getPrevExpressionView({
         data, update
     });
 });
@@ -178,27 +174,21 @@ let getPrevExpressionView = ({
         }, [
             data.value.path && ExpressionExpandor({
                 predicates: data.predicates,
-                hideExpressionExpandor: data.value.hideExpressionExpandor,
+                hideExpressionExpandor: data.hideExpressionExpandor,
                 onExpand: (hide) => {
-                    if (data.value.infixPath) {
-                        data.value.hideExpressionExpandor = true;
-                    } else {
-                        data.value.hideExpressionExpandor = hide;
-                    }
-                    data.value.infixPath = null;
+                    data.hideExpressionExpandor = hide;
+                    data.infixPath = null;
                     data.value.title = null;
+                    data.onexpandchange && data.onexpandchange(hide);
                     update();
                 },
 
                 onselected: (v, path) => {
-                    data.value.infixPath = path;
-                    let {
-                        args
-                    } = getPredicateMetaInfo(data.predicatesMetaInfo, getPredicatePath(path));
-                    args = args || [];
-                    data.value.title = get(args, '0.name');
-                    data.value.hideExpressionExpandor = true;
-                    update();
+                    update([
+                        ['infixPath', path],
+                        ['value.title', get(getPredicateMetaInfo(data.predicatesMetaInfo, getPredicatePath(path)), 'args.0.name')],
+                        ['hideExpressionExpandor', true]
+                    ]);
                 }
             })
         ])
@@ -218,7 +208,7 @@ let getOptionsView = ({
         TreeOptionView({
             title: data.value.title,
             path: data.value.path,
-            showSelectTree: data.value.showSelectTree,
+            showSelectTree: data.showSelectTree,
             data: () => expressionTypes(data),
             onselected: (v, path) => {
                 update([

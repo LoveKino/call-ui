@@ -97,6 +97,18 @@ let getPredicateMetaInfo = (predicatesMetaInfo, predicatePath) => {
     return get(predicatesMetaInfo, predicatePath);
 };
 
+let getContext = ({
+    predicates,
+    predicatesMetaInfo,
+    variables
+}) => {
+    return {
+        predicates,
+        predicatesMetaInfo,
+        variables
+    };
+};
+
 module.exports = {
     getLambda,
     getExpressionType,
@@ -104,5 +116,6 @@ module.exports = {
     getVariableName,
     expressionTypes,
     infixTypes,
-    getPredicateMetaInfo
+    getPredicateMetaInfo,
+    getContext
 };

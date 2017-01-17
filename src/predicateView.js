@@ -7,7 +7,7 @@ let {
 let ParamsFieldView = require('./paramsFieldView');
 
 let {
-    getPredicatePath, getPredicateMetaInfo
+    getPredicatePath, getPredicateMetaInfo, getContext
 } = require('./model');
 
 module.exports = view((data) => {
@@ -16,7 +16,9 @@ module.exports = view((data) => {
         predicatesMetaInfo,
         expressionView,
         optionsView,
-        onchange = id
+        onchange = id,
+        onexpandchange,
+        infix = 0
     } = data;
 
     let predicatePath = getPredicatePath(value.path);
@@ -26,20 +28,19 @@ module.exports = view((data) => {
 
     value.params = value.params || [];
 
-    value.infix = value.infix || 0;
-
     onchange(value);
 
     return n('div', [
         ParamsFieldView({
-            expressionInfo: data,
+            context: getContext(data),
+            onexpandchange,
             onchange: (params) => {
-                value.params = value.params.slice(0, value.infix).concat(params);
+                value.params = params.concat(value.params.slice(infix));
                 onchange(value);
             },
-            args: args.slice(0, value.infix),
+            args: args.slice(0, infix),
             expressionView,
-            params: value.params.slice(0, value.infix)
+            params: value.params.slice(0, infix)
         }),
 
         optionsView,
@@ -47,33 +48,21 @@ module.exports = view((data) => {
         n('div', {
             style: {
                 padding: 5,
-                display: value.infix ? 'inline-block' : 'block'
+                display: infix ? 'inline-block' : 'block'
             }
         }, [
             ParamsFieldView({
-                context: getParamContext(data),
+                context: getContext(data),
                 onchange: (params) => {
-                    value.params = value.params.slice(0, value.infix).concat(params);
+                    value.params = value.params.slice(0, infix).concat(params);
                     onchange(value);
                 },
-                args: args.slice(value.infix),
+                args: args.slice(infix),
                 expressionView,
-                params: value.params.slice(value.infix)
+                params: value.params.slice(infix)
             })
         ])
     ]);
 });
-
-let getParamContext = ({
-    predicates,
-    predicatesMetaInfo,
-    variables
-}) => {
-    return {
-        predicates,
-        predicatesMetaInfo,
-        variables
-    };
-};
 
 const id = v => v;

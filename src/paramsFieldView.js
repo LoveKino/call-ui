@@ -12,10 +12,14 @@ module.exports = view(({
     args,
     context,
     expressionView,
+    onexpandchange,
     onchange = id, params = []
 }) => {
     return () => n('div', {
-        'class': 'lambda-params'
+        'class': 'lambda-params',
+        style: {
+            display: 'inline-block'
+        }
     }, [
         map(args, ({
             name
@@ -33,7 +37,8 @@ module.exports = view(({
                     onchange: (expressionValue) => {
                         params[index] = expressionValue;
                         onchange(params);
-                    }
+                    },
+                    onexpandchange
                 }))
             ]);
         })
