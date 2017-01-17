@@ -311,7 +311,7 @@
 
 	let {
 	    dsl, interpreter
-	} = __webpack_require__(79);
+	} = __webpack_require__(78);
 
 	let {
 	    getJson
@@ -323,7 +323,7 @@
 
 	let {
 	    getLambda
-	} = __webpack_require__(89);
+	} = __webpack_require__(77);
 
 	module.exports = view(({
 	    predicatesMetaInfo,
@@ -411,15 +411,15 @@
 
 	let PredicateView = __webpack_require__(75);
 
-	let VariableView = __webpack_require__(77);
+	let VariableView = __webpack_require__(88);
 
-	let ExpressionExpandor = __webpack_require__(90);
+	let ExpressionExpandor = __webpack_require__(89);
 
 	let {
 	    mergeMap
 	} = __webpack_require__(34);
 
-	const LAMBDA_STYLE = __webpack_require__(78);
+	const LAMBDA_STYLE = __webpack_require__(90);
 
 	let {
 	    JSON_DATA,
@@ -434,7 +434,7 @@
 	    getPredicateMetaInfo,
 	    getPredicatePath,
 	    getContext
-	} = __webpack_require__(89);
+	} = __webpack_require__(77);
 
 	let {
 	    get
@@ -511,10 +511,9 @@
 	    return data.infixPath ? expressionView(mergeMap(getContext(data), {
 	        value: {
 	            path: data.infixPath,
-	            params: [data.value]
+	            params: [data.value],
+	            infix: 1
 	        },
-
-	        infix: 1,
 
 	        onexpandchange: () => {
 	            // close infix mode
@@ -26378,7 +26377,7 @@
 
 	let {
 	    getPredicatePath, getPredicateMetaInfo, getContext
-	} = __webpack_require__(89);
+	} = __webpack_require__(77);
 
 	module.exports = view((data) => {
 	    let {
@@ -26387,8 +26386,7 @@
 	        expressionView,
 	        optionsView,
 	        onchange = id,
-	        onexpandchange,
-	        infix = 0
+	        onexpandchange
 	    } = data;
 
 	    let predicatePath = getPredicatePath(value.path);
@@ -26397,6 +26395,7 @@
 	    } = getPredicateMetaInfo(predicatesMetaInfo, predicatePath);
 
 	    value.params = value.params || [];
+	    value.infix = value.infix || 0;
 
 	    onchange(value);
 
@@ -26405,12 +26404,12 @@
 	            context: getContext(data),
 	            onexpandchange,
 	            onchange: (params) => {
-	                value.params = params.concat(value.params.slice(infix));
+	                value.params = params.concat(value.params.slice(value.infix));
 	                onchange(value);
 	            },
-	            args: args.slice(0, infix),
+	            args: args.slice(0, value.infix),
 	            expressionView,
-	            params: value.params.slice(0, infix)
+	            params: value.params.slice(0, value.infix)
 	        }),
 
 	        optionsView,
@@ -26418,18 +26417,18 @@
 	        n('div', {
 	            style: {
 	                padding: 5,
-	                display: infix ? 'inline-block' : 'block'
+	                display: value.infix ? 'inline-block' : 'block'
 	            }
 	        }, [
 	            ParamsFieldView({
 	                context: getContext(data),
 	                onchange: (params) => {
-	                    value.params = value.params.slice(0, infix).concat(params);
+	                    value.params = value.params.slice(0, value.infix).concat(params);
 	                    onchange(value);
 	                },
-	                args: args.slice(infix),
+	                args: args.slice(value.infix),
 	                expressionView,
-	                params: value.params.slice(infix)
+	                params: value.params.slice(value.infix)
 	            })
 	        ])
 	    ]);
@@ -26499,94 +26498,128 @@
 	'use strict';
 
 	let {
-	    n, view
-	} = __webpack_require__(4);
+	    map
+	} = __webpack_require__(34);
 
-	module.exports = view(({
-	    optionsView,
-	    onchange,
-	    value
+	let {
+	    dsl
+	} = __webpack_require__(78);
+
+	let {
+	    PREDICATE, VARIABLE, JSON_DATA, ABSTRACTION,
+	    NUMBER, BOOLEAN, STRING, JSON_TYPE, NULL
+	} = __webpack_require__(52);
+
+	let {
+	    reduce, get
+	} = __webpack_require__(34);
+
+	let {
+	    v, r
+	} = dsl;
+
+	let method = dsl.require;
+
+	let getLambda = (value) => {
+	    let expressionType = getExpressionType(value.path);
+	    let predicatePath = getPredicatePath(value.path);
+
+	    switch (expressionType) {
+	        case VARIABLE:
+	            return v(getVariableName(value.path));
+	        case ABSTRACTION:
+	            if (value.expression === undefined) return new Error('expression is not defined in abstraction');
+	            if (value.expression instanceof Error) return value.expression;
+	            return r(...value.currentVariables, getLambda(value.expression));
+	        case PREDICATE:
+	            return method(predicatePath)(...map(value.params, getLambda));
+	        case JSON_DATA:
+	            return value.value;
+	    }
+	};
+
+	let getVariableName = (path) => {
+	    let parts = path.split('.');
+	    parts.shift();
+	    return parts.join('.');
+	};
+
+	let getExpressionType = (path = '') => {
+	    return path.split('.')[0];
+	};
+
+	let getPredicatePath = (path) => path.split('.').slice(1).join('.');
+
+	let expressionTypes = ({
+	    predicates,
+	    variables,
+	    funs
 	}) => {
-	    onchange && onchange(value);
+	    let types = {
+	        [JSON_DATA]: {
+	            [NUMBER]: 1,
+	            [BOOLEAN]: 1,
+	            [STRING]: 1,
+	            [JSON_TYPE]: 1,
+	            [NULL]: 1
+	        }, // declare json data
+	        [PREDICATE]: predicates, // declare function
+	        [ABSTRACTION]: 1 // declare function
+	    };
 
-	    return () => n('div', [optionsView]);
-	});
+	    if (variables.length) {
+	        types.variable = reduce(variables, (prev, cur) => {
+	            prev[cur] = 1;
+	            return prev;
+	        }, {});
+	    }
+
+	    return reduce(funs, (prev, name) => {
+	        if (types[name]) {
+	            prev[name] = types[name];
+	        }
+	        return prev;
+	    }, {});
+	};
+
+	let infixTypes = ({
+	    predicates
+	}) => {
+	    return {
+	        [PREDICATE]: predicates
+	    };
+	};
+
+	let getPredicateMetaInfo = (predicatesMetaInfo, predicatePath) => {
+	    return get(predicatesMetaInfo, predicatePath);
+	};
+
+	let getContext = ({
+	    predicates,
+	    predicatesMetaInfo,
+	    variables
+	}) => {
+	    return {
+	        predicates,
+	        predicatesMetaInfo,
+	        variables
+	    };
+	};
+
+	module.exports = {
+	    getLambda,
+	    getExpressionType,
+	    getPredicatePath,
+	    getVariableName,
+	    expressionTypes,
+	    infixTypes,
+	    getPredicateMetaInfo,
+	    getContext
+	};
 
 
 /***/ },
 /* 78 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	module.exports = `
-	.lambda-ui {
-	    font-size: 14px;
-	}
-
-	.lambda-variable fieldset{
-	    display: inline-block;
-	    border: 1px solid rgba(200, 200, 200, 0.4);
-	    border-radius: 5px;
-	    padding: 3px 4px;
-	}
-
-	.lambda-variable input{
-	    width: 30px !important;
-	    min-width: 30px !important;
-	    outline: none;
-	} 
-
-	.lambda-params fieldset{
-	    padding: 1px 4px;
-	    border: 0;
-	}
-
-	.lambda-ui-hover:hover{
-	    background-color: #f5f5f5 !important;
-	}
-
-	.lambda-ui input[type=text]{
-	    border: 0;
-	    border-bottom: 1px solid rgba(0,0,0,.12);
-	    outline: none;
-	    height: 28px;
-	    min-width: 160px;
-	}
-
-	.lambda-ui input[type=text]:focus{
-	    border: 0;
-	    height: 27px;
-	    border-bottom: 2px solid #3f51b5;
-	}
-
-	.lambda-ui input[type=number]{
-	    border: 0;
-	    border-bottom: 1px solid rgba(0,0,0,.12);
-	    outline: none;
-	    height: 28px;
-	    min-width: 160px;
-	}
-
-	.lambda-ui input[type=number]:focus{
-	    border: 0;
-	    height: 27px;
-	    border-bottom: 2px solid #3f51b5;
-	}
-
-	.lambda-ui .input-style {
-	    border: 0;
-	    display: inline-block;
-	    border-bottom: 1px solid rgba(0,0,0,.12);
-	    outline: none;
-	    height: 28px;
-	    min-width: 160px;
-	}
-	`;
-
-
-/***/ },
-/* 79 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -26618,8 +26651,8 @@
 	 *      predicate: add
 	 */
 
-	let dsl = __webpack_require__(80);
-	let interpreter = __webpack_require__(84);
+	let dsl = __webpack_require__(79);
+	let interpreter = __webpack_require__(83);
 
 	module.exports = {
 	    dsl,
@@ -26628,7 +26661,7 @@
 
 
 /***/ },
-/* 80 */
+/* 79 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -26695,7 +26728,7 @@
 
 	let {
 	    map
-	} = __webpack_require__(81);
+	} = __webpack_require__(80);
 
 	let {
 	    isFunction
@@ -26757,7 +26790,7 @@
 
 
 /***/ },
-/* 81 */
+/* 80 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -26766,11 +26799,11 @@
 	    isObject, funType, or, isString, isFalsy, likeArray
 	} = __webpack_require__(9);
 
-	let iterate = __webpack_require__(82);
+	let iterate = __webpack_require__(81);
 
 	let {
 	    map, reduce, find, findIndex, forEach, filter, any, exist, compact
-	} = __webpack_require__(83);
+	} = __webpack_require__(82);
 
 	let contain = (list, item, fopts) => findIndex(list, item, fopts) !== -1;
 
@@ -26866,7 +26899,7 @@
 
 
 /***/ },
-/* 82 */
+/* 81 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -27011,14 +27044,14 @@
 
 
 /***/ },
-/* 83 */
+/* 82 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 	let {
 	    iterate
-	} = __webpack_require__(82);
+	} = __webpack_require__(81);
 
 	let defauls = {
 	    eq: (v1, v2) => v1 === v2
@@ -27117,14 +27150,14 @@
 
 
 /***/ },
-/* 84 */
+/* 83 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 	let {
 	    map, reduce
-	} = __webpack_require__(81);
+	} = __webpack_require__(80);
 
 	let {
 	    funType, isObject, isFunction
@@ -27132,7 +27165,7 @@
 
 	let {
 	    hasOwnProperty, get
-	} = __webpack_require__(85);
+	} = __webpack_require__(84);
 
 	/**
 	 * used to interpret lambda json
@@ -27229,14 +27262,14 @@
 
 
 /***/ },
-/* 85 */
+/* 84 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 	let {
 	    reduce
-	} = __webpack_require__(86);
+	} = __webpack_require__(85);
 	let {
 	    funType, isObject, or, isString, isFalsy
 	} = __webpack_require__(9);
@@ -27389,7 +27422,7 @@
 
 
 /***/ },
-/* 86 */
+/* 85 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -27398,11 +27431,11 @@
 	    isObject, funType, or, isString, isFalsy, likeArray
 	} = __webpack_require__(9);
 
-	let iterate = __webpack_require__(87);
+	let iterate = __webpack_require__(86);
 
 	let {
 	    map, reduce, find, findIndex, forEach, filter, any, exist, compact
-	} = __webpack_require__(88);
+	} = __webpack_require__(87);
 
 	let contain = (list, item, fopts) => findIndex(list, item, fopts) !== -1;
 
@@ -27498,7 +27531,7 @@
 
 
 /***/ },
-/* 87 */
+/* 86 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -27604,12 +27637,12 @@
 
 
 /***/ },
-/* 88 */
+/* 87 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	let iterate = __webpack_require__(87);
+	let iterate = __webpack_require__(86);
 
 	let defauls = {
 	    eq: (v1, v2) => v1 === v2
@@ -27708,134 +27741,28 @@
 
 
 /***/ },
-/* 89 */
+/* 88 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 	let {
-	    map
-	} = __webpack_require__(34);
+	    n, view
+	} = __webpack_require__(4);
 
-	let {
-	    dsl
-	} = __webpack_require__(79);
-
-	let {
-	    PREDICATE, VARIABLE, JSON_DATA, ABSTRACTION,
-	    NUMBER, BOOLEAN, STRING, JSON_TYPE, NULL
-	} = __webpack_require__(52);
-
-	let {
-	    reduce, get
-	} = __webpack_require__(34);
-
-	let {
-	    v, r
-	} = dsl;
-
-	let method = dsl.require;
-
-	let getLambda = (value) => {
-	    let expressionType = getExpressionType(value.path);
-	    let predicatePath = getPredicatePath(value.path);
-
-	    switch (expressionType) {
-	        case VARIABLE:
-	            return v(getVariableName(value.path));
-	        case ABSTRACTION:
-	            if (value.expression === undefined) return new Error('expression is not defined in abstraction');
-	            if (value.expression instanceof Error) return value.expression;
-	            return r(...value.currentVariables, getLambda(value.expression));
-	        case PREDICATE:
-	            return method(predicatePath)(...map(value.params, getLambda));
-	        case JSON_DATA:
-	            return value.value;
-	    }
-	};
-
-	let getVariableName = (path) => {
-	    let parts = path.split('.');
-	    parts.shift();
-	    return parts.join('.');
-	};
-
-	let getExpressionType = (path = '') => {
-	    return path.split('.')[0];
-	};
-
-	let getPredicatePath = (path) => path.split('.').slice(1).join('.');
-
-	let expressionTypes = ({
-	    predicates,
-	    variables,
-	    funs
+	module.exports = view(({
+	    optionsView,
+	    onchange,
+	    value
 	}) => {
-	    let types = {
-	        [JSON_DATA]: {
-	            [NUMBER]: 1,
-	            [BOOLEAN]: 1,
-	            [STRING]: 1,
-	            [JSON_TYPE]: 1,
-	            [NULL]: 1
-	        }, // declare json data
-	        [PREDICATE]: predicates, // declare function
-	        [ABSTRACTION]: 1 // declare function
-	    };
+	    onchange && onchange(value);
 
-	    if (variables.length) {
-	        types.variable = reduce(variables, (prev, cur) => {
-	            prev[cur] = 1;
-	            return prev;
-	        }, {});
-	    }
-
-	    return reduce(funs, (prev, name) => {
-	        if (types[name]) {
-	            prev[name] = types[name];
-	        }
-	        return prev;
-	    }, {});
-	};
-
-	let infixTypes = ({
-	    predicates
-	}) => {
-	    return {
-	        [PREDICATE]: predicates
-	    };
-	};
-
-	let getPredicateMetaInfo = (predicatesMetaInfo, predicatePath) => {
-	    return get(predicatesMetaInfo, predicatePath);
-	};
-
-	let getContext = ({
-	    predicates,
-	    predicatesMetaInfo,
-	    variables
-	}) => {
-	    return {
-	        predicates,
-	        predicatesMetaInfo,
-	        variables
-	    };
-	};
-
-	module.exports = {
-	    getLambda,
-	    getExpressionType,
-	    getPredicatePath,
-	    getVariableName,
-	    expressionTypes,
-	    infixTypes,
-	    getPredicateMetaInfo,
-	    getContext
-	};
+	    return () => n('div', [optionsView]);
+	});
 
 
 /***/ },
-/* 90 */
+/* 89 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -27852,7 +27779,7 @@
 
 	let {
 	    infixTypes
-	} = __webpack_require__(89);
+	} = __webpack_require__(77);
 
 	let {
 	    mergeMap
@@ -27916,6 +27843,78 @@
 	        }
 	    });
 	});
+
+
+/***/ },
+/* 90 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = `
+	.lambda-ui {
+	    font-size: 14px;
+	}
+
+	.lambda-variable fieldset{
+	    display: inline-block;
+	    border: 1px solid rgba(200, 200, 200, 0.4);
+	    border-radius: 5px;
+	    padding: 3px 4px;
+	}
+
+	.lambda-variable input{
+	    width: 30px !important;
+	    min-width: 30px !important;
+	    outline: none;
+	} 
+
+	.lambda-params fieldset{
+	    padding: 1px 4px;
+	    border: 0;
+	}
+
+	.lambda-ui-hover:hover{
+	    background-color: #f5f5f5 !important;
+	}
+
+	.lambda-ui input[type=text]{
+	    border: 0;
+	    border-bottom: 1px solid rgba(0,0,0,.12);
+	    outline: none;
+	    height: 28px;
+	    min-width: 160px;
+	}
+
+	.lambda-ui input[type=text]:focus{
+	    border: 0;
+	    height: 27px;
+	    border-bottom: 2px solid #3f51b5;
+	}
+
+	.lambda-ui input[type=number]{
+	    border: 0;
+	    border-bottom: 1px solid rgba(0,0,0,.12);
+	    outline: none;
+	    height: 28px;
+	    min-width: 160px;
+	}
+
+	.lambda-ui input[type=number]:focus{
+	    border: 0;
+	    height: 27px;
+	    border-bottom: 2px solid #3f51b5;
+	}
+
+	.lambda-ui .input-style {
+	    border: 0;
+	    display: inline-block;
+	    border-bottom: 1px solid rgba(0,0,0,.12);
+	    outline: none;
+	    height: 28px;
+	    min-width: 160px;
+	}
+	`;
 
 
 /***/ }

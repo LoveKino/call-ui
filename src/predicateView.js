@@ -17,8 +17,7 @@ module.exports = view((data) => {
         expressionView,
         optionsView,
         onchange = id,
-        onexpandchange,
-        infix = 0
+        onexpandchange
     } = data;
 
     let predicatePath = getPredicatePath(value.path);
@@ -27,6 +26,7 @@ module.exports = view((data) => {
     } = getPredicateMetaInfo(predicatesMetaInfo, predicatePath);
 
     value.params = value.params || [];
+    value.infix = value.infix || 0;
 
     onchange(value);
 
@@ -35,12 +35,12 @@ module.exports = view((data) => {
             context: getContext(data),
             onexpandchange,
             onchange: (params) => {
-                value.params = params.concat(value.params.slice(infix));
+                value.params = params.concat(value.params.slice(value.infix));
                 onchange(value);
             },
-            args: args.slice(0, infix),
+            args: args.slice(0, value.infix),
             expressionView,
-            params: value.params.slice(0, infix)
+            params: value.params.slice(0, value.infix)
         }),
 
         optionsView,
@@ -48,18 +48,18 @@ module.exports = view((data) => {
         n('div', {
             style: {
                 padding: 5,
-                display: infix ? 'inline-block' : 'block'
+                display: value.infix ? 'inline-block' : 'block'
             }
         }, [
             ParamsFieldView({
                 context: getContext(data),
                 onchange: (params) => {
-                    value.params = value.params.slice(0, infix).concat(params);
+                    value.params = value.params.slice(0, value.infix).concat(params);
                     onchange(value);
                 },
-                args: args.slice(infix),
+                args: args.slice(value.infix),
                 expressionView,
-                params: value.params.slice(infix)
+                params: value.params.slice(value.infix)
             })
         ])
     ]);

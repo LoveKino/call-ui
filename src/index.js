@@ -112,10 +112,9 @@ let expressionView = view((data, {
     return data.infixPath ? expressionView(mergeMap(getContext(data), {
         value: {
             path: data.infixPath,
-            params: [data.value]
+            params: [data.value],
+            infix: 1
         },
-
-        infix: 1,
 
         onexpandchange: () => {
             // close infix mode
