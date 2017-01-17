@@ -27,7 +27,9 @@ module.exports = view(({
     data,
     showSelectTree,
     onselected,
-    title
+    title,
+    pathMapping,
+    nameMap
 }, {
     update
 }) => {
@@ -45,7 +47,7 @@ module.exports = view(({
 
         n('div', {
             style: {
-                padding: 5,
+                paddingRight: 8,
                 cursor: 'pointer',
                 backgroundColor: showSelectTree ? 'rgba(200, 200, 200, .12)' : 'none'
             },
@@ -55,7 +57,7 @@ module.exports = view(({
             onclick: () => {
                 update('showSelectTree', !showSelectTree);
             }
-        }, path ? renderGuideLine(path) : n('div class="input-style"', {
+        }, path ? renderGuideLine(path, pathMapping) : n('div class="input-style"', {
             style: {
                 color: '#9b9b9b',
                 overflow: 'auto'
@@ -63,7 +65,7 @@ module.exports = view(({
         }, [
             n('span', {
                 style: {
-                    fontSize: 14
+                    fontSize: 12
                 }
             }, title || DEFAULT_TITLE),
 
@@ -99,7 +101,8 @@ module.exports = view(({
                         ['path', p],
                         ['showSelectTree', false]
                     ]);
-                }
+                },
+                nameMap
             })
         ])
     ]);
@@ -108,7 +111,7 @@ module.exports = view(({
 /**
  * @param path string
  */
-let renderGuideLine = (path) => {
+let renderGuideLine = (path, pathMapping) => {
     let parts = path.split('.');
     let last = parts.pop();
     let type = parts[0];
@@ -116,7 +119,10 @@ let renderGuideLine = (path) => {
     return n('span', [
         n('span', {
             style: {
-                fontWeight: (type === PREDICATE || type === VARIABLE) ? 'bold' : 'inherit'
+                fontWeight: (type === PREDICATE || type === VARIABLE) ? 'bold' : 'inherit',
+                fontSize: type === PREDICATE ? 16 : 12,
+                color: '#b4881d',
+                padding: '0 5px'
             }
         }, last),
 
@@ -124,6 +130,6 @@ let renderGuideLine = (path) => {
             style: {
                 paddingLeft: 10
             }
-        }, `(${parts.join(' > ')})`)
+        }, pathMapping ? pathMapping(parts) : `(${parts.join(' > ')})`)
     ]);
 };

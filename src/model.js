@@ -100,12 +100,18 @@ let getPredicateMetaInfo = (predicatesMetaInfo, predicatePath) => {
 let getContext = ({
     predicates,
     predicatesMetaInfo,
-    variables
+    variables,
+    funs,
+    pathMapping,
+    nameMap
 }) => {
     return {
         predicates,
         predicatesMetaInfo,
-        variables
+        variables,
+        funs,
+        pathMapping,
+        nameMap
     };
 };
 

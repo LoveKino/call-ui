@@ -398,6 +398,8 @@
 	            path: data.value.path,
 	            showSelectTree: data.showSelectTree,
 	            data: () => expressionTypes(data),
+	            pathMapping: data.pathMapping,
+	            nameMap: data.nameMap,
 	            onselected: (v, path) => {
 	                update([
 	                    ['value.path', path]
@@ -3062,7 +3064,9 @@
 	    data,
 	    showSelectTree,
 	    onselected,
-	    title
+	    title,
+	    pathMapping,
+	    nameMap
 	}, {
 	    update
 	}) => {
@@ -3080,7 +3084,7 @@
 
 	        n('div', {
 	            style: {
-	                padding: 5,
+	                paddingRight: 8,
 	                cursor: 'pointer',
 	                backgroundColor: showSelectTree ? 'rgba(200, 200, 200, .12)' : 'none'
 	            },
@@ -3090,7 +3094,7 @@
 	            onclick: () => {
 	                update('showSelectTree', !showSelectTree);
 	            }
-	        }, path ? renderGuideLine(path) : n('div class="input-style"', {
+	        }, path ? renderGuideLine(path, pathMapping) : n('div class="input-style"', {
 	            style: {
 	                color: '#9b9b9b',
 	                overflow: 'auto'
@@ -3098,7 +3102,7 @@
 	        }, [
 	            n('span', {
 	                style: {
-	                    fontSize: 14
+	                    fontSize: 12
 	                }
 	            }, title || DEFAULT_TITLE),
 
@@ -3134,7 +3138,8 @@
 	                        ['path', p],
 	                        ['showSelectTree', false]
 	                    ]);
-	                }
+	                },
+	                nameMap
 	            })
 	        ])
 	    ]);
@@ -3143,7 +3148,7 @@
 	/**
 	 * @param path string
 	 */
-	let renderGuideLine = (path) => {
+	let renderGuideLine = (path, pathMapping) => {
 	    let parts = path.split('.');
 	    let last = parts.pop();
 	    let type = parts[0];
@@ -3151,7 +3156,10 @@
 	    return n('span', [
 	        n('span', {
 	            style: {
-	                fontWeight: (type === PREDICATE || type === VARIABLE) ? 'bold' : 'inherit'
+	                fontWeight: (type === PREDICATE || type === VARIABLE) ? 'bold' : 'inherit',
+	                fontSize: type === PREDICATE ? 16 : 12,
+	                color: '#b4881d',
+	                padding: '0 5px'
 	            }
 	        }, last),
 
@@ -3159,7 +3167,7 @@
 	            style: {
 	                paddingLeft: 10
 	            }
-	        }, `(${parts.join(' > ')})`)
+	        }, pathMapping ? pathMapping(parts) : `(${parts.join(' > ')})`)
 	    ]);
 	};
 
@@ -26387,12 +26395,18 @@
 	let getContext = ({
 	    predicates,
 	    predicatesMetaInfo,
-	    variables
+	    variables,
+	    funs,
+	    pathMapping,
+	    nameMap
 	}) => {
 	    return {
 	        predicates,
 	        predicatesMetaInfo,
-	        variables
+	        variables,
+	        funs,
+	        pathMapping,
+	        nameMap
 	    };
 	};
 

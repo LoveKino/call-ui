@@ -209,6 +209,8 @@ let getOptionsView = ({
             path: data.value.path,
             showSelectTree: data.showSelectTree,
             data: () => expressionTypes(data),
+            pathMapping: data.pathMapping,
+            nameMap: data.nameMap,
             onselected: (v, path) => {
                 update([
                     ['value.path', path]

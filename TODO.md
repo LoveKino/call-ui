@@ -7,3 +7,5 @@
 - custom UI
 
 - left-side operation, infix operation
+
+- brief for expression, fold on it
