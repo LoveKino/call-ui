@@ -43,10 +43,12 @@ let test = (name, data, assertFun) => {
             }
         };
 
-        changed = true;
-        v = getValue(v);
+        if (!changed) {
+            changed = true;
+            v = getValue(v);
 
-        assertFun(v);
+            assertFun(v);
+        }
     };
 
     setTimeout(() => {

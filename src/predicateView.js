@@ -9,14 +9,11 @@ module.exports = view((data) => {
         value,
         optionsView,
         getSuffixParams,
-        getPrefixParams,
-        onchange = id
+        getPrefixParams
     } = data;
 
     value.params = value.params || [];
     value.infix = value.infix || 0;
-
-    onchange(value);
 
     return n('div', [
         getPrefixParams(),
@@ -33,5 +30,3 @@ module.exports = view((data) => {
         ])
     ]);
 });
-
-const id = v => v;

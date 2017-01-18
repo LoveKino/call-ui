@@ -27,11 +27,9 @@ const {
 /**
  * used to define json data
  */
-module.exports = view((data) => {
-    let {
-        value, onchange = id, optionsView
-    } = data;
-
+module.exports = view(({
+    value, onchange = id, optionsView
+}) => {
     let type = getDataTypePath(value.path);
 
     value.value = value.value === undefined ? DEFAULT_DATA_MAP[type] : value.value;
@@ -40,8 +38,6 @@ module.exports = view((data) => {
         value.value = v;
         onchange(value);
     };
-
-    onchange(value);
 
     let renderInputArea = () => {
         return [

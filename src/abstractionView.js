@@ -10,33 +10,13 @@ let {
     VARIABLE
 } = require('./const');
 
-let {
-    mergeMap
-} = require('bolzano');
-
-module.exports = view((data) => {
-    let {
-        value,
-        variables,
-        expressionView,
-        optionsView,
-        onchange
-    } = data;
-
-    value.currentVariables = value.variables || [];
-
-    onchange(value);
-
-    let expressionViewObj = mergeMap(data, {
-        title: 'expression',
-        value: value.expression,
-        variables: variables.concat(value.currentVariables),
-        onchange: (lambda) => {
-            value.expression = lambda;
-            onchange(value);
-        }
-    });
-
+module.exports = view(({
+    value,
+    variables,
+    optionsView,
+    onchange,
+    expressionBody
+}) => {
     return () => n('div', [
         optionsView,
 
@@ -57,7 +37,7 @@ module.exports = view((data) => {
                 VariableDeclareView({
                     onchange: (v) => {
                         value.currentVariables = v;
-                        expressionViewObj.variables = variables.concat(value.currentVariables);
+                        expressionBody.updateVariables(variables.concat(value.currentVariables));
                         onchange(value);
                     },
 
@@ -72,7 +52,7 @@ module.exports = view((data) => {
                     marginTop: 5
                 }
             }, [
-                expressionView(expressionViewObj)
+                expressionBody.getView()
             ])
         ])
     ]);

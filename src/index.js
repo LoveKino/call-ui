@@ -44,6 +44,8 @@ let {
     get
 } = require('bolzano');
 
+let funExpressionBody = require('./funExpressionBody');
+
 /**
  * lambda UI editor
  *
@@ -102,6 +104,7 @@ let expressionView = view((data, {
     update
 }) => {
     data.value = data.value || {};
+    data.value.currentVariables = data.value.variables || [];
     data.variables = data.variables || [];
     data.funs = data.funs || [JSON_DATA, PREDICATE, ABSTRACTION, VARIABLE];
 
@@ -123,6 +126,10 @@ let expressionView = view((data, {
     return () => {
         let expresionType = getExpressionType(data.value.path);
 
+        let {
+            value, onchange, variables
+        } = data;
+
         let optionsView = OptionsView({
             data, onselected: (v, path) => {
                 update([
@@ -131,6 +138,7 @@ let expressionView = view((data, {
             }
         });
 
+        onchange(value);
 
         return data.infixPath ? expressionView(mergeMap(getContext(data), {
             value: {
@@ -176,20 +184,23 @@ let expressionView = view((data, {
                         getPrefixParams
                     })),
 
-                    expresionType === JSON_DATA && JsonDataView(mergeMap(data, {
-                        expressionView,
-                        optionsView
-                    })),
+                    expresionType === JSON_DATA && JsonDataView({
+                        value, onchange, optionsView
+                    }),
 
-                    expresionType === VARIABLE && VariableView(mergeMap(data, {
-                        expressionView,
+                    expresionType === VARIABLE && VariableView({
                         optionsView
-                    })),
+                    }),
 
-                    expresionType === ABSTRACTION && AbstractionView(mergeMap(data, {
-                        expressionView,
-                        optionsView
-                    }))
+                    expresionType === ABSTRACTION && AbstractionView({
+                        value,
+                        variables,
+                        optionsView,
+                        onchange,
+                        expressionBody: funExpressionBody(data, {
+                            expressionView
+                        })
+                    })
                 ]
             ]),
 

@@ -89,10 +89,12 @@
 	            }
 	        };
 
-	        changed = true;
-	        v = getValue(v);
+	        if (!changed) {
+	            changed = true;
+	            v = getValue(v);
 
-	        assertFun(v);
+	            assertFun(v);
+	        }
 	    };
 
 	    setTimeout(() => {
@@ -1802,6 +1804,8 @@
 	    get
 	} = __webpack_require__(38);
 
+	let funExpressionBody = __webpack_require__(96);
+
 	/**
 	 * lambda UI editor
 	 *
@@ -1860,6 +1864,7 @@
 	    update
 	}) => {
 	    data.value = data.value || {};
+	    data.value.currentVariables = data.value.variables || [];
 	    data.variables = data.variables || [];
 	    data.funs = data.funs || [JSON_DATA, PREDICATE, ABSTRACTION, VARIABLE];
 
@@ -1881,6 +1886,10 @@
 	    return () => {
 	        let expresionType = getExpressionType(data.value.path);
 
+	        let {
+	            value, onchange, variables
+	        } = data;
+
 	        let optionsView = OptionsView({
 	            data, onselected: (v, path) => {
 	                update([
@@ -1889,6 +1898,7 @@
 	            }
 	        });
 
+	        onchange(value);
 
 	        return data.infixPath ? expressionView(mergeMap(getContext(data), {
 	            value: {
@@ -1934,20 +1944,23 @@
 	                        getPrefixParams
 	                    })),
 
-	                    expresionType === JSON_DATA && JsonDataView(mergeMap(data, {
-	                        expressionView,
-	                        optionsView
-	                    })),
+	                    expresionType === JSON_DATA && JsonDataView({
+	                        value, onchange, optionsView
+	                    }),
 
-	                    expresionType === VARIABLE && VariableView(mergeMap(data, {
-	                        expressionView,
+	                    expresionType === VARIABLE && VariableView({
 	                        optionsView
-	                    })),
+	                    }),
 
-	                    expresionType === ABSTRACTION && AbstractionView(mergeMap(data, {
-	                        expressionView,
-	                        optionsView
-	                    }))
+	                    expresionType === ABSTRACTION && AbstractionView({
+	                        value,
+	                        variables,
+	                        optionsView,
+	                        onchange,
+	                        expressionBody: funExpressionBody(data, {
+	                            expressionView
+	                        })
+	                    })
 	                ]
 	            ]),
 
@@ -6660,11 +6673,9 @@
 	/**
 	 * used to define json data
 	 */
-	module.exports = view((data) => {
-	    let {
-	        value, onchange = id, optionsView
-	    } = data;
-
+	module.exports = view(({
+	    value, onchange = id, optionsView
+	}) => {
 	    let type = getDataTypePath(value.path);
 
 	    value.value = value.value === undefined ? DEFAULT_DATA_MAP[type] : value.value;
@@ -6673,8 +6684,6 @@
 	        value.value = v;
 	        onchange(value);
 	    };
-
-	    onchange(value);
 
 	    let renderInputArea = () => {
 	        return [
@@ -27396,33 +27405,13 @@
 	    VARIABLE
 	} = __webpack_require__(56);
 
-	let {
-	    mergeMap
-	} = __webpack_require__(38);
-
-	module.exports = view((data) => {
-	    let {
-	        value,
-	        variables,
-	        expressionView,
-	        optionsView,
-	        onchange
-	    } = data;
-
-	    value.currentVariables = value.variables || [];
-
-	    onchange(value);
-
-	    let expressionViewObj = mergeMap(data, {
-	        title: 'expression',
-	        value: value.expression,
-	        variables: variables.concat(value.currentVariables),
-	        onchange: (lambda) => {
-	            value.expression = lambda;
-	            onchange(value);
-	        }
-	    });
-
+	module.exports = view(({
+	    value,
+	    variables,
+	    optionsView,
+	    onchange,
+	    expressionBody
+	}) => {
 	    return () => n('div', [
 	        optionsView,
 
@@ -27443,7 +27432,7 @@
 	                VariableDeclareView({
 	                    onchange: (v) => {
 	                        value.currentVariables = v;
-	                        expressionViewObj.variables = variables.concat(value.currentVariables);
+	                        expressionBody.updateVariables(variables.concat(value.currentVariables));
 	                        onchange(value);
 	                    },
 
@@ -27458,7 +27447,7 @@
 	                    marginTop: 5
 	                }
 	            }, [
-	                expressionView(expressionViewObj)
+	                expressionBody.getView()
 	            ])
 	        ])
 	    ]);
@@ -27788,14 +27777,11 @@
 	        value,
 	        optionsView,
 	        getSuffixParams,
-	        getPrefixParams,
-	        onchange = id
+	        getPrefixParams
 	    } = data;
 
 	    value.params = value.params || [];
 	    value.infix = value.infix || 0;
-
-	    onchange(value);
 
 	    return n('div', [
 	        getPrefixParams(),
@@ -27813,8 +27799,6 @@
 	    ]);
 	});
 
-	const id = v => v;
-
 
 /***/ },
 /* 80 */
@@ -27827,12 +27811,8 @@
 	} = __webpack_require__(8);
 
 	module.exports = view(({
-	    optionsView,
-	    onchange,
-	    value
+	    optionsView
 	}) => {
-	    onchange && onchange(value);
-
 	    return () => n('div', [optionsView]);
 	});
 
@@ -29393,6 +29373,47 @@
 	    min-width: 160px;
 	}
 	`;
+
+
+/***/ },
+/* 96 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    mergeMap
+	} = __webpack_require__(38);
+
+	module.exports = (data, {
+	    expressionView
+	}) => {
+	    let {
+	        value,
+	        variables,
+	        onchange
+	    } = data;
+
+	    let expressionViewObj = mergeMap(data, {
+	        title: 'expression',
+	        value: value.expression,
+	        variables: variables.concat(value.currentVariables),
+	        onchange: (lambda) => {
+	            value.expression = lambda;
+	            onchange(value);
+	        }
+	    });
+
+	    return {
+	        getView: () => {
+	            return expressionView(expressionViewObj);
+	        },
+
+	        updateVariables: (vars) => {
+	            expressionViewObj.variables = vars;
+	        }
+	    };
+	};
 
 
 /***/ }

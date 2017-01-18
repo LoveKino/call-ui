@@ -5,11 +5,7 @@ let {
 } = require('kabanery');
 
 module.exports = view(({
-    optionsView,
-    onchange,
-    value
+    optionsView
 }) => {
-    onchange && onchange(value);
-
     return () => n('div', [optionsView]);
 });
