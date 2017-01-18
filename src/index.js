@@ -108,6 +108,7 @@ let expressionView = view((data, {
     data.value.currentVariables = data.value.variables || [];
     data.variables = data.variables || [];
     data.funs = data.funs || [JSON_DATA, PREDICATE, ABSTRACTION, VARIABLE];
+    data.onchange = data.onchange || id;
 
     let {
         getSuffixParams,
@@ -280,3 +281,5 @@ let OptionsView = view(({
         })
     ]);
 });
+
+const id = v => v;
