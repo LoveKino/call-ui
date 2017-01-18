@@ -27,9 +27,17 @@ document.body.appendChild(LambdaRetView({
         math: {
             '+': {
                 args: [{
-                    name: 'number'
+                    name: 'number',
+                    defaultValue: {
+                        path: 'data.number',
+                        value: 0
+                    }
                 }, {
-                    name: 'number'
+                    name: 'number',
+                    defaultValue: {
+                        path: 'data.number',
+                        value: 0
+                    }
                 }]
             }
         },
