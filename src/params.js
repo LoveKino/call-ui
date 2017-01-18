@@ -3,12 +3,8 @@
 let ParamsFieldView = require('./component/paramsFieldView');
 
 let {
-    getPredicatePath, getPredicateMetaInfo, getContext
+    getPredicatePath, getPredicateMetaInfo
 } = require('./model');
-
-let {
-    mergeMap
-} = require('bolzano');
 
 let getArgs = ({
     value,
@@ -28,6 +24,12 @@ module.exports = (data, {
 }) => {
     let getPrefixParams = () => {
         let {
+            predicates,
+            predicatesMetaInfo,
+            expressAbility,
+            nameMap,
+            pathMapping,
+            variables,
             value,
             onchange = id
         } = data;
@@ -39,12 +41,18 @@ module.exports = (data, {
                 title,
                 content,
                 onchange
-            }) => expressionView(mergeMap(getContext(data), {
+            }) => expressionView({
                 title,
                 onchange,
                 onexpandchange,
+                predicates,
+                predicatesMetaInfo,
+                variables,
+                nameMap,
+                pathMapping,
+                expressAbility,
                 value: content,
-            })),
+            }),
 
             onchange: (params) => {
                 value.params = params.concat(value.params.slice(value.infix));
@@ -59,6 +67,12 @@ module.exports = (data, {
 
     let getSuffixParams = () => {
         let {
+            predicates,
+            predicatesMetaInfo,
+            expressAbility,
+            nameMap,
+            pathMapping,
+            variables,
             value,
             onchange = id
         } = data;
@@ -70,11 +84,17 @@ module.exports = (data, {
                 title,
                 content,
                 onchange
-            }) => expressionView(mergeMap(getContext(data), {
+            }) => expressionView({
                 title,
                 onchange,
-                value: content
-            })),
+                predicates,
+                predicatesMetaInfo,
+                nameMap,
+                pathMapping,
+                variables,
+                expressAbility,
+                value: content,
+            }),
 
             onchange: (params) => {
                 value.params = value.params.slice(0, value.infix).concat(params);

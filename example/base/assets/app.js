@@ -52,6 +52,10 @@
 	    map
 	} = __webpack_require__(34);
 
+	let {
+	    n
+	} = __webpack_require__(4);
+
 	/**
 	 * type system
 	 *   basic type: number, string, boolean, function, object, array
@@ -90,6 +94,66 @@
 	    }
 	}));
 
+	document.body.appendChild(n('br'));
+
+	/**
+	 * type system
+	 *   basic type: number, string, boolean, function, object, array
+	 */
+	document.body.appendChild(LambdaRetView({
+	    predicates: {
+	        math: {
+	            '+': (x, y) => x + y
+	        },
+
+	        map
+	    },
+
+	    predicatesMetaInfo: {
+	        math: {
+	            '+': {
+	                args: [{
+	                    type: 'number',
+	                    name: 'number'
+	                }, {
+	                    type: 'number',
+	                    name: 'number'
+	                }]
+	            }
+	        },
+
+	        map: {
+	            args: [{
+	                type: 'Array',
+	                name: 'list'
+	            }, {
+	                type: 'function',
+	                name: 'handler'
+	            }]
+	        }
+	    },
+
+	    expressAbility: () => {
+	        return {
+	            predicate: {
+	                math: {
+	                    '+': (x, y) => x + y
+	                }
+	            }
+	        };
+	    },
+
+	    expandAbility: () => {
+	        return {
+	            predicate: {
+	                map
+	            }
+	        };
+	    },
+
+	    showSelectTree: true
+	}));
+
 
 /***/ },
 /* 1 */
@@ -101,7 +165,7 @@
 
 	let {
 	    dsl, interpreter
-	} = __webpack_require__(81);
+	} = __webpack_require__(70);
 
 	let {
 	    getJson
@@ -113,13 +177,16 @@
 
 	let {
 	    getLambda
-	} = __webpack_require__(80);
+	} = __webpack_require__(69);
 
-	module.exports = view(({
-	    predicatesMetaInfo,
-	    predicates,
-	    value
-	}) => {
+	let {
+	    mergeMap
+	} = __webpack_require__(34);
+
+	module.exports = view((data) => {
+	    let {
+	        predicates,
+	    } = data;
 
 	    let run = interpreter(predicates);
 
@@ -144,13 +211,7 @@
 	            value: n('span', '')
 	        }),
 
-	        LambdaUI({
-	            predicates,
-
-	            predicatesMetaInfo,
-
-	            value,
-
+	        LambdaUI(mergeMap(data, {
 	            onchange: (v) => {
 	                v = getLambda(v);
 
@@ -171,7 +232,7 @@
 
 	                updateShowView('value', v && v instanceof Error ? n('pre', v.stack) : n('span', v));
 	            }
-	        })
+	        }))
 	    ]);
 	});
 
@@ -197,15 +258,15 @@
 
 	let JsonDataView = __webpack_require__(53);
 
-	let AbstractionView = __webpack_require__(69);
+	let AbstractionView = __webpack_require__(80);
 
-	let PredicateView = __webpack_require__(75);
+	let PredicateView = __webpack_require__(86);
 
-	let VariableView = __webpack_require__(76);
+	let VariableView = __webpack_require__(87);
 
-	let ExpressionExpandor = __webpack_require__(77);
+	let ExpressionExpandor = __webpack_require__(88);
 
-	let params = __webpack_require__(78);
+	let params = __webpack_require__(89);
 
 	let {
 	    mergeMap
@@ -228,7 +289,7 @@
 	    getPredicatePath,
 	    infixTypes,
 	    getDataTypePath
-	} = __webpack_require__(80);
+	} = __webpack_require__(69);
 
 	let {
 	    get
@@ -323,7 +384,8 @@
 	        let optionsView = OptionsView({
 	            data, onselected: (v, path) => {
 	                update([
-	                    ['value.path', path]
+	                    ['value.path', path],
+	                    ['showSelectTree', false]
 	                ]);
 	            }
 	        });
@@ -417,10 +479,15 @@
 	    onExpand,
 	    onselected
 	}) => {
+	    let {
+	        predicates, expandAbility
+	    } = data;
+
+	    let options = expandAbility ? expandAbility(data) : infixTypes({
+	        predicates
+	    });
 	    return ExpressionExpandor({
-	        options: infixTypes({
-	            predicates: data.predicates
-	        }),
+	        options,
 	        hideExpressionExpandor: data.hideExpressionExpandor,
 	        onExpand: (hide) => {
 	            data.hideExpressionExpandor = hide;
@@ -440,6 +507,12 @@
 	let OptionsView = view(({
 	    data, onselected
 	}) => {
+	    let {
+	        title, value, showSelectTree, pathMapping, nameMap, expressAbility
+	    } = data;
+
+	    let optionData = expressAbility ? expressAbility(data) : expressionTypes(data);
+
 	    return n('div', {
 	        style: {
 	            color: '#9b9b9b',
@@ -448,13 +521,12 @@
 	        }
 	    }, [
 	        TreeOptionView({
-	            title: data.title,
-	            path: data.value.path,
-	            showSelectTree: data.showSelectTree,
-	            data: () => expressionTypes(data),
-	            pathMapping: data.pathMapping,
-	            nameMap: data.nameMap,
-	            onselected
+	            title,
+	            showSelectTree,
+	            pathMapping,
+	            nameMap,
+	            onselected,
+	            path: value.path, data: optionData
 	        })
 	    ]);
 	});
@@ -5097,7 +5169,7 @@
 
 	let {
 	    getDataTypePath
-	} = __webpack_require__(80);
+	} = __webpack_require__(69);
 
 	/**
 	 * used to define json data
@@ -25821,669 +25893,12 @@
 	'use strict';
 
 	let {
-	    n, view
-	} = __webpack_require__(4);
-
-	let VariableDeclareView = __webpack_require__(70);
-
-	let {
-	    VARIABLE
-	} = __webpack_require__(52);
-
-	module.exports = view(({
-	    value,
-	    variables,
-	    optionsView,
-	    onchange,
-	    expressionBody
-	}) => {
-	    return () => n('div', [
-	        optionsView,
-
-	        n('div', {
-	            style: {
-	                marginLeft: 15,
-	                marginTop: 5,
-	                padding: 5
-	            }
-	        }, [
-	            n('div', {
-	                style: {
-	                    border: '1px solid rgba(200, 200, 200, 0.4)',
-	                    borderRadius: 5,
-	                    padding: 5
-	                }
-	            }, [
-	                VariableDeclareView({
-	                    onchange: (v) => {
-	                        value.currentVariables = v;
-	                        expressionBody.updateVariables(variables.concat(value.currentVariables));
-	                        onchange(value);
-	                    },
-
-	                    variables: value.currentVariables,
-	                    prevVariables: variables,
-	                    title: VARIABLE,
-	                })
-	            ]),
-
-	            n('div', {
-	                style: {
-	                    marginTop: 5
-	                }
-	            }, [
-	                expressionBody.getView()
-	            ])
-	        ])
-	    ]);
-	});
-
-
-/***/ },
-/* 70 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	let {
-	    n, view
-	} = __webpack_require__(4);
-
-	let InputList = __webpack_require__(71);
-
-	let {
-	    reduce, map
-	} = __webpack_require__(34);
-
-	// used to define variables
-	// TODO variables detect
-	module.exports = view((data) => {
-	    let {
-	        title,
-	        variables = [], onchange = v => v
-	    } = data;
-
-	    return n('div', {
-	        'class': 'lambda-variable'
-	    }, [
-	        InputList({
-	            listData: map(variables, (variable) => {
-	                return {
-	                    value: variable || ''
-	                };
-	            }),
-
-	            title: n('span', {
-	                style: {
-	                    color: '#9b9b9b',
-	                    fontSize: 14
-	                }
-	            }, title),
-
-	            onchange: (v) => {
-	                // TODO check variable definition
-	                onchange(reduce(v, (prev, item) => {
-	                    item.value && prev.push(item.value.trim());
-	                    return prev;
-	                }, []));
-
-	                data.variables = map(v, (item) => item.value);
-	            }
-	        })
-	    ]);
-	});
-
-
-/***/ },
-/* 71 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	let dynamicList = __webpack_require__(72);
-
-	let {
-	    map, mergeMap
-	} = __webpack_require__(34);
-
-	let {
-	    n
-	} = __webpack_require__(4);
-
-	let plus = __webpack_require__(73);
-
-	let line = __webpack_require__(74);
-
-	module.exports = ({
-	    listData,
-	    defaultItem,
-	    title,
-	    onchange = id
-	}) => {
-	    return dynamicList({
-	        listData,
-	        defaultItem,
-	        // append or delete items happend
-	        onchangeList: () => onchange(listData),
-	        render: ({
-	            appendItem, deleteItem, listData
-	        }) => {
-	            return n('div', {
-	                style: {
-	                    display: 'inline-block'
-	                }
-	            }, [
-	                n('span', [
-	                    n('span', title), n('span', {
-	                        style: {
-	                            cursor: 'pointer',
-	                            paddingLeft: 15,
-	                            fontWeight: 'bold'
-	                        },
-	                        onclick: appendItem
-	                    }, n('div', {
-	                        style: {
-	                            display: 'inline-block'
-	                        }
-	                    }, plus({
-	                        width: 10,
-	                        height: 10,
-	                        bold: 3,
-	                        color: 'black'
-	                    })))
-	                ]),
-
-	                map(listData, (item) => {
-	                    return n('fieldset', [
-	                        n('input type="text"', mergeMap({
-	                            onkeyup: (e) => {
-	                                item.value = e.target.value;
-	                                onchange(listData);
-	                            }
-	                        }, item)),
-
-	                        n('span', {
-	                            style: {
-	                                cursor: 'pointer',
-	                                fontWeight: 'bold'
-	                            },
-	                            onclick: () => deleteItem(item)
-	                        }, n('div', {
-	                            style: {
-	                                display: 'inline-block',
-	                                marginLeft: 5
-	                            }
-	                        }, [
-	                            line({
-	                                length: 10,
-	                                bold: 3,
-	                                color: 'black',
-	                                direction: 'horizontal'
-	                            })
-	                        ]))
-	                    ]);
-	                })
-	            ]);
-	        }
-	    });
-	};
-
-	const id = v => v;
-
-
-/***/ },
-/* 72 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	let {
-	    findIndex, mergeMap
-	} = __webpack_require__(34);
-
-	let {
-	    view
-	} = __webpack_require__(4);
-
-	let {
-	    isFunction
-	} = __webpack_require__(9);
-
-	/**
-	 * dynamic list,
-	 *   (1) add item
-	 *   (2) delete item
-	 *   (3) show list
-	 *   (4) maintain list data
-	 *
-	 * @param render function
-	 *  render dom by listData
-	 */
-	module.exports = view(({
-	    listData,
-	    defaultItem,
-	    render,
-	    onchangeList = id,
-	}, {
-	    update
-	}) => {
-	    let appendItem = () => {
-	        let value = defaultItem;
-	        if (isFunction(defaultItem)) {
-	            value = defaultItem();
-	        } else {
-	            value = mergeMap(defaultItem);
-	        }
-	        listData.push(value);
-	        onchangeList(value, 'append', listData);
-	        // update view
-	        update();
-	    };
-
-	    let deleteItem = (item) => {
-	        let index = findIndex(listData, item);
-	        if (index !== -1) {
-	            listData.splice(index, 1);
-	            // update view
-	            onchangeList(item, index, 'delete', listData);
-	            update();
-	        }
-	    };
-
-	    return render({
-	        listData,
-	        appendItem,
-	        deleteItem
-	    });
-	});
-
-	const id = v => v;
-
-
-/***/ },
-/* 73 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	let {
-	    n
-	} = __webpack_require__(4);
-
-	let line = __webpack_require__(74);
-
-	module.exports = ({
-	    width,
-	    height,
-	    color,
-	    bold
-	}) => {
-	    return n('div', {
-	        style: {
-	            width,
-	            height,
-	            margin: 0, padding: 0
-	        }
-	    }, [
-	        n('div', {
-	            style: {
-	                position: 'relative',
-	                left: 0,
-	                top: (height - bold) / 2
-	            }
-	        }, [
-	            line({
-	                length: width,
-	                bold,
-	                color,
-	                direction: 'horizontal'
-	            })
-	        ]),
-
-	        n('div', {
-	            style: {
-	                position: 'relative',
-	                top: -1 * bold,
-	                left: (width - bold) / 2
-	            }
-	        }, [
-	            line({
-	                length: height,
-	                bold,
-	                color
-	            })
-	        ])
-	    ]);
-	};
-
-
-/***/ },
-/* 74 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	let {
-	    n
-	} = __webpack_require__(4);
-
-	module.exports = ({
-	    color = 'black', bold = 3, length = 20, direction = 'vertical'
-	} = {}) => {
-	    return direction === 'vertical' ?
-	        n('div', {
-	            style: {
-	                width: bold,
-	                height: length,
-	                backgroundColor: color
-	            }
-	        }) : n('div', {
-	            style: {
-	                height: bold,
-	                width: length,
-	                backgroundColor: color
-	            }
-	        });
-	};
-
-
-/***/ },
-/* 75 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	let {
-	    n, view
-	} = __webpack_require__(4);
-
-	module.exports = view(({
-	    value,
-	    optionsView,
-	    getSuffixParams,
-	    getPrefixParams
-	}) => {
-	    value.params = value.params || [];
-	    value.infix = value.infix || 0;
-
-	    return n('div', [
-	        getPrefixParams(),
-
-	        optionsView,
-
-	        n('div', {
-	            style: {
-	                padding: 5,
-	                display: value.infix ? 'inline-block' : 'block'
-	            }
-	        }, [
-	            getSuffixParams()
-	        ])
-	    ]);
-	});
-
-
-/***/ },
-/* 76 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	let {
-	    n, view
-	} = __webpack_require__(4);
-
-	module.exports = view(({
-	    optionsView
-	}) => {
-	    return () => n('div', [optionsView]);
-	});
-
-
-/***/ },
-/* 77 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	let {
-	    view, n
-	} = __webpack_require__(4);
-
-	let fold = __webpack_require__(65);
-
-	let triangle = __webpack_require__(51);
-
-	let TreeSelect = __webpack_require__(37);
-
-	let {
-	    mergeMap
-	} = __webpack_require__(34);
-
-	module.exports = view(({
-	    options,
-	    onExpand,
-	    onselected,
-	    hideExpressionExpandor
-	}) => {
-	    return () => fold({
-	        head: (ops) => {
-	            return n('div', {
-	                style: mergeMap(
-	                    ops.isHide() ? triangle({
-	                        direction: 'right',
-	                        top: 5,
-	                        bottom: 5,
-	                        left: 5,
-	                        color: '#737373'
-	                    }) : triangle({
-	                        direction: 'left',
-	                        top: 5,
-	                        bottom: 5,
-	                        right: 5,
-	                        color: '#737373'
-	                    }), {
-	                        position: 'absolute',
-	                        bottom: 0,
-	                        marginLeft: 5,
-	                        cursor: 'pointer'
-	                    }
-	                ),
-
-	                onclick: () => {
-	                    ops.toggle();
-	                    onExpand && onExpand(ops.isHide());
-	                }
-	            });
-	        },
-
-	        hide: hideExpressionExpandor,
-
-	        body: () => {
-	            return n('div', {
-	                style: {
-	                    display: 'inline-block',
-	                    marginLeft: 15,
-	                    position: 'absolute',
-	                    bottom: 0
-	                }
-	            }, TreeSelect({
-	                data: options,
-	                onselected: (v, path) => {
-	                    onselected && onselected(v, path);
-	                }
-	            }));
-	        }
-	    });
-	});
-
-
-/***/ },
-/* 78 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	let ParamsFieldView = __webpack_require__(79);
-
-	let {
-	    getPredicatePath, getPredicateMetaInfo, getContext
-	} = __webpack_require__(80);
-
-	let {
-	    mergeMap
-	} = __webpack_require__(34);
-
-	let getArgs = ({
-	    value,
-	    predicatesMetaInfo
-	}) => {
-	    let predicatePath = getPredicatePath(value.path);
-	    let {
-	        args
-	    } = getPredicateMetaInfo(predicatesMetaInfo, predicatePath);
-	    return args;
-	};
-
-	const id = v => v;
-
-	module.exports = (data, {
-	    expressionView, onexpandchange
-	}) => {
-	    let getPrefixParams = () => {
-	        let {
-	            value,
-	            onchange = id
-	        } = data;
-
-	        let args = getArgs(data);
-
-	        return ParamsFieldView({
-	            itemRender: ({
-	                title,
-	                content,
-	                onchange
-	            }) => expressionView(mergeMap(getContext(data), {
-	                title,
-	                onchange,
-	                onexpandchange,
-	                value: content,
-	            })),
-
-	            onchange: (params) => {
-	                value.params = params.concat(value.params.slice(value.infix));
-	                onchange(value);
-	            },
-
-	            args: args.slice(0, value.infix),
-
-	            params: value.params.slice(0, value.infix)
-	        });
-	    };
-
-	    let getSuffixParams = () => {
-	        let {
-	            value,
-	            onchange = id
-	        } = data;
-
-	        let args = getArgs(data);
-
-	        return ParamsFieldView({
-	            itemRender: ({
-	                title,
-	                content,
-	                onchange
-	            }) => expressionView(mergeMap(getContext(data), {
-	                title,
-	                onchange,
-	                value: content
-	            })),
-
-	            onchange: (params) => {
-	                value.params = value.params.slice(0, value.infix).concat(params);
-	                onchange(value);
-	            },
-
-	            args: args.slice(value.infix),
-
-	            params: value.params.slice(value.infix)
-	        });
-	    };
-
-	    return {
-	        getPrefixParams,
-	        getSuffixParams
-	    };
-	};
-
-
-/***/ },
-/* 79 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	let {
-	    n, view
-	} = __webpack_require__(4);
-
-	let {
-	    map
-	} = __webpack_require__(34);
-
-	module.exports = view(({
-	    args,
-	    itemRender,
-	    onchange = id, params = []
-	}) => {
-	    return () => n('div', {
-	        'class': 'lambda-params',
-	        style: {
-	            display: 'inline-block'
-	        }
-	    }, [
-	        map(args, ({
-	            name
-	        }, index) => {
-	            let value = params[index] || {};
-
-	            return n('fieldset', {
-	                style: {
-	                    padding: '4px'
-	                }
-	            }, [
-	                itemRender({
-	                    title: name,
-
-	                    content: value,
-
-	                    onchange: (itemValue) => {
-	                        params[index] = itemValue;
-	                        onchange(params);
-	                    }
-	                })
-	            ]);
-	        })
-	    ]);
-	});
-
-	const id = v => v;
-
-
-/***/ },
-/* 80 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	let {
 	    map
 	} = __webpack_require__(34);
 
 	let {
 	    dsl
-	} = __webpack_require__(81);
+	} = __webpack_require__(70);
 
 	let {
 	    PREDICATE, VARIABLE, JSON_DATA, ABSTRACTION,
@@ -26608,7 +26023,7 @@
 
 
 /***/ },
-/* 81 */
+/* 70 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -26640,8 +26055,8 @@
 	 *      predicate: add
 	 */
 
-	let dsl = __webpack_require__(82);
-	let interpreter = __webpack_require__(86);
+	let dsl = __webpack_require__(71);
+	let interpreter = __webpack_require__(75);
 
 	module.exports = {
 	    dsl,
@@ -26650,7 +26065,7 @@
 
 
 /***/ },
-/* 82 */
+/* 71 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -26717,7 +26132,7 @@
 
 	let {
 	    map
-	} = __webpack_require__(83);
+	} = __webpack_require__(72);
 
 	let {
 	    isFunction
@@ -26779,7 +26194,7 @@
 
 
 /***/ },
-/* 83 */
+/* 72 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -26788,11 +26203,11 @@
 	    isObject, funType, or, isString, isFalsy, likeArray
 	} = __webpack_require__(9);
 
-	let iterate = __webpack_require__(84);
+	let iterate = __webpack_require__(73);
 
 	let {
 	    map, reduce, find, findIndex, forEach, filter, any, exist, compact
-	} = __webpack_require__(85);
+	} = __webpack_require__(74);
 
 	let contain = (list, item, fopts) => findIndex(list, item, fopts) !== -1;
 
@@ -26888,7 +26303,7 @@
 
 
 /***/ },
-/* 84 */
+/* 73 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -27033,14 +26448,14 @@
 
 
 /***/ },
-/* 85 */
+/* 74 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 	let {
 	    iterate
-	} = __webpack_require__(84);
+	} = __webpack_require__(73);
 
 	let defauls = {
 	    eq: (v1, v2) => v1 === v2
@@ -27139,14 +26554,14 @@
 
 
 /***/ },
-/* 86 */
+/* 75 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 	let {
 	    map, reduce
-	} = __webpack_require__(83);
+	} = __webpack_require__(72);
 
 	let {
 	    funType, isObject, isFunction
@@ -27154,7 +26569,7 @@
 
 	let {
 	    hasOwnProperty, get
-	} = __webpack_require__(87);
+	} = __webpack_require__(76);
 
 	/**
 	 * used to interpret lambda json
@@ -27251,14 +26666,14 @@
 
 
 /***/ },
-/* 87 */
+/* 76 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 	let {
 	    reduce
-	} = __webpack_require__(88);
+	} = __webpack_require__(77);
 	let {
 	    funType, isObject, or, isString, isFalsy
 	} = __webpack_require__(9);
@@ -27411,7 +26826,7 @@
 
 
 /***/ },
-/* 88 */
+/* 77 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -27420,11 +26835,11 @@
 	    isObject, funType, or, isString, isFalsy, likeArray
 	} = __webpack_require__(9);
 
-	let iterate = __webpack_require__(89);
+	let iterate = __webpack_require__(78);
 
 	let {
 	    map, reduce, find, findIndex, forEach, filter, any, exist, compact
-	} = __webpack_require__(90);
+	} = __webpack_require__(79);
 
 	let contain = (list, item, fopts) => findIndex(list, item, fopts) !== -1;
 
@@ -27520,7 +26935,7 @@
 
 
 /***/ },
-/* 89 */
+/* 78 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -27626,12 +27041,12 @@
 
 
 /***/ },
-/* 90 */
+/* 79 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	let iterate = __webpack_require__(89);
+	let iterate = __webpack_require__(78);
 
 	let defauls = {
 	    eq: (v1, v2) => v1 === v2
@@ -27730,6 +27145,683 @@
 
 
 /***/ },
+/* 80 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    n, view
+	} = __webpack_require__(4);
+
+	let VariableDeclareView = __webpack_require__(81);
+
+	let {
+	    VARIABLE
+	} = __webpack_require__(52);
+
+	module.exports = view(({
+	    value,
+	    variables,
+	    optionsView,
+	    onchange,
+	    expressionBody
+	}) => {
+	    return () => n('div', [
+	        optionsView,
+
+	        n('div', {
+	            style: {
+	                marginLeft: 15,
+	                marginTop: 5,
+	                padding: 5
+	            }
+	        }, [
+	            n('div', {
+	                style: {
+	                    border: '1px solid rgba(200, 200, 200, 0.4)',
+	                    borderRadius: 5,
+	                    padding: 5
+	                }
+	            }, [
+	                VariableDeclareView({
+	                    onchange: (v) => {
+	                        value.currentVariables = v;
+	                        expressionBody.updateVariables(variables.concat(value.currentVariables));
+	                        onchange(value);
+	                    },
+
+	                    variables: value.currentVariables,
+	                    prevVariables: variables,
+	                    title: VARIABLE,
+	                })
+	            ]),
+
+	            n('div', {
+	                style: {
+	                    marginTop: 5
+	                }
+	            }, [
+	                expressionBody.getView()
+	            ])
+	        ])
+	    ]);
+	});
+
+
+/***/ },
+/* 81 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    n, view
+	} = __webpack_require__(4);
+
+	let InputList = __webpack_require__(82);
+
+	let {
+	    reduce, map
+	} = __webpack_require__(34);
+
+	// used to define variables
+	// TODO variables detect
+	module.exports = view((data) => {
+	    let {
+	        title,
+	        variables = [], onchange = v => v
+	    } = data;
+
+	    return n('div', {
+	        'class': 'lambda-variable'
+	    }, [
+	        InputList({
+	            listData: map(variables, (variable) => {
+	                return {
+	                    value: variable || ''
+	                };
+	            }),
+
+	            title: n('span', {
+	                style: {
+	                    color: '#9b9b9b',
+	                    fontSize: 14
+	                }
+	            }, title),
+
+	            onchange: (v) => {
+	                // TODO check variable definition
+	                onchange(reduce(v, (prev, item) => {
+	                    item.value && prev.push(item.value.trim());
+	                    return prev;
+	                }, []));
+
+	                data.variables = map(v, (item) => item.value);
+	            }
+	        })
+	    ]);
+	});
+
+
+/***/ },
+/* 82 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let dynamicList = __webpack_require__(83);
+
+	let {
+	    map, mergeMap
+	} = __webpack_require__(34);
+
+	let {
+	    n
+	} = __webpack_require__(4);
+
+	let plus = __webpack_require__(84);
+
+	let line = __webpack_require__(85);
+
+	module.exports = ({
+	    listData,
+	    defaultItem,
+	    title,
+	    onchange = id
+	}) => {
+	    return dynamicList({
+	        listData,
+	        defaultItem,
+	        // append or delete items happend
+	        onchangeList: () => onchange(listData),
+	        render: ({
+	            appendItem, deleteItem, listData
+	        }) => {
+	            return n('div', {
+	                style: {
+	                    display: 'inline-block'
+	                }
+	            }, [
+	                n('span', [
+	                    n('span', title), n('span', {
+	                        style: {
+	                            cursor: 'pointer',
+	                            paddingLeft: 15,
+	                            fontWeight: 'bold'
+	                        },
+	                        onclick: appendItem
+	                    }, n('div', {
+	                        style: {
+	                            display: 'inline-block'
+	                        }
+	                    }, plus({
+	                        width: 10,
+	                        height: 10,
+	                        bold: 3,
+	                        color: 'black'
+	                    })))
+	                ]),
+
+	                map(listData, (item) => {
+	                    return n('fieldset', [
+	                        n('input type="text"', mergeMap({
+	                            onkeyup: (e) => {
+	                                item.value = e.target.value;
+	                                onchange(listData);
+	                            }
+	                        }, item)),
+
+	                        n('span', {
+	                            style: {
+	                                cursor: 'pointer',
+	                                fontWeight: 'bold'
+	                            },
+	                            onclick: () => deleteItem(item)
+	                        }, n('div', {
+	                            style: {
+	                                display: 'inline-block',
+	                                marginLeft: 5
+	                            }
+	                        }, [
+	                            line({
+	                                length: 10,
+	                                bold: 3,
+	                                color: 'black',
+	                                direction: 'horizontal'
+	                            })
+	                        ]))
+	                    ]);
+	                })
+	            ]);
+	        }
+	    });
+	};
+
+	const id = v => v;
+
+
+/***/ },
+/* 83 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    findIndex, mergeMap
+	} = __webpack_require__(34);
+
+	let {
+	    view
+	} = __webpack_require__(4);
+
+	let {
+	    isFunction
+	} = __webpack_require__(9);
+
+	/**
+	 * dynamic list,
+	 *   (1) add item
+	 *   (2) delete item
+	 *   (3) show list
+	 *   (4) maintain list data
+	 *
+	 * @param render function
+	 *  render dom by listData
+	 */
+	module.exports = view(({
+	    listData,
+	    defaultItem,
+	    render,
+	    onchangeList = id,
+	}, {
+	    update
+	}) => {
+	    let appendItem = () => {
+	        let value = defaultItem;
+	        if (isFunction(defaultItem)) {
+	            value = defaultItem();
+	        } else {
+	            value = mergeMap(defaultItem);
+	        }
+	        listData.push(value);
+	        onchangeList(value, 'append', listData);
+	        // update view
+	        update();
+	    };
+
+	    let deleteItem = (item) => {
+	        let index = findIndex(listData, item);
+	        if (index !== -1) {
+	            listData.splice(index, 1);
+	            // update view
+	            onchangeList(item, index, 'delete', listData);
+	            update();
+	        }
+	    };
+
+	    return render({
+	        listData,
+	        appendItem,
+	        deleteItem
+	    });
+	});
+
+	const id = v => v;
+
+
+/***/ },
+/* 84 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    n
+	} = __webpack_require__(4);
+
+	let line = __webpack_require__(85);
+
+	module.exports = ({
+	    width,
+	    height,
+	    color,
+	    bold
+	}) => {
+	    return n('div', {
+	        style: {
+	            width,
+	            height,
+	            margin: 0, padding: 0
+	        }
+	    }, [
+	        n('div', {
+	            style: {
+	                position: 'relative',
+	                left: 0,
+	                top: (height - bold) / 2
+	            }
+	        }, [
+	            line({
+	                length: width,
+	                bold,
+	                color,
+	                direction: 'horizontal'
+	            })
+	        ]),
+
+	        n('div', {
+	            style: {
+	                position: 'relative',
+	                top: -1 * bold,
+	                left: (width - bold) / 2
+	            }
+	        }, [
+	            line({
+	                length: height,
+	                bold,
+	                color
+	            })
+	        ])
+	    ]);
+	};
+
+
+/***/ },
+/* 85 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    n
+	} = __webpack_require__(4);
+
+	module.exports = ({
+	    color = 'black', bold = 3, length = 20, direction = 'vertical'
+	} = {}) => {
+	    return direction === 'vertical' ?
+	        n('div', {
+	            style: {
+	                width: bold,
+	                height: length,
+	                backgroundColor: color
+	            }
+	        }) : n('div', {
+	            style: {
+	                height: bold,
+	                width: length,
+	                backgroundColor: color
+	            }
+	        });
+	};
+
+
+/***/ },
+/* 86 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    n, view
+	} = __webpack_require__(4);
+
+	module.exports = view(({
+	    value,
+	    optionsView,
+	    getSuffixParams,
+	    getPrefixParams
+	}) => {
+	    value.params = value.params || [];
+	    value.infix = value.infix || 0;
+
+	    return n('div', [
+	        getPrefixParams(),
+
+	        optionsView,
+
+	        n('div', {
+	            style: {
+	                padding: 5,
+	                display: value.infix ? 'inline-block' : 'block'
+	            }
+	        }, [
+	            getSuffixParams()
+	        ])
+	    ]);
+	});
+
+
+/***/ },
+/* 87 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    n, view
+	} = __webpack_require__(4);
+
+	module.exports = view(({
+	    optionsView
+	}) => {
+	    return () => n('div', [optionsView]);
+	});
+
+
+/***/ },
+/* 88 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    view, n
+	} = __webpack_require__(4);
+
+	let fold = __webpack_require__(65);
+
+	let triangle = __webpack_require__(51);
+
+	let TreeSelect = __webpack_require__(37);
+
+	let {
+	    mergeMap
+	} = __webpack_require__(34);
+
+	module.exports = view(({
+	    options,
+	    onExpand,
+	    onselected,
+	    hideExpressionExpandor
+	}) => {
+	    return () => fold({
+	        head: (ops) => {
+	            return n('div', {
+	                style: mergeMap(
+	                    ops.isHide() ? triangle({
+	                        direction: 'right',
+	                        top: 5,
+	                        bottom: 5,
+	                        left: 5,
+	                        color: '#737373'
+	                    }) : triangle({
+	                        direction: 'left',
+	                        top: 5,
+	                        bottom: 5,
+	                        right: 5,
+	                        color: '#737373'
+	                    }), {
+	                        position: 'absolute',
+	                        bottom: 0,
+	                        marginLeft: 5,
+	                        cursor: 'pointer'
+	                    }
+	                ),
+
+	                onclick: () => {
+	                    ops.toggle();
+	                    onExpand && onExpand(ops.isHide());
+	                }
+	            });
+	        },
+
+	        hide: hideExpressionExpandor,
+
+	        body: () => {
+	            return n('div', {
+	                style: {
+	                    display: 'inline-block',
+	                    marginLeft: 15,
+	                    position: 'absolute',
+	                    bottom: 0
+	                }
+	            }, TreeSelect({
+	                data: options,
+	                onselected: (v, path) => {
+	                    onselected && onselected(v, path);
+	                }
+	            }));
+	        }
+	    });
+	});
+
+
+/***/ },
+/* 89 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let ParamsFieldView = __webpack_require__(90);
+
+	let {
+	    getPredicatePath, getPredicateMetaInfo
+	} = __webpack_require__(69);
+
+	let getArgs = ({
+	    value,
+	    predicatesMetaInfo
+	}) => {
+	    let predicatePath = getPredicatePath(value.path);
+	    let {
+	        args
+	    } = getPredicateMetaInfo(predicatesMetaInfo, predicatePath);
+	    return args;
+	};
+
+	const id = v => v;
+
+	module.exports = (data, {
+	    expressionView, onexpandchange
+	}) => {
+	    let getPrefixParams = () => {
+	        let {
+	            predicates,
+	            predicatesMetaInfo,
+	            expressAbility,
+	            nameMap,
+	            pathMapping,
+	            variables,
+	            value,
+	            onchange = id
+	        } = data;
+
+	        let args = getArgs(data);
+
+	        return ParamsFieldView({
+	            itemRender: ({
+	                title,
+	                content,
+	                onchange
+	            }) => expressionView({
+	                title,
+	                onchange,
+	                onexpandchange,
+	                predicates,
+	                predicatesMetaInfo,
+	                variables,
+	                nameMap,
+	                pathMapping,
+	                expressAbility,
+	                value: content,
+	            }),
+
+	            onchange: (params) => {
+	                value.params = params.concat(value.params.slice(value.infix));
+	                onchange(value);
+	            },
+
+	            args: args.slice(0, value.infix),
+
+	            params: value.params.slice(0, value.infix)
+	        });
+	    };
+
+	    let getSuffixParams = () => {
+	        let {
+	            predicates,
+	            predicatesMetaInfo,
+	            expressAbility,
+	            nameMap,
+	            pathMapping,
+	            variables,
+	            value,
+	            onchange = id
+	        } = data;
+
+	        let args = getArgs(data);
+
+	        return ParamsFieldView({
+	            itemRender: ({
+	                title,
+	                content,
+	                onchange
+	            }) => expressionView({
+	                title,
+	                onchange,
+	                predicates,
+	                predicatesMetaInfo,
+	                nameMap,
+	                pathMapping,
+	                variables,
+	                expressAbility,
+	                value: content,
+	            }),
+
+	            onchange: (params) => {
+	                value.params = value.params.slice(0, value.infix).concat(params);
+	                onchange(value);
+	            },
+
+	            args: args.slice(value.infix),
+
+	            params: value.params.slice(value.infix)
+	        });
+	    };
+
+	    return {
+	        getPrefixParams,
+	        getSuffixParams
+	    };
+	};
+
+
+/***/ },
+/* 90 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    n, view
+	} = __webpack_require__(4);
+
+	let {
+	    map
+	} = __webpack_require__(34);
+
+	module.exports = view(({
+	    args,
+	    itemRender,
+	    onchange = id, params = []
+	}) => {
+	    return () => n('div', {
+	        'class': 'lambda-params',
+	        style: {
+	            display: 'inline-block'
+	        }
+	    }, [
+	        map(args, ({
+	            name
+	        }, index) => {
+	            let value = params[index] || {};
+
+	            return n('fieldset', {
+	                style: {
+	                    padding: '4px'
+	                }
+	            }, [
+	                itemRender({
+	                    title: name,
+
+	                    content: value,
+
+	                    onchange: (itemValue) => {
+	                        params[index] = itemValue;
+	                        onchange(params);
+	                    }
+	                })
+	            ]);
+	        })
+	    ]);
+	});
+
+	const id = v => v;
+
+
+/***/ },
 /* 91 */
 /***/ function(module, exports) {
 
@@ -27815,10 +27907,16 @@
 	    expressionView
 	}) => {
 	    let {
-	        value,
+	        predicates,
+	        predicatesMetaInfo,
+	        expressAbility,
+	        nameMap,
+	        pathMapping,
 	        variables,
+	        value,
 	        onchange
 	    } = data;
+
 
 	    let expressionViewObj = mergeMap(data, {
 	        title: 'expression',
@@ -27826,8 +27924,13 @@
 	        variables: variables.concat(value.currentVariables),
 	        onchange: (lambda) => {
 	            value.expression = lambda;
-	            onchange(value);
-	        }
+	            onchange && onchange(value);
+	        },
+	        predicates,
+	        predicatesMetaInfo,
+	        expressAbility,
+	        nameMap,
+	        pathMapping
 	    });
 
 	    return {

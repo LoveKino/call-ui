@@ -134,7 +134,8 @@ let expressionView = view((data, {
         let optionsView = OptionsView({
             data, onselected: (v, path) => {
                 update([
-                    ['value.path', path]
+                    ['value.path', path],
+                    ['showSelectTree', false]
                 ]);
             }
         });
@@ -228,10 +229,15 @@ let ExpandorView = ({
     onExpand,
     onselected
 }) => {
+    let {
+        predicates, expandAbility
+    } = data;
+
+    let options = expandAbility ? expandAbility(data) : infixTypes({
+        predicates
+    });
     return ExpressionExpandor({
-        options: infixTypes({
-            predicates: data.predicates
-        }),
+        options,
         hideExpressionExpandor: data.hideExpressionExpandor,
         onExpand: (hide) => {
             data.hideExpressionExpandor = hide;
@@ -251,6 +257,12 @@ let ExpandorView = ({
 let OptionsView = view(({
     data, onselected
 }) => {
+    let {
+        title, value, showSelectTree, pathMapping, nameMap, expressAbility
+    } = data;
+
+    let optionData = expressAbility ? expressAbility(data) : expressionTypes(data);
+
     return n('div', {
         style: {
             color: '#9b9b9b',
@@ -259,13 +271,12 @@ let OptionsView = view(({
         }
     }, [
         TreeOptionView({
-            title: data.title,
-            path: data.value.path,
-            showSelectTree: data.showSelectTree,
-            data: () => expressionTypes(data),
-            pathMapping: data.pathMapping,
-            nameMap: data.nameMap,
-            onselected
+            title,
+            showSelectTree,
+            pathMapping,
+            nameMap,
+            onselected,
+            path: value.path, data: optionData
         })
     ]);
 });

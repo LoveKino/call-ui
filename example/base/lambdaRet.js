@@ -18,11 +18,14 @@ let {
     getLambda
 } = require('../../src/model');
 
-module.exports = view(({
-    predicatesMetaInfo,
-    predicates,
-    value
-}) => {
+let {
+    mergeMap
+} = require('bolzano');
+
+module.exports = view((data) => {
+    let {
+        predicates,
+    } = data;
 
     let run = interpreter(predicates);
 
@@ -47,13 +50,7 @@ module.exports = view(({
             value: n('span', '')
         }),
 
-        LambdaUI({
-            predicates,
-
-            predicatesMetaInfo,
-
-            value,
-
+        LambdaUI(mergeMap(data, {
             onchange: (v) => {
                 v = getLambda(v);
 
@@ -74,6 +71,6 @@ module.exports = view(({
 
                 updateShowView('value', v && v instanceof Error ? n('pre', v.stack) : n('span', v));
             }
-        })
+        }))
     ]);
 });

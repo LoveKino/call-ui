@@ -8,10 +8,16 @@ module.exports = (data, {
     expressionView
 }) => {
     let {
-        value,
+        predicates,
+        predicatesMetaInfo,
+        expressAbility,
+        nameMap,
+        pathMapping,
         variables,
+        value,
         onchange
     } = data;
+
 
     let expressionViewObj = mergeMap(data, {
         title: 'expression',
@@ -19,8 +25,13 @@ module.exports = (data, {
         variables: variables.concat(value.currentVariables),
         onchange: (lambda) => {
             value.expression = lambda;
-            onchange(value);
-        }
+            onchange && onchange(value);
+        },
+        predicates,
+        predicatesMetaInfo,
+        expressAbility,
+        nameMap,
+        pathMapping
     });
 
     return {
