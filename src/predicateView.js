@@ -4,14 +4,12 @@ let {
     n, view
 } = require('kabanery');
 
-module.exports = view((data) => {
-    let {
-        value,
-        optionsView,
-        getSuffixParams,
-        getPrefixParams
-    } = data;
-
+module.exports = view(({
+    value,
+    optionsView,
+    getSuffixParams,
+    getPrefixParams
+}) => {
     value.params = value.params || [];
     value.infix = value.infix || 0;
 

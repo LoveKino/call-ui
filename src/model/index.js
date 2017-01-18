@@ -51,7 +51,7 @@ let getExpressionType = (path = '') => {
     return path.split('.')[0];
 };
 
-let getPredicatePath = (path) => path.split('.').slice(1).join('.');
+let getPredicatePath = (path = '') => path.split('.').slice(1).join('.');
 
 let expressionTypes = ({
     predicates,
@@ -115,6 +115,8 @@ let getContext = ({
     };
 };
 
+let getDataTypePath = (path = '') => path.split('.').slice(1).join('.');
+
 module.exports = {
     getLambda,
     getExpressionType,
@@ -123,5 +125,6 @@ module.exports = {
     expressionTypes,
     infixTypes,
     getPredicateMetaInfo,
-    getContext
+    getContext,
+    getDataTypePath
 };

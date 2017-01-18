@@ -28,7 +28,8 @@ let {
     JSON_DATA,
     ABSTRACTION,
     VARIABLE,
-    PREDICATE
+    PREDICATE,
+    DEFAULT_DATA_MAP
 } = require('./const');
 
 let {
@@ -36,8 +37,8 @@ let {
     expressionTypes,
     getPredicateMetaInfo,
     getPredicatePath,
-    getContext,
-    infixTypes
+    infixTypes,
+    getDataTypePath
 } = require('./model');
 
 let {
@@ -124,11 +125,11 @@ let expressionView = view((data, {
     });
 
     return () => {
-        let expresionType = getExpressionType(data.value.path);
-
         let {
-            value, onchange, variables
+            value, onchange, variables, infixPath
         } = data;
+
+        let expresionType = getExpressionType(value.path);
 
         let optionsView = OptionsView({
             data, onselected: (v, path) => {
@@ -138,26 +139,20 @@ let expressionView = view((data, {
             }
         });
 
+        if (expresionType === JSON_DATA) {
+            let type = getDataTypePath(value.path);
+            value.value = value.value === undefined ? DEFAULT_DATA_MAP[type] : value.value;
+        }
+
         onchange(value);
 
-        return data.infixPath ? expressionView(mergeMap(getContext(data), {
+        return data.infixPath ? expressionView(mergeMap(data, {
+            infixPath: null,
             value: {
-                path: data.infixPath,
-                params: [data.value],
+                path: infixPath,
+                params: [value],
                 infix: 1
-            },
-
-            onchange: data.onchange,
-
-            expressionView,
-
-            optionsView: OptionsView({
-                data, onselected: (v, path) => {
-                    update([
-                        ['value.path', path]
-                    ]);
-                }
-            })
+            }
         })) : n('div', {
             style: {
                 position: 'relative',
@@ -178,11 +173,12 @@ let expressionView = view((data, {
                 !data.value.path && optionsView,
 
                 data.value.path && [
-                    expresionType === PREDICATE && PredicateView(mergeMap(data, {
+                    expresionType === PREDICATE && PredicateView({
+                        value,
                         optionsView,
                         getSuffixParams,
                         getPrefixParams
-                    })),
+                    }),
 
                     expresionType === JSON_DATA && JsonDataView({
                         value, onchange, optionsView

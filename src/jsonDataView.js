@@ -24,6 +24,10 @@ const {
     NUMBER, BOOLEAN, STRING, JSON_TYPE, NULL, INLINE_TYPES, DEFAULT_DATA_MAP
 } = require('./const');
 
+let {
+    getDataTypePath
+} = require('./model');
+
 /**
  * used to define json data
  */
@@ -31,8 +35,6 @@ module.exports = view(({
     value, onchange = id, optionsView
 }) => {
     let type = getDataTypePath(value.path);
-
-    value.value = value.value === undefined ? DEFAULT_DATA_MAP[type] : value.value;
 
     let onValueChanged = (v) => {
         value.value = v;
@@ -144,8 +146,6 @@ module.exports = view(({
         }) : renderInputArea()
     ]);
 });
-
-let getDataTypePath = (path = '') => path.split('.').slice(1).join('.');
 
 let abbreText = (data) => {
     let str = data;

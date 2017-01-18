@@ -217,7 +217,8 @@
 	    JSON_DATA,
 	    ABSTRACTION,
 	    VARIABLE,
-	    PREDICATE
+	    PREDICATE,
+	    DEFAULT_DATA_MAP
 	} = __webpack_require__(52);
 
 	let {
@@ -225,8 +226,8 @@
 	    expressionTypes,
 	    getPredicateMetaInfo,
 	    getPredicatePath,
-	    getContext,
-	    infixTypes
+	    infixTypes,
+	    getDataTypePath
 	} = __webpack_require__(80);
 
 	let {
@@ -313,11 +314,11 @@
 	    });
 
 	    return () => {
-	        let expresionType = getExpressionType(data.value.path);
-
 	        let {
-	            value, onchange, variables
+	            value, onchange, variables, infixPath
 	        } = data;
+
+	        let expresionType = getExpressionType(value.path);
 
 	        let optionsView = OptionsView({
 	            data, onselected: (v, path) => {
@@ -327,26 +328,20 @@
 	            }
 	        });
 
+	        if (expresionType === JSON_DATA) {
+	            let type = getDataTypePath(value.path);
+	            value.value = value.value === undefined ? DEFAULT_DATA_MAP[type] : value.value;
+	        }
+
 	        onchange(value);
 
-	        return data.infixPath ? expressionView(mergeMap(getContext(data), {
+	        return data.infixPath ? expressionView(mergeMap(data, {
+	            infixPath: null,
 	            value: {
-	                path: data.infixPath,
-	                params: [data.value],
+	                path: infixPath,
+	                params: [value],
 	                infix: 1
-	            },
-
-	            onchange: data.onchange,
-
-	            expressionView,
-
-	            optionsView: OptionsView({
-	                data, onselected: (v, path) => {
-	                    update([
-	                        ['value.path', path]
-	                    ]);
-	                }
-	            })
+	            }
 	        })) : n('div', {
 	            style: {
 	                position: 'relative',
@@ -367,11 +362,12 @@
 	                !data.value.path && optionsView,
 
 	                data.value.path && [
-	                    expresionType === PREDICATE && PredicateView(mergeMap(data, {
+	                    expresionType === PREDICATE && PredicateView({
+	                        value,
 	                        optionsView,
 	                        getSuffixParams,
 	                        getPrefixParams
-	                    })),
+	                    }),
 
 	                    expresionType === JSON_DATA && JsonDataView({
 	                        value, onchange, optionsView
@@ -5099,6 +5095,10 @@
 	    NUMBER, BOOLEAN, STRING, JSON_TYPE, NULL, INLINE_TYPES, DEFAULT_DATA_MAP
 	} = __webpack_require__(52);
 
+	let {
+	    getDataTypePath
+	} = __webpack_require__(80);
+
 	/**
 	 * used to define json data
 	 */
@@ -5106,8 +5106,6 @@
 	    value, onchange = id, optionsView
 	}) => {
 	    let type = getDataTypePath(value.path);
-
-	    value.value = value.value === undefined ? DEFAULT_DATA_MAP[type] : value.value;
 
 	    let onValueChanged = (v) => {
 	        value.value = v;
@@ -5219,8 +5217,6 @@
 	        }) : renderInputArea()
 	    ]);
 	});
-
-	let getDataTypePath = (path = '') => path.split('.').slice(1).join('.');
 
 	let abbreText = (data) => {
 	    let str = data;
@@ -26201,14 +26197,12 @@
 	    n, view
 	} = __webpack_require__(4);
 
-	module.exports = view((data) => {
-	    let {
-	        value,
-	        optionsView,
-	        getSuffixParams,
-	        getPrefixParams
-	    } = data;
-
+	module.exports = view(({
+	    value,
+	    optionsView,
+	    getSuffixParams,
+	    getPrefixParams
+	}) => {
 	    value.params = value.params || [];
 	    value.infix = value.infix || 0;
 
@@ -26534,7 +26528,7 @@
 	    return path.split('.')[0];
 	};
 
-	let getPredicatePath = (path) => path.split('.').slice(1).join('.');
+	let getPredicatePath = (path = '') => path.split('.').slice(1).join('.');
 
 	let expressionTypes = ({
 	    predicates,
@@ -26598,6 +26592,8 @@
 	    };
 	};
 
+	let getDataTypePath = (path = '') => path.split('.').slice(1).join('.');
+
 	module.exports = {
 	    getLambda,
 	    getExpressionType,
@@ -26606,7 +26602,8 @@
 	    expressionTypes,
 	    infixTypes,
 	    getPredicateMetaInfo,
-	    getContext
+	    getContext,
+	    getDataTypePath
 	};
 
 
