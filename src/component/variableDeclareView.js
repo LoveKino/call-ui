@@ -33,7 +33,7 @@ module.exports = view((data) => {
                     color: '#9b9b9b',
                     fontSize: 14
                 }
-            },title),
+            }, title),
 
             onchange: (v) => {
                 // TODO check variable definition

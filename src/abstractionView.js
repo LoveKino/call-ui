@@ -4,7 +4,7 @@ let {
     n, view
 } = require('kabanery');
 
-let VariableDeclareView = require('./variableDeclareView');
+let VariableDeclareView = require('./component/variableDeclareView');
 
 let {
     VARIABLE

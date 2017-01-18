@@ -11,7 +11,7 @@ let {
 let {
     PREDICATE, VARIABLE, JSON_DATA, ABSTRACTION,
     NUMBER, BOOLEAN, STRING, JSON_TYPE, NULL
-} = require('./const');
+} = require('../const');
 
 let {
     reduce, get

@@ -5,14 +5,12 @@ let {
 } = require('kabanery');
 
 let {
-    map, mergeMap
+    map
 } = require('bolzano');
 
 module.exports = view(({
     args,
-    context,
-    expressionView,
-    onexpandchange,
+    itemRender,
     onchange = id, params = []
 }) => {
     return () => n('div', {
@@ -25,21 +23,22 @@ module.exports = view(({
             name
         }, index) => {
             let value = params[index] || {};
-            value.title = name;
 
             return n('fieldset', {
                 style: {
                     padding: '4px'
                 }
             }, [
-                expressionView(mergeMap(context, {
-                    value,
-                    onchange: (expressionValue) => {
-                        params[index] = expressionValue;
+                itemRender({
+                    title: name,
+
+                    content: value,
+
+                    onchange: (itemValue) => {
+                        params[index] = itemValue;
                         onchange(params);
-                    },
-                    onexpandchange
-                }))
+                    }
+                })
             ]);
         })
     ]);

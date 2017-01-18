@@ -11,15 +11,11 @@ let triangle = require('css-shapes-object/lib/triangle');
 let TreeSelect = require('kabanery-tree-select');
 
 let {
-    infixTypes
-} = require('./model');
-
-let {
     mergeMap
 } = require('bolzano');
 
 module.exports = view(({
-    predicates,
+    options,
     onExpand,
     onselected,
     hideExpressionExpandor
@@ -66,9 +62,7 @@ module.exports = view(({
                     bottom: 0
                 }
             }, TreeSelect({
-                data: infixTypes({
-                    predicates
-                }),
+                data: options,
                 onselected: (v, path) => {
                     onselected && onselected(v, path);
                 }

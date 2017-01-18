@@ -18,7 +18,7 @@ let triangle = require('css-shapes-object/lib/triangle');
 
 let {
     PREDICATE, VARIABLE
-} = require('./const');
+} = require('../const');
 
 const DEFAULT_TITLE = 'please select';
 

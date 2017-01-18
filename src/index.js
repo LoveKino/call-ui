@@ -4,7 +4,7 @@ let {
     view, n
 } = require('kabanery');
 
-let TreeOptionView = require('./treeOptionView');
+let TreeOptionView = require('./component/treeOptionView');
 
 let JsonDataView = require('./jsonDataView');
 
@@ -14,7 +14,9 @@ let PredicateView = require('./predicateView');
 
 let VariableView = require('./variableView');
 
-let ExpressionExpandor = require('./expressionExpandor');
+let ExpressionExpandor = require('./component/expressionExpandor');
+
+let params = require('./params');
 
 let {
     mergeMap
@@ -34,7 +36,8 @@ let {
     expressionTypes,
     getPredicateMetaInfo,
     getPredicatePath,
-    getContext
+    getContext,
+    infixTypes
 } = require('./model');
 
 let {
@@ -95,13 +98,6 @@ module.exports = view((data) => {
     ]);
 });
 
-let expressionViewMap = {
-    [JSON_DATA]: JsonDataView,
-    [PREDICATE]: PredicateView,
-    [ABSTRACTION]: AbstractionView,
-    [VARIABLE]: VariableView
-};
-
 let expressionView = view((data, {
     update
 }) => {
@@ -109,93 +105,144 @@ let expressionView = view((data, {
     data.variables = data.variables || [];
     data.funs = data.funs || [JSON_DATA, PREDICATE, ABSTRACTION, VARIABLE];
 
-    return data.infixPath ? expressionView(mergeMap(getContext(data), {
-        value: {
-            path: data.infixPath,
-            params: [data.value],
-            infix: 1
-        },
-
-        onexpandchange: () => {
-            // close infix mode
-            update('infixPath', null);
-        },
-
-        onchange: data.onchange,
-
+    let {
+        getSuffixParams,
+        getPrefixParams
+    } = params(data, {
         expressionView,
-
-        optionsView: getOptionsView({
-            data, update
-        })
-    })) : getPrevExpressionView({
-        data, update
-    });
-});
-
-let getPrevExpressionView = ({
-    data, update
-}) => {
-    let optionsView = getOptionsView({
-        data, update
-    });
-
-    return n('div', {
-        style: {
-            position: 'relative',
-            display: 'inline-block',
-            borderRadius: 5
+        onexpandchange: (hide, data) => {
+            // close infix mode
+            update([
+                ['infixPath', null],
+                ['value', data.value],
+                ['title', '']
+            ]);
         }
-    }, [
-        n('div', {
-            style: {
-                display: 'inline-block',
-                padding: 8,
-                border: '1px solid rgba(200, 200, 200, 0.4)',
-                borderRadius: 5
+    });
+
+    return () => {
+        let expresionType = getExpressionType(data.value.path);
+
+        let optionsView = OptionsView({
+            data, onselected: (v, path) => {
+                update([
+                    ['value.path', path]
+                ]);
             }
-        }, [
+        });
 
-            !data.value.path && optionsView,
 
-            data.value.path && expressionViewMap[
-                getExpressionType(data.value.path)
-            ](mergeMap(data, {
-                expressionView,
-                optionsView
-            }))
-        ]),
+        return data.infixPath ? expressionView(mergeMap(getContext(data), {
+            value: {
+                path: data.infixPath,
+                params: [data.value],
+                infix: 1
+            },
 
-        n('div', {
-            style: {
-                display: 'inline-block'
-            }
-        }, [
-            data.value.path && ExpressionExpandor({
-                predicates: data.predicates,
-                hideExpressionExpandor: data.hideExpressionExpandor,
-                onExpand: (hide) => {
-                    data.hideExpressionExpandor = hide;
-                    data.infixPath = null;
-                    data.value.title = null;
-                    data.onexpandchange && data.onexpandchange(hide);
-                    update();
-                },
+            onchange: data.onchange,
 
-                onselected: (v, path) => {
+            expressionView,
+
+            optionsView: OptionsView({
+                data, onselected: (v, path) => {
                     update([
-                        ['infixPath', path],
-                        ['value.title', get(getPredicateMetaInfo(data.predicatesMetaInfo, getPredicatePath(path)), 'args.0.name')],
-                        ['hideExpressionExpandor', true]
+                        ['value.path', path]
                     ]);
                 }
             })
-        ])
-    ]);
+        })) : n('div', {
+            style: {
+                position: 'relative',
+                display: 'inline-block',
+                borderRadius: 5
+            }
+        }, [
+            // expression
+            n('div', {
+                style: {
+                    display: 'inline-block',
+                    padding: 8,
+                    border: '1px solid rgba(200, 200, 200, 0.4)',
+                    borderRadius: 5
+                }
+            }, [
+
+                !data.value.path && optionsView,
+
+                data.value.path && [
+                    expresionType === PREDICATE && PredicateView(mergeMap(data, {
+                        optionsView,
+                        getSuffixParams,
+                        getPrefixParams
+                    })),
+
+                    expresionType === JSON_DATA && JsonDataView(mergeMap(data, {
+                        expressionView,
+                        optionsView
+                    })),
+
+                    expresionType === VARIABLE && VariableView(mergeMap(data, {
+                        expressionView,
+                        optionsView
+                    })),
+
+                    expresionType === ABSTRACTION && AbstractionView(mergeMap(data, {
+                        expressionView,
+                        optionsView
+                    }))
+                ]
+            ]),
+
+            // expandor
+            n('div', {
+                style: {
+                    display: 'inline-block'
+                }
+            }, [
+                data.value.path && ExpandorView({
+                    onExpand: (hide) => {
+                        update();
+                        data.onexpandchange && data.onexpandchange(hide, data);
+                    },
+
+                    onselected: () => {
+                        update();
+                    },
+
+                    data
+                })
+            ])
+        ]);
+    };
+});
+
+let ExpandorView = ({
+    data,
+    onExpand,
+    onselected
+}) => {
+    return ExpressionExpandor({
+        options: infixTypes({
+            predicates: data.predicates
+        }),
+        hideExpressionExpandor: data.hideExpressionExpandor,
+        onExpand: (hide) => {
+            data.hideExpressionExpandor = hide;
+            data.infixPath = null;
+            onExpand && onExpand();
+        },
+
+        onselected: (v, path) => {
+            data.infixPath = path;
+            data.title = get(getPredicateMetaInfo(data.predicatesMetaInfo, getPredicatePath(path)), 'args.0.name');
+            data.hideExpressionExpandor = true;
+            onselected && onselected(v, path);
+        }
+    });
 };
 
-let getOptionsView = ({
-    data, update
+let OptionsView = view(({
+    data, onselected
 }) => {
     return n('div', {
         style: {
@@ -205,17 +252,13 @@ let getOptionsView = ({
         }
     }, [
         TreeOptionView({
-            title: data.value.title,
+            title: data.title,
             path: data.value.path,
             showSelectTree: data.showSelectTree,
             data: () => expressionTypes(data),
             pathMapping: data.pathMapping,
             nameMap: data.nameMap,
-            onselected: (v, path) => {
-                update([
-                    ['value.path', path]
-                ]);
-            }
+            onselected
         })
     ]);
-};
+});
