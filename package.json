@@ -1,6 +1,6 @@
 {
   "name": "lambda-ui",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "lambda editor ui",
   "main": "index.js",
   "scripts": {

@@ -94,7 +94,7 @@ let infixTypes = ({
 };
 
 let getPredicateMetaInfo = (predicatesMetaInfo, predicatePath) => {
-    return get(predicatesMetaInfo, predicatePath);
+    return get(predicatesMetaInfo, predicatePath) || {};
 };
 
 let getContext = ({

@@ -163,6 +163,20 @@
 	    showSelectTree: true
 	}));
 
+	document.body.appendChild(n('br'));
+
+	document.body.appendChild(LambdaRetView({
+	    predicates: {
+	        math: {
+	            'zero': () => 0
+	        }
+	    },
+
+	    predicatesMetaInfo: {
+	        math: {}
+	    }
+	}));
+
 
 /***/ },
 /* 1 */
@@ -367,6 +381,7 @@
 	    data.value.currentVariables = data.value.variables || [];
 	    data.variables = data.variables || [];
 	    data.funs = data.funs || [JSON_DATA, PREDICATE, ABSTRACTION, VARIABLE];
+	    data.onchange = data.onchange || id;
 
 	    let {
 	        getSuffixParams,
@@ -539,6 +554,8 @@
 	        })
 	    ]);
 	});
+
+	const id = v => v;
 
 
 /***/ },
@@ -25995,7 +26012,7 @@
 	};
 
 	let getPredicateMetaInfo = (predicatesMetaInfo, predicatePath) => {
-	    return get(predicatesMetaInfo, predicatePath);
+	    return get(predicatesMetaInfo, predicatePath) || {};
 	};
 
 	let getContext = ({
@@ -27550,7 +27567,7 @@
 
 	        optionsView,
 
-	        n('div', {
+	        value.params.slice(value.infix).length && n('div', {
 	            style: {
 	                padding: 5,
 	                display: value.infix ? 'inline-block' : 'block'
@@ -27676,8 +27693,8 @@
 	    let predicatePath = getPredicatePath(value.path);
 	    let {
 	        args
-	    } = getPredicateMetaInfo(predicatesMetaInfo, predicatePath);
-	    return args;
+	    } = getPredicateMetaInfo(predicatesMetaInfo, predicatePath) || {};
+	    return args || [];
 	};
 
 	const id = v => v;

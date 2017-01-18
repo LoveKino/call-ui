@@ -13,8 +13,8 @@ let getArgs = ({
     let predicatePath = getPredicatePath(value.path);
     let {
         args
-    } = getPredicateMetaInfo(predicatesMetaInfo, predicatePath);
-    return args;
+    } = getPredicateMetaInfo(predicatesMetaInfo, predicatePath) || {};
+    return args || [];
 };
 
 const id = v => v;

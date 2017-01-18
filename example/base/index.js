@@ -116,3 +116,17 @@ document.body.appendChild(LambdaRetView({
 
     showSelectTree: true
 }));
+
+document.body.appendChild(n('br'));
+
+document.body.appendChild(LambdaRetView({
+    predicates: {
+        math: {
+            'zero': () => 0
+        }
+    },
+
+    predicatesMetaInfo: {
+        math: {}
+    }
+}));
