@@ -27,10 +27,8 @@ document.body.appendChild(LambdaRetView({
         math: {
             '+': {
                 args: [{
-                    type: 'number',
                     name: 'number'
                 }, {
-                    type: 'number',
                     name: 'number'
                 }]
             }
@@ -38,10 +36,8 @@ document.body.appendChild(LambdaRetView({
 
         map: {
             args: [{
-                type: 'Array',
                 name: 'list'
             }, {
-                type: 'function',
                 name: 'handler'
             }]
         }
@@ -67,18 +63,23 @@ document.body.appendChild(LambdaRetView({
         math: {
             '+': {
                 args: [{
-                    type: 'number',
-                    name: 'number'
+                    name: 'number',
+                    defaultValue: {
+                        path: 'data.number',
+                        value: 0
+                    }
                 }, {
-                    type: 'number',
-                    name: 'number'
+                    name: 'number',
+                    defaultValue: {
+                        path: 'data.number',
+                        value: 0
+                    }
                 }]
             }
         },
 
         map: {
             args: [{
-                type: 'Array',
                 name: 'list'
             }, {
                 type: 'function',

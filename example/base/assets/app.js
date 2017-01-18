@@ -73,10 +73,8 @@
 	        math: {
 	            '+': {
 	                args: [{
-	                    type: 'number',
 	                    name: 'number'
 	                }, {
-	                    type: 'number',
 	                    name: 'number'
 	                }]
 	            }
@@ -84,10 +82,8 @@
 
 	        map: {
 	            args: [{
-	                type: 'Array',
 	                name: 'list'
 	            }, {
-	                type: 'function',
 	                name: 'handler'
 	            }]
 	        }
@@ -113,18 +109,23 @@
 	        math: {
 	            '+': {
 	                args: [{
-	                    type: 'number',
-	                    name: 'number'
+	                    name: 'number',
+	                    defaultValue: {
+	                        path: 'data.number',
+	                        value: 0
+	                    }
 	                }, {
-	                    type: 'number',
-	                    name: 'number'
+	                    name: 'number',
+	                    defaultValue: {
+	                        path: 'data.number',
+	                        value: 0
+	                    }
 	                }]
 	            }
 	        },
 
 	        map: {
 	            args: [{
-	                type: 'Array',
 	                name: 'list'
 	            }, {
 	                type: 'function',
@@ -27794,9 +27795,10 @@
 	        }
 	    }, [
 	        map(args, ({
-	            name
+	            name,
+	            defaultValue
 	        }, index) => {
-	            let value = params[index] || {};
+	            let value = params[index] || defaultValue || {};
 
 	            return n('fieldset', {
 	                style: {

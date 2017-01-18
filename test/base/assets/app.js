@@ -29304,9 +29304,10 @@
 	        }
 	    }, [
 	        map(args, ({
-	            name
+	            name,
+	            defaultValue
 	        }, index) => {
-	            let value = params[index] || {};
+	            let value = params[index] || defaultValue || {};
 
 	            return n('fieldset', {
 	                style: {
