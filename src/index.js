@@ -87,10 +87,10 @@ let funExpressionBody = require('./funExpressionBody');
  * 1. user choses expression type
  * 2. define current expression type
  */
-module.exports = view((data) => {
+module.exports = view((data = {}) => {
     let $style = document.getElementById('lambda-style');
     if (!$style) {
-        $style = n('style id=lambda-style type="text/css"', LAMBDA_STYLE);
+        $style = n('style id="lambda-style" type="text/css"', LAMBDA_STYLE);
         document.getElementsByTagName('head')[0].appendChild($style);
     }
 

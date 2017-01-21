@@ -18,9 +18,8 @@ module.exports = view(({
 
         optionsView,
 
-        value.params.slice(value.infix).length && n('div', {
+        n('div', {
             style: {
-                padding: 5,
                 display: value.infix ? 'inline-block' : 'block'
             }
         }, [

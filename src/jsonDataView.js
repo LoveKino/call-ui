@@ -70,7 +70,7 @@ module.exports = view(({
                 }
             }),
 
-            type === STRING && n('input type="text"', {
+            type === STRING && n(`input type="${value.type||'text'}" placeholder="${value.placeholder || ''}"`, {
                 style: {
                     marginTop: -10
                 },

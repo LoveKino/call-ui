@@ -41,6 +41,20 @@ module.exports = `
     border-bottom: 2px solid #3f51b5;
 }
 
+.lambda-ui input[type=password]{
+    border: 0;
+    border-bottom: 1px solid rgba(0,0,0,.12);
+    outline: none;
+    height: 28px;
+    min-width: 160px;
+}
+
+.lambda-ui input[type=password]:focus{
+    border: 0;
+    height: 27px;
+    border-bottom: 2px solid #3f51b5;
+}
+
 .lambda-ui input[type=number]{
     border: 0;
     border-bottom: 1px solid rgba(0,0,0,.12);
