@@ -182,6 +182,22 @@
 	 *
 	 * 1. user choses expression type
 	 * 2. define current expression type
+	 *
+	 * data = {
+	 *      predicates,
+	 *      predicatesMetaInfo: {
+	 *          ... {
+	 *              args: [{
+	 *                  name,
+	 *                  defaultValue: value
+	 *              }]
+	 *          }
+	 *      },
+	 *
+	 *      value: {
+	 *          path
+	 *      }
+	 * }
 	 */
 	module.exports = view((data = {}) => {
 	    style({
@@ -202,10 +218,33 @@
 
 	    return () => {
 	        let {
-	            value, onchange, variables, infixPath
+	            value,
+	            variables,
+	            infixPath,
+
+	            // global config
+	            predicates,
+	            predicatesMetaInfo,
+	            expressAbility,
+	            nameMap,
+	            pathMapping,
+
+	            // events
+	            onchange
 	        } = data;
 
 	        completeValueWithDefault(value);
+
+	        if (data.infixPath) {
+	            return expressionView(mergeMap(data, {
+	                infixPath: null,
+	                value: {
+	                    path: infixPath,
+	                    params: [value],
+	                    infix: 1
+	                }
+	            }));
+	        }
 
 	        let expresionType = getExpressionType(value.path);
 
@@ -218,16 +257,22 @@
 	            }
 	        });
 
+	        let expandor = data.value.path && ExpandorView({
+	            onExpand: (hide) => {
+	                update();
+	                data.onexpandchange && data.onexpandchange(hide, data);
+	            },
+
+	            onselected: () => {
+	                update();
+	            },
+
+	            data
+	        });
+
 	        onchange(value);
 
-	        return data.infixPath ? expressionView(mergeMap(data, {
-	            infixPath: null,
-	            value: {
-	                path: infixPath,
-	                params: [value],
-	                infix: 1
-	            }
-	        })) : n('div', {
+	        return n('div', {
 	            style: {
 	                position: 'relative',
 	                display: 'inline-block',
@@ -249,21 +294,52 @@
 	                data.value.path && [
 	                    expresionType === PREDICATE && PredicateView({
 	                        prefixParams: getPrefixParams(data, {
-	                            expressionView, onexpandchange: (hide, data) => {
-	                                // close infix mode
-	                                update([
-	                                    ['infixPath', null],
-	                                    ['value', data.value],
-	                                    ['title', '']
-	                                ]);
-	                            }
+	                            itemRender: ({
+	                                title,
+	                                content,
+	                                onchange
+	                            }) => expressionView({
+	                                value: content,
+	                                title,
+	                                onchange,
+	                                predicates,
+	                                predicatesMetaInfo,
+	                                variables,
+	                                nameMap,
+	                                pathMapping,
+	                                expressAbility,
+
+	                                onexpandchange: (hide, data) => {
+	                                    // close infix mode
+	                                    update([
+	                                        ['infixPath', null],
+	                                        ['value', data.value],
+	                                        ['title', '']
+	                                    ]);
+	                                }
+	                            })
 	                        }),
 
 	                        value,
 	                        optionsView,
 
 	                        suffixParams: getSuffixParams(data, {
-	                            expressionView
+	                            expressionView,
+	                            itemRender: ({
+	                                title,
+	                                content,
+	                                onchange
+	                            }) => expressionView({
+	                                title,
+	                                onchange,
+	                                predicates,
+	                                predicatesMetaInfo,
+	                                nameMap,
+	                                pathMapping,
+	                                variables,
+	                                expressAbility,
+	                                value: content,
+	                            })
 	                        })
 	                    }),
 
@@ -288,18 +364,7 @@
 	            ]),
 
 	            // expandor
-	            data.value.path && ExpandorView({
-	                onExpand: (hide) => {
-	                    update();
-	                    data.onexpandchange && data.onexpandchange(hide, data);
-	                },
-
-	                onselected: () => {
-	                    update();
-	                },
-
-	                data
-	            })
+	            expandor
 	        ]);
 	    };
 	});
@@ -7164,15 +7229,9 @@
 	const id = v => v;
 
 	let getPrefixParams = (data, {
-	    expressionView, onexpandchange
+	    itemRender
 	}) => {
 	    let {
-	        predicates,
-	        predicatesMetaInfo,
-	        expressAbility,
-	        nameMap,
-	        pathMapping,
-	        variables,
 	        value,
 	        onchange = id
 	    } = data;
@@ -7180,22 +7239,7 @@
 	    let args = getArgs(data);
 
 	    return ParamsFieldView({
-	        itemRender: ({
-	            title,
-	            content,
-	            onchange
-	        }) => expressionView({
-	            title,
-	            onchange,
-	            onexpandchange,
-	            predicates,
-	            predicatesMetaInfo,
-	            variables,
-	            nameMap,
-	            pathMapping,
-	            expressAbility,
-	            value: content,
-	        }),
+	        itemRender,
 
 	        onchange: (params) => {
 	            value.params = params.concat(value.params.slice(value.infix));
@@ -7209,15 +7253,9 @@
 	};
 
 	let getSuffixParams = (data, {
-	    expressionView
+	    itemRender
 	}) => {
 	    let {
-	        predicates,
-	        predicatesMetaInfo,
-	        expressAbility,
-	        nameMap,
-	        pathMapping,
-	        variables,
 	        value,
 	        onchange = id
 	    } = data;
@@ -7225,21 +7263,7 @@
 	    let args = getArgs(data);
 
 	    return ParamsFieldView({
-	        itemRender: ({
-	            title,
-	            content,
-	            onchange
-	        }) => expressionView({
-	            title,
-	            onchange,
-	            predicates,
-	            predicatesMetaInfo,
-	            nameMap,
-	            pathMapping,
-	            variables,
-	            expressAbility,
-	            value: content,
-	        }),
+	        itemRender,
 
 	        onchange: (params) => {
 	            value.params = value.params.slice(0, value.infix).concat(params);
