@@ -80,6 +80,22 @@ let {
  *
  * 1. user choses expression type
  * 2. define current expression type
+ *
+ * data = {
+ *      predicates,
+ *      predicatesMetaInfo: {
+ *          ... {
+ *              args: [{
+ *                  name,
+ *                  defaultValue: value
+ *              }]
+ *          }
+ *      },
+ *
+ *      value: {
+ *          path
+ *      }
+ * }
  */
 module.exports = view((data = {}) => {
     style({
@@ -100,10 +116,33 @@ let expressionView = view((data, {
 
     return () => {
         let {
-            value, onchange, variables, infixPath
+            value,
+            variables,
+            infixPath,
+
+            // global config
+            predicates,
+            predicatesMetaInfo,
+            expressAbility,
+            nameMap,
+            pathMapping,
+
+            // events
+            onchange
         } = data;
 
         completeValueWithDefault(value);
+
+        if (data.infixPath) {
+            return expressionView(mergeMap(data, {
+                infixPath: null,
+                value: {
+                    path: infixPath,
+                    params: [value],
+                    infix: 1
+                }
+            }));
+        }
 
         let expresionType = getExpressionType(value.path);
 
@@ -116,16 +155,22 @@ let expressionView = view((data, {
             }
         });
 
+        let expandor = data.value.path && ExpandorView({
+            onExpand: (hide) => {
+                update();
+                data.onexpandchange && data.onexpandchange(hide, data);
+            },
+
+            onselected: () => {
+                update();
+            },
+
+            data
+        });
+
         onchange(value);
 
-        return data.infixPath ? expressionView(mergeMap(data, {
-            infixPath: null,
-            value: {
-                path: infixPath,
-                params: [value],
-                infix: 1
-            }
-        })) : n('div', {
+        return n('div', {
             style: {
                 position: 'relative',
                 display: 'inline-block',
@@ -147,21 +192,52 @@ let expressionView = view((data, {
                 data.value.path && [
                     expresionType === PREDICATE && PredicateView({
                         prefixParams: getPrefixParams(data, {
-                            expressionView, onexpandchange: (hide, data) => {
-                                // close infix mode
-                                update([
-                                    ['infixPath', null],
-                                    ['value', data.value],
-                                    ['title', '']
-                                ]);
-                            }
+                            itemRender: ({
+                                title,
+                                content,
+                                onchange
+                            }) => expressionView({
+                                value: content,
+                                title,
+                                onchange,
+                                predicates,
+                                predicatesMetaInfo,
+                                variables,
+                                nameMap,
+                                pathMapping,
+                                expressAbility,
+
+                                onexpandchange: (hide, data) => {
+                                    // close infix mode
+                                    update([
+                                        ['infixPath', null],
+                                        ['value', data.value],
+                                        ['title', '']
+                                    ]);
+                                }
+                            })
                         }),
 
                         value,
                         optionsView,
 
                         suffixParams: getSuffixParams(data, {
-                            expressionView
+                            expressionView,
+                            itemRender: ({
+                                title,
+                                content,
+                                onchange
+                            }) => expressionView({
+                                title,
+                                onchange,
+                                predicates,
+                                predicatesMetaInfo,
+                                nameMap,
+                                pathMapping,
+                                variables,
+                                expressAbility,
+                                value: content,
+                            })
                         })
                     }),
 
@@ -186,18 +262,7 @@ let expressionView = view((data, {
             ]),
 
             // expandor
-            data.value.path && ExpandorView({
-                onExpand: (hide) => {
-                    update();
-                    data.onexpandchange && data.onexpandchange(hide, data);
-                },
-
-                onselected: () => {
-                    update();
-                },
-
-                data
-            })
+            expandor
         ]);
     };
 });

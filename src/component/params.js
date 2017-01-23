@@ -20,15 +20,9 @@ let getArgs = ({
 const id = v => v;
 
 let getPrefixParams = (data, {
-    expressionView, onexpandchange
+    itemRender
 }) => {
     let {
-        predicates,
-        predicatesMetaInfo,
-        expressAbility,
-        nameMap,
-        pathMapping,
-        variables,
         value,
         onchange = id
     } = data;
@@ -36,22 +30,7 @@ let getPrefixParams = (data, {
     let args = getArgs(data);
 
     return ParamsFieldView({
-        itemRender: ({
-            title,
-            content,
-            onchange
-        }) => expressionView({
-            title,
-            onchange,
-            onexpandchange,
-            predicates,
-            predicatesMetaInfo,
-            variables,
-            nameMap,
-            pathMapping,
-            expressAbility,
-            value: content,
-        }),
+        itemRender,
 
         onchange: (params) => {
             value.params = params.concat(value.params.slice(value.infix));
@@ -65,15 +44,9 @@ let getPrefixParams = (data, {
 };
 
 let getSuffixParams = (data, {
-    expressionView
+    itemRender
 }) => {
     let {
-        predicates,
-        predicatesMetaInfo,
-        expressAbility,
-        nameMap,
-        pathMapping,
-        variables,
         value,
         onchange = id
     } = data;
@@ -81,21 +54,7 @@ let getSuffixParams = (data, {
     let args = getArgs(data);
 
     return ParamsFieldView({
-        itemRender: ({
-            title,
-            content,
-            onchange
-        }) => expressionView({
-            title,
-            onchange,
-            predicates,
-            predicatesMetaInfo,
-            nameMap,
-            pathMapping,
-            variables,
-            expressAbility,
-            value: content,
-        }),
+        itemRender,
 
         onchange: (params) => {
             value.params = value.params.slice(0, value.infix).concat(params);
