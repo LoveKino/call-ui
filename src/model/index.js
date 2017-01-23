@@ -10,7 +10,7 @@ let {
 
 let {
     PREDICATE, VARIABLE, JSON_DATA, ABSTRACTION,
-    NUMBER, BOOLEAN, STRING, JSON_TYPE, NULL
+    NUMBER, BOOLEAN, STRING, JSON_TYPE, NULL, DEFAULT_DATA_MAP
 } = require('../const');
 
 let {
@@ -117,7 +117,31 @@ let getContext = ({
 
 let getDataTypePath = (path = '') => path.split('.').slice(1).join('.');
 
+let completeDataWithDefault = (data) => {
+    data.value = data.value || {};
+    data.value.currentVariables = data.value.variables || [];
+    data.variables = data.variables || [];
+    data.funs = data.funs || [JSON_DATA, PREDICATE, ABSTRACTION, VARIABLE];
+    data.onchange = data.onchange || id;
+    return data;
+};
+
+let completeValueWithDefault = (value) => {
+    let expresionType = getExpressionType(value.path);
+    if (expresionType === JSON_DATA) {
+        let type = getDataTypePath(value.path);
+        value.value = value.value === undefined ? DEFAULT_DATA_MAP[type] : value.value;
+    } else if (expresionType === PREDICATE) {
+        value.params = value.params || [];
+        value.infix = value.infix || 0;
+    }
+    return value;
+};
+
+let id = v => v;
+
 module.exports = {
+    completeDataWithDefault,
     getLambda,
     getExpressionType,
     getPredicatePath,
@@ -126,5 +150,6 @@ module.exports = {
     infixTypes,
     getPredicateMetaInfo,
     getContext,
-    getDataTypePath
+    getDataTypePath,
+    completeValueWithDefault
 };

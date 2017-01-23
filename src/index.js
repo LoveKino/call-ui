@@ -4,48 +4,40 @@ let {
     view, n
 } = require('kabanery');
 
-let TreeOptionView = require('./component/treeOptionView');
+let JsonDataView = require('./component/jsonDataView');
 
-let JsonDataView = require('./jsonDataView');
+let AbstractionView = require('./component/abstractionView');
 
-let AbstractionView = require('./abstractionView');
+let PredicateView = require('./component/predicateView');
 
-let PredicateView = require('./predicateView');
+let VariableView = require('./component/variableView');
 
-let VariableView = require('./variableView');
+let ExpandorView = require('./component/expandorView');
 
-let ExpressionExpandor = require('./component/expressionExpandor');
+let funExpressionBody = require('./component/funExpressionBody');
 
-let params = require('./params');
+let OptionsView = require('./component/optionsView');
+
+let params = require('./component/params');
 
 let {
     mergeMap
 } = require('bolzano');
 
-const LAMBDA_STYLE = require('./style');
+const style = require('./style');
 
 let {
     JSON_DATA,
     ABSTRACTION,
     VARIABLE,
-    PREDICATE,
-    DEFAULT_DATA_MAP
+    PREDICATE
 } = require('./const');
 
 let {
     getExpressionType,
-    expressionTypes,
-    getPredicateMetaInfo,
-    getPredicatePath,
-    infixTypes,
-    getDataTypePath
+    completeDataWithDefault,
+    completeValueWithDefault
 } = require('./model');
-
-let {
-    get
-} = require('bolzano');
-
-let funExpressionBody = require('./funExpressionBody');
 
 /**
  * lambda UI editor
@@ -53,7 +45,7 @@ let funExpressionBody = require('./funExpressionBody');
  * π calculus
  *
  * e ::= x              a variable
- *   |   πx.e           an abstraction (function)
+ *   |   חx.e           an abstraction (function)
  *   |   e₁e₂           a (function) application
  *
  * 1. meta data
@@ -66,7 +58,7 @@ let funExpressionBody = require('./funExpressionBody');
  *    x
  *
  * 4. abstraction
- *    πx₁x₂...x.e
+ *    חx₁x₂...x.e
  *
  * 5. application
  *    e₁e₂e₃...
@@ -76,9 +68,8 @@ let funExpressionBody = require('./funExpressionBody');
  * e ::= json                    as meta data, also a pre-defined π expression
  *   |   x                       variable
  *   |   predicate               predicate is a pre-defined abstraction
- *   |   πx.e                    abstraction
+ *   |   חx.e                    abstraction
  *   |   e1e2                    application
- *
  */
 
 /**
@@ -88,11 +79,9 @@ let funExpressionBody = require('./funExpressionBody');
  * 2. define current expression type
  */
 module.exports = view((data = {}) => {
-    let $style = document.getElementById('lambda-style');
-    if (!$style) {
-        $style = n('style id="lambda-style" type="text/css"', LAMBDA_STYLE);
-        document.getElementsByTagName('head')[0].appendChild($style);
-    }
+    style({
+        style: data.styleStr
+    });
 
     return n('div', {
         'class': 'lambda-ui'
@@ -104,11 +93,7 @@ module.exports = view((data = {}) => {
 let expressionView = view((data, {
     update
 }) => {
-    data.value = data.value || {};
-    data.value.currentVariables = data.value.variables || [];
-    data.variables = data.variables || [];
-    data.funs = data.funs || [JSON_DATA, PREDICATE, ABSTRACTION, VARIABLE];
-    data.onchange = data.onchange || id;
+    completeDataWithDefault(data);
 
     let {
         getSuffixParams,
@@ -130,6 +115,8 @@ let expressionView = view((data, {
             value, onchange, variables, infixPath
         } = data;
 
+        completeValueWithDefault(value);
+
         let expresionType = getExpressionType(value.path);
 
         let optionsView = OptionsView({
@@ -140,11 +127,6 @@ let expressionView = view((data, {
                 ]);
             }
         });
-
-        if (expresionType === JSON_DATA) {
-            let type = getDataTypePath(value.path);
-            value.value = value.value === undefined ? DEFAULT_DATA_MAP[type] : value.value;
-        }
 
         onchange(value);
 
@@ -178,8 +160,7 @@ let expressionView = view((data, {
                     expresionType === PREDICATE && PredicateView({
                         value,
                         optionsView,
-                        getSuffixParams,
-                        getPrefixParams
+                        prefixParams: getPrefixParams(), suffixParams: getSuffixParams()
                     }),
 
                     expresionType === JSON_DATA && JsonDataView({
@@ -224,62 +205,3 @@ let expressionView = view((data, {
         ]);
     };
 });
-
-let ExpandorView = ({
-    data,
-    onExpand,
-    onselected
-}) => {
-    let {
-        predicates, expandAbility
-    } = data;
-
-    let options = expandAbility ? expandAbility(data) : infixTypes({
-        predicates
-    });
-    return ExpressionExpandor({
-        options,
-        hideExpressionExpandor: data.hideExpressionExpandor,
-        onExpand: (hide) => {
-            data.hideExpressionExpandor = hide;
-            data.infixPath = null;
-            onExpand && onExpand();
-        },
-
-        onselected: (v, path) => {
-            data.infixPath = path;
-            data.title = get(getPredicateMetaInfo(data.predicatesMetaInfo, getPredicatePath(path)), 'args.0.name');
-            data.hideExpressionExpandor = true;
-            onselected && onselected(v, path);
-        }
-    });
-};
-
-let OptionsView = view(({
-    data, onselected
-}) => {
-    let {
-        title, value, showSelectTree, pathMapping, nameMap, expressAbility
-    } = data;
-
-    let optionData = expressAbility ? expressAbility(data) : expressionTypes(data);
-
-    return n('div', {
-        style: {
-            color: '#9b9b9b',
-            fontSize: 12,
-            display: 'inline-block'
-        }
-    }, [
-        TreeOptionView({
-            title,
-            showSelectTree,
-            pathMapping,
-            nameMap,
-            onselected,
-            path: value.path, data: optionData
-        })
-    ]);
-});
-
-const id = v => v;

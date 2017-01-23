@@ -4,11 +4,11 @@ let {
     n, view
 } = require('kabanery');
 
-let VariableDeclareView = require('./component/variableDeclareView');
+let VariableDeclareView = require('../view/variableDeclareView');
 
 let {
     VARIABLE
-} = require('./const');
+} = require('../const');
 
 module.exports = view(({
     value,

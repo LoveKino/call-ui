@@ -7,14 +7,11 @@ let {
 module.exports = view(({
     value,
     optionsView,
-    getSuffixParams,
-    getPrefixParams
+    prefixParams,
+    suffixParams
 }) => {
-    value.params = value.params || [];
-    value.infix = value.infix || 0;
-
     return n('div', [
-        getPrefixParams(),
+        prefixParams,
 
         optionsView,
 
@@ -23,7 +20,7 @@ module.exports = view(({
                 display: value.infix ? 'inline-block' : 'block'
             }
         }, [
-            getSuffixParams()
+            suffixParams
         ])
     ]);
 });

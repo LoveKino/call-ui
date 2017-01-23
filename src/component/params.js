@@ -1,10 +1,10 @@
 'use strict';
 
-let ParamsFieldView = require('./component/paramsFieldView');
+let ParamsFieldView = require('../view/paramsFieldView');
 
 let {
     getPredicatePath, getPredicateMetaInfo
-} = require('./model');
+} = require('../model');
 
 let getArgs = ({
     value,

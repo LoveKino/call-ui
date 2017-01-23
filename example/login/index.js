@@ -2,6 +2,16 @@
 
 let LambdaUI = require('../..');
 
+/**
+ * 1. no expand
+ *
+ * 2. can not change expression type
+ *
+ * 3. custom input
+ *
+ * 4. custome expression ui
+ */
+
 document.body.appendChild(LambdaUI({
     predicates: {
         login: 1

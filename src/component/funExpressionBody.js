@@ -18,7 +18,6 @@ module.exports = (data, {
         onchange
     } = data;
 
-
     let expressionViewObj = mergeMap(data, {
         title: 'expression',
         value: value.expression,

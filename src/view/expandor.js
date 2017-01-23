@@ -18,7 +18,7 @@ module.exports = view(({
     options,
     onExpand,
     onselected,
-    hideExpressionExpandor
+    hide
 }) => {
     return () => fold({
         head: (ops) => {
@@ -51,7 +51,7 @@ module.exports = view(({
             });
         },
 
-        hide: hideExpressionExpandor,
+        hide,
 
         body: () => {
             return n('div', {
