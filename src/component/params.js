@@ -19,96 +19,96 @@ let getArgs = ({
 
 const id = v => v;
 
-module.exports = (data, {
+let getPrefixParams = (data, {
     expressionView, onexpandchange
 }) => {
-    let getPrefixParams = () => {
-        let {
+    let {
+        predicates,
+        predicatesMetaInfo,
+        expressAbility,
+        nameMap,
+        pathMapping,
+        variables,
+        value,
+        onchange = id
+    } = data;
+
+    let args = getArgs(data);
+
+    return ParamsFieldView({
+        itemRender: ({
+            title,
+            content,
+            onchange
+        }) => expressionView({
+            title,
+            onchange,
+            onexpandchange,
             predicates,
             predicatesMetaInfo,
+            variables,
+            nameMap,
+            pathMapping,
             expressAbility,
+            value: content,
+        }),
+
+        onchange: (params) => {
+            value.params = params.concat(value.params.slice(value.infix));
+            onchange(value);
+        },
+
+        args: args.slice(0, value.infix),
+
+        params: value.params.slice(0, value.infix)
+    });
+};
+
+let getSuffixParams = (data, {
+    expressionView
+}) => {
+    let {
+        predicates,
+        predicatesMetaInfo,
+        expressAbility,
+        nameMap,
+        pathMapping,
+        variables,
+        value,
+        onchange = id
+    } = data;
+
+    let args = getArgs(data);
+
+    return ParamsFieldView({
+        itemRender: ({
+            title,
+            content,
+            onchange
+        }) => expressionView({
+            title,
+            onchange,
+            predicates,
+            predicatesMetaInfo,
             nameMap,
             pathMapping,
             variables,
-            value,
-            onchange = id
-        } = data;
-
-        let args = getArgs(data);
-
-        return ParamsFieldView({
-            itemRender: ({
-                title,
-                content,
-                onchange
-            }) => expressionView({
-                title,
-                onchange,
-                onexpandchange,
-                predicates,
-                predicatesMetaInfo,
-                variables,
-                nameMap,
-                pathMapping,
-                expressAbility,
-                value: content,
-            }),
-
-            onchange: (params) => {
-                value.params = params.concat(value.params.slice(value.infix));
-                onchange(value);
-            },
-
-            args: args.slice(0, value.infix),
-
-            params: value.params.slice(0, value.infix)
-        });
-    };
-
-    let getSuffixParams = () => {
-        let {
-            predicates,
-            predicatesMetaInfo,
             expressAbility,
-            nameMap,
-            pathMapping,
-            variables,
-            value,
-            onchange = id
-        } = data;
+            value: content,
+        }),
 
-        let args = getArgs(data);
+        onchange: (params) => {
+            value.params = value.params.slice(0, value.infix).concat(params);
+            onchange(value);
+        },
 
-        return ParamsFieldView({
-            itemRender: ({
-                title,
-                content,
-                onchange
-            }) => expressionView({
-                title,
-                onchange,
-                predicates,
-                predicatesMetaInfo,
-                nameMap,
-                pathMapping,
-                variables,
-                expressAbility,
-                value: content,
-            }),
+        args: args.slice(value.infix),
 
-            onchange: (params) => {
-                value.params = value.params.slice(0, value.infix).concat(params);
-                onchange(value);
-            },
+        params: value.params.slice(value.infix)
+    });
+};
 
-            args: args.slice(value.infix),
-
-            params: value.params.slice(value.infix)
-        });
-    };
-
-    return {
-        getPrefixParams,
-        getSuffixParams
-    };
+module.exports = {
+    getPrefixParams,
+    getSuffixParams
 };

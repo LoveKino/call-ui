@@ -16,31 +16,15 @@ let {
     isObject
 } = require('basetype');
 
-let boolInput = require('../view/input/boolInput');
-
-let numberInput = require('../view/input/numberInput');
-
-let textInput = require('../view/input/textInput');
-
-let jsonCodeInput = require('../view/input/jsonCodeInput');
-
-let nullInput = require('../view/input/nullInput');
+let InputView = require('../view/input');
 
 const {
-    NUMBER, BOOLEAN, STRING, JSON_TYPE, NULL, INLINE_TYPES, DEFAULT_DATA_MAP
+    INLINE_TYPES, DEFAULT_DATA_MAP
 } = require('../const');
 
 let {
     getDataTypePath
 } = require('../model');
-
-let inputViewMap = {
-    [NUMBER]: numberInput,
-    [STRING]: textInput,
-    [BOOLEAN]: boolInput,
-    [JSON_TYPE]: jsonCodeInput,
-    [NULL]: nullInput
-};
 
 /**
  * used to define json data
@@ -56,14 +40,12 @@ module.exports = view(({
     };
 
     let renderInputArea = () => {
-        let v = inputViewMap[type];
-
-        return v && v({
+        return InputView({
             content: value.value || DEFAULT_DATA_MAP[type],
             type: value.type,
             placeholder: value.placeholder,
             onchange: onValueChanged
-        });
+        }, type);
     };
 
     return n('div', {

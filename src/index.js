@@ -18,7 +18,10 @@ let funExpressionBody = require('./component/funExpressionBody');
 
 let OptionsView = require('./component/optionsView');
 
-let params = require('./component/params');
+let {
+    getSuffixParams,
+    getPrefixParams
+} = require('./component/params');
 
 let {
     mergeMap
@@ -95,21 +98,6 @@ let expressionView = view((data, {
 }) => {
     completeDataWithDefault(data);
 
-    let {
-        getSuffixParams,
-        getPrefixParams
-    } = params(data, {
-        expressionView,
-        onexpandchange: (hide, data) => {
-            // close infix mode
-            update([
-                ['infixPath', null],
-                ['value', data.value],
-                ['title', '']
-            ]);
-        }
-    });
-
     return () => {
         let {
             value, onchange, variables, infixPath
@@ -158,9 +146,23 @@ let expressionView = view((data, {
 
                 data.value.path && [
                     expresionType === PREDICATE && PredicateView({
+                        prefixParams: getPrefixParams(data, {
+                            expressionView, onexpandchange: (hide, data) => {
+                                // close infix mode
+                                update([
+                                    ['infixPath', null],
+                                    ['value', data.value],
+                                    ['title', '']
+                                ]);
+                            }
+                        }),
+
                         value,
                         optionsView,
-                        prefixParams: getPrefixParams(), suffixParams: getSuffixParams()
+
+                        suffixParams: getSuffixParams(data, {
+                            expressionView
+                        })
                     }),
 
                     expresionType === JSON_DATA && JsonDataView({
@@ -184,24 +186,18 @@ let expressionView = view((data, {
             ]),
 
             // expandor
-            n('div', {
-                style: {
-                    display: 'inline-block'
-                }
-            }, [
-                data.value.path && ExpandorView({
-                    onExpand: (hide) => {
-                        update();
-                        data.onexpandchange && data.onexpandchange(hide, data);
-                    },
+            data.value.path && ExpandorView({
+                onExpand: (hide) => {
+                    update();
+                    data.onexpandchange && data.onexpandchange(hide, data);
+                },
 
-                    onselected: () => {
-                        update();
-                    },
+                onselected: () => {
+                    update();
+                },
 
-                    data
-                })
-            ])
+                data
+            })
         ]);
     };
 });
