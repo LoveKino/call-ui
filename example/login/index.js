@@ -39,5 +39,7 @@ document.body.appendChild(LambdaUI({
 
     value: {
         path: 'predicate.login'
-    }
+    },
+
+    expressAbility: () => null
 }));

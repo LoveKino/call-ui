@@ -1884,7 +1884,6 @@
 	            predicatesMetaInfo,
 	            expressAbility,
 	            nameMap,
-	            pathMapping,
 
 	            // ui states
 	            title,
@@ -1898,8 +1897,7 @@
 	            predicates,
 	            predicatesMetaInfo,
 	            expressAbility,
-	            nameMap,
-	            pathMapping
+	            nameMap
 	        };
 
 	        completeValueWithDefault(value);
@@ -1922,7 +1920,6 @@
 	            data: expressAbility ? expressAbility(data) : expressionTypes(data),
 	            title,
 	            showSelectTree,
-	            pathMapping,
 	            nameMap,
 	            onselected: (v, path) => {
 	                update([
@@ -29284,7 +29281,6 @@
 	    showSelectTree,
 	    onselected,
 	    title,
-	    pathMapping,
 	    nameMap
 	}, {
 	    update
@@ -29315,7 +29311,7 @@
 	            onclick: () => {
 	                update('showSelectTree', !showSelectTree);
 	            }
-	        }, path ? renderGuideLine(path, pathMapping) : n('div class="input-style"', {
+	        }, path ? renderGuideLine(path) : n('div class="input-style"', {
 	            style: {
 	                color: '#9b9b9b',
 	                overflow: 'auto'
@@ -29351,7 +29347,7 @@
 	                fontSize: 14
 	            }
 	        }, [
-	            showSelectTree && TreeSelect({
+	            showSelectTree && data && TreeSelect({
 	                data: isFunction(data) ? data() : data,
 	                onselected: (v, p) => {
 	                    onselected && onselected(v, p);
@@ -29369,7 +29365,7 @@
 	/**
 	 * @param path string
 	 */
-	let renderGuideLine = (path, pathMapping) => {
+	let renderGuideLine = (path) => {
 	    let parts = path.split('.');
 	    let last = parts.pop();
 	    let type = parts[0];
@@ -29388,7 +29384,7 @@
 	            style: {
 	                paddingLeft: 10
 	            }
-	        }, pathMapping ? pathMapping(parts) : `(${parts.join(' > ')})`)
+	        }, `(${parts.join(' > ')})`)
 	    ]);
 	};
 

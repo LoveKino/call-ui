@@ -28,7 +28,6 @@ module.exports = view(({
     showSelectTree,
     onselected,
     title,
-    pathMapping,
     nameMap
 }, {
     update
@@ -59,7 +58,7 @@ module.exports = view(({
             onclick: () => {
                 update('showSelectTree', !showSelectTree);
             }
-        }, path ? renderGuideLine(path, pathMapping) : n('div class="input-style"', {
+        }, path ? renderGuideLine(path) : n('div class="input-style"', {
             style: {
                 color: '#9b9b9b',
                 overflow: 'auto'
@@ -95,7 +94,7 @@ module.exports = view(({
                 fontSize: 14
             }
         }, [
-            showSelectTree && TreeSelect({
+            showSelectTree && data && TreeSelect({
                 data: isFunction(data) ? data() : data,
                 onselected: (v, p) => {
                     onselected && onselected(v, p);
@@ -113,7 +112,7 @@ module.exports = view(({
 /**
  * @param path string
  */
-let renderGuideLine = (path, pathMapping) => {
+let renderGuideLine = (path) => {
     let parts = path.split('.');
     let last = parts.pop();
     let type = parts[0];
@@ -132,6 +131,6 @@ let renderGuideLine = (path, pathMapping) => {
             style: {
                 paddingLeft: 10
             }
-        }, pathMapping ? pathMapping(parts) : `(${parts.join(' > ')})`)
+        }, `(${parts.join(' > ')})`)
     ]);
 };

@@ -124,7 +124,6 @@ let expressionView = view((data, {
             predicatesMetaInfo,
             expressAbility,
             nameMap,
-            pathMapping,
 
             // ui states
             title,
@@ -138,8 +137,7 @@ let expressionView = view((data, {
             predicates,
             predicatesMetaInfo,
             expressAbility,
-            nameMap,
-            pathMapping
+            nameMap
         };
 
         completeValueWithDefault(value);
@@ -162,7 +160,6 @@ let expressionView = view((data, {
             data: expressAbility ? expressAbility(data) : expressionTypes(data),
             title,
             showSelectTree,
-            pathMapping,
             nameMap,
             onselected: (v, path) => {
                 update([
