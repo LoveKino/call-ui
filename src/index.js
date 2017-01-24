@@ -14,9 +14,7 @@ let VariableView = require('./component/variableView');
 
 let ExpandorView = require('./component/expandorView');
 
-let funExpressionBody = require('./component/funExpressionBody');
-
-let OptionsView = require('./component/optionsView');
+let TreeOptionView = require('./view/treeOptionView');
 
 let {
     getSuffixParams,
@@ -39,7 +37,8 @@ let {
 let {
     getExpressionType,
     completeDataWithDefault,
-    completeValueWithDefault
+    completeValueWithDefault,
+    expressionTypes
 } = require('./model');
 
 /**
@@ -127,9 +126,21 @@ let expressionView = view((data, {
             nameMap,
             pathMapping,
 
+            // ui states
+            title,
+            showSelectTree,
+
             // events
             onchange
         } = data;
+
+        let globalConfig = {
+            predicates,
+            predicatesMetaInfo,
+            expressAbility,
+            nameMap,
+            pathMapping
+        };
 
         completeValueWithDefault(value);
 
@@ -146,8 +157,14 @@ let expressionView = view((data, {
 
         let expresionType = getExpressionType(value.path);
 
-        let optionsView = OptionsView({
-            data, onselected: (v, path) => {
+        let optionsView = TreeOptionView({
+            path: value.path,
+            data: expressAbility ? expressAbility(data) : expressionTypes(data),
+            title,
+            showSelectTree,
+            pathMapping,
+            nameMap,
+            onselected: (v, path) => {
                 update([
                     ['value.path', path],
                     ['showSelectTree', false]
@@ -167,6 +184,59 @@ let expressionView = view((data, {
 
             data
         });
+
+        let getAbstractionBody = () => {
+            let expressionViewObj = mergeMap(globalConfig, {
+                title: 'expression',
+                value: value.expression,
+                variables: variables.concat(value.currentVariables),
+                onchange: (lambda) => {
+                    value.expression = lambda;
+                    onchange && onchange(value);
+                }
+            });
+
+            return {
+                getView: () => {
+                    return expressionView(expressionViewObj);
+                },
+
+                updateVariables: (vars) => {
+                    expressionViewObj.variables = vars;
+                }
+            };
+        };
+
+        let prefixParamItemRender = ({
+            title,
+            content,
+            onchange
+        }) => expressionView(mergeMap(globalConfig, {
+            value: content,
+            title,
+            onchange,
+            variables,
+
+            onexpandchange: (hide, data) => {
+                // close infix mode
+                update([
+                    ['infixPath', null],
+                    ['value', data.value],
+                    ['title', '']
+                ]);
+            }
+        }));
+
+        let suffixParamItemRender = ({
+            title,
+            content,
+            onchange
+        }) => expressionView(mergeMap(globalConfig, {
+            title,
+            onchange,
+            variables,
+            value: content,
+        }));
 
         onchange(value);
 
@@ -192,30 +262,8 @@ let expressionView = view((data, {
                 data.value.path && [
                     expresionType === PREDICATE && PredicateView({
                         prefixParams: getPrefixParams(data, {
-                            itemRender: ({
-                                title,
-                                content,
-                                onchange
-                            }) => expressionView({
-                                value: content,
-                                title,
-                                onchange,
-                                predicates,
-                                predicatesMetaInfo,
-                                variables,
-                                nameMap,
-                                pathMapping,
-                                expressAbility,
-
-                                onexpandchange: (hide, data) => {
-                                    // close infix mode
-                                    update([
-                                        ['infixPath', null],
-                                        ['value', data.value],
-                                        ['title', '']
-                                    ]);
-                                }
-                            })
+                            // prefix param item
+                            itemRender: prefixParamItemRender
                         }),
 
                         value,
@@ -223,21 +271,8 @@ let expressionView = view((data, {
 
                         suffixParams: getSuffixParams(data, {
                             expressionView,
-                            itemRender: ({
-                                title,
-                                content,
-                                onchange
-                            }) => expressionView({
-                                title,
-                                onchange,
-                                predicates,
-                                predicatesMetaInfo,
-                                nameMap,
-                                pathMapping,
-                                variables,
-                                expressAbility,
-                                value: content,
-                            })
+                            // suffix param item
+                            itemRender: suffixParamItemRender
                         })
                     }),
 
@@ -254,9 +289,7 @@ let expressionView = view((data, {
                         variables,
                         optionsView,
                         onchange,
-                        expressionBody: funExpressionBody(data, {
-                            expressionView
-                        })
+                        expressionBody: getAbstractionBody()
                     })
                 ]
             ]),

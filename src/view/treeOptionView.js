@@ -35,6 +35,8 @@ module.exports = view(({
 }) => {
     return n('label', {
         style: {
+            color: '#9b9b9b',
+            fontSize: 12,
             position: 'relative',
             display: 'inline-block'
         }
