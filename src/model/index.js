@@ -23,6 +23,22 @@ let {
 
 let method = dsl.require;
 
+/**
+ * get lambda from lambda-ui value
+ *
+ * value = {
+ *     path,
+ *
+ *     expression,    // for abstraction
+ *
+ *     currentVariables,    // for abstraction
+ *
+ *     params,    // predicate
+ *
+ *     value    // json data
+ * }
+ */
+
 let getLambda = (value) => {
     let expressionType = getExpressionType(value.path);
     let predicatePath = getPredicatePath(value.path);
@@ -40,6 +56,8 @@ let getLambda = (value) => {
             return value.value;
     }
 };
+
+let getLambdaUiValue = (lambdaJson) => {};
 
 let getVariableName = (path) => {
     let parts = path.split('.');

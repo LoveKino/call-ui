@@ -1,3 +1,3 @@
-# lambda-ui (one ui rules all)
+# leta-ui (one ui rules all)
 
-lambda editor ui
+leta editor ui
