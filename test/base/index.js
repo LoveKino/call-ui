@@ -2,19 +2,7 @@
 
 let assert = require('assert');
 
-let LambdaUI = require('../..');
-
-let {
-    getLambda
-} = require('../../src/model');
-
-let {
-    dsl, interpreter
-} = require('leta');
-
-let {
-    getJson
-} = dsl;
+let LetaUI = require('../..');
 
 let {
     n
@@ -25,29 +13,14 @@ let {
 } = require('bolzano');
 
 let test = (name, data, assertFun) => {
-    let run = interpreter(data.predicates);
-
     let changed = false;
 
-    data.onchange = (v) => {
-        v = getLambda(v);
-
-        let getValue = (v) => {
-            if (v instanceof Error) {
-                return v;
-            }
-            try {
-                return run(getJson(v));
-            } catch (err) {
-                return err;
-            }
-        };
-
+    data.onchange = (v, {
+        runLeta
+    }) => {
         if (!changed) {
             changed = true;
-            v = getValue(v);
-
-            assertFun(v);
+            assertFun(runLeta(v));
         }
     };
 
@@ -67,7 +40,7 @@ let test = (name, data, assertFun) => {
                 fontSize: 14
             }
         }, name),
-        LambdaUI(data),
+        LetaUI(data),
         n('pre', {
             style: {
                 fontSize: 10

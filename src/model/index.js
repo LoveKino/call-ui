@@ -5,11 +5,11 @@ let {
 } = require('bolzano');
 
 let {
-    dsl
+    dsl, interpreter
 } = require('leta');
 
 let {
-    PREDICATE, VARIABLE, JSON_DATA, ABSTRACTION,
+    PREDICATE, VARIABLE, JSON_DATA, ABSTRACTION, APPLICATION,
     NUMBER, BOOLEAN, STRING, JSON_TYPE, NULL, DEFAULT_DATA_MAP
 } = require('../const');
 
@@ -17,16 +17,16 @@ let {
     reduce, get
 } = require('bolzano');
 
-let {
-    v, r
-} = dsl;
+let getLambdaUiValue = require('./getLambdaUiValue');
 
-let method = dsl.require;
+let {
+    v, r, method, getJson
+} = dsl;
 
 /**
  * get lambda from lambda-ui value
  *
- * value = {
+ * lambda ui value = {
  *     path,
  *
  *     expression,    // for abstraction
@@ -54,10 +54,26 @@ let getLambda = (value) => {
             return method(predicatePath)(...map(value.params, getLambda));
         case JSON_DATA:
             return value.value;
+        case APPLICATION:
+            // TODO
     }
 };
 
-let getLambdaUiValue = (lambdaJson) => {};
+let runner = (predicates) => {
+    let run = interpreter(predicates);
+
+    return (v) => {
+        let ret = getLambda(v);
+        if (ret instanceof Error) {
+            return ret;
+        }
+        try {
+            return run(getJson(ret));
+        } catch (err) {
+            return err;
+        }
+    };
+};
 
 let getVariableName = (path) => {
     let parts = path.split('.');
@@ -85,7 +101,8 @@ let expressionTypes = ({
             [NULL]: 1
         }, // declare json data
         [PREDICATE]: predicates, // declare function
-        [ABSTRACTION]: 1 // declare function
+        [ABSTRACTION]: 1, // declare function
+        [APPLICATION]: 1
     };
 
     if (variables.length) {
@@ -161,6 +178,7 @@ let id = v => v;
 module.exports = {
     completeDataWithDefault,
     getLambda,
+    runner,
     getExpressionType,
     getPredicatePath,
     getVariableName,
@@ -169,5 +187,7 @@ module.exports = {
     getPredicateMetaInfo,
     getContext,
     getDataTypePath,
-    completeValueWithDefault
+    completeValueWithDefault,
+
+    getLambdaUiValue
 };

@@ -5,7 +5,7 @@ let {
 } = require('kabanery');
 
 let {
-    map
+    map, mergeMap
 } = require('bolzano');
 
 module.exports = view(({
@@ -21,9 +21,9 @@ module.exports = view(({
     }, [
         map(args, ({
             name,
-            defaultValue
+            content
         }, index) => {
-            let value = params[index] || defaultValue || {};
+            let value = mergeMap(params[index] || {}, content || {});
 
             return n('fieldset', {
                 style: {

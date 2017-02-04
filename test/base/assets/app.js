@@ -48,19 +48,7 @@
 
 	let assert = __webpack_require__(1);
 
-	let LambdaUI = __webpack_require__(6);
-
-	let {
-	    getLambda
-	} = __webpack_require__(63);
-
-	let {
-	    dsl, interpreter
-	} = __webpack_require__(64);
-
-	let {
-	    getJson
-	} = dsl;
+	let LetaUI = __webpack_require__(6);
 
 	let {
 	    n
@@ -71,29 +59,14 @@
 	} = __webpack_require__(38);
 
 	let test = (name, data, assertFun) => {
-	    let run = interpreter(data.predicates);
-
 	    let changed = false;
 
-	    data.onchange = (v) => {
-	        v = getLambda(v);
-
-	        let getValue = (v) => {
-	            if (v instanceof Error) {
-	                return v;
-	            }
-	            try {
-	                return run(getJson(v));
-	            } catch (err) {
-	                return err;
-	            }
-	        };
-
+	    data.onchange = (v, {
+	        runLeta
+	    }) => {
 	        if (!changed) {
 	            changed = true;
-	            v = getValue(v);
-
-	            assertFun(v);
+	            assertFun(runLeta(v));
 	        }
 	    };
 
@@ -113,7 +86,7 @@
 	                fontSize: 14
 	            }
 	        }, name),
-	        LambdaUI(data),
+	        LetaUI(data),
 	        n('pre', {
 	            style: {
 	                fontSize: 10
@@ -1760,302 +1733,37 @@
 
 	'use strict';
 
-	let {
-	    view, n
-	} = __webpack_require__(8);
-
-	let JsonDataView = __webpack_require__(37);
-
-	let AbstractionView = __webpack_require__(74);
-
-	let PredicateView = __webpack_require__(80);
-
-	let VariableView = __webpack_require__(81);
-
-	let ExpandorView = __webpack_require__(82);
-
-	let TreeOptionView = __webpack_require__(100);
+	let LetaUI = __webpack_require__(102);
 
 	let {
-	    getSuffixParams,
-	    getPrefixParams
-	} = __webpack_require__(101);
+	    runner, getLambdaUiValue
+	} = __webpack_require__(63);
 
 	let {
 	    mergeMap
 	} = __webpack_require__(38);
 
-	const style = __webpack_require__(103);
+	module.exports = (...args) => {
+	    let data = null;
+	    if (args.length === 1) {
+	        data = args[0];
+	    } else if (args.length === 2) {
+	        data = args[1];
+	        data.value = getLambdaUiValue(args[0]); // convert lambda json
+	    } else {
+	        throw new Error(`unexpected number of arguments. Expect one or two but got ${args.length}`);
+	    }
 
-	let {
-	    JSON_DATA,
-	    ABSTRACTION,
-	    VARIABLE,
-	    PREDICATE
-	} = __webpack_require__(62);
+	    let runLeta = runner(data.predicates);
 
-	let {
-	    getExpressionType,
-	    completeDataWithDefault,
-	    completeValueWithDefault,
-	    expressionTypes
-	} = __webpack_require__(63);
-
-	/**
-	 * lambda UI editor
-	 *
-	 * π calculus
-	 *
-	 * e ::= x              a variable
-	 *   |   חx.e           an abstraction (function)
-	 *   |   e₁e₂           a (function) application
-	 *
-	 * 1. meta data
-	 *    json
-	 *
-	 * 2. predicate
-	 *    f(x, ...)
-	 *
-	 * 3. variable
-	 *    x
-	 *
-	 * 4. abstraction
-	 *    חx₁x₂...x.e
-	 *
-	 * 5. application
-	 *    e₁e₂e₃...
-	 *
-	 * π based on predicates and json expansion
-	 *
-	 * e ::= json                    as meta data, also a pre-defined π expression
-	 *   |   x                       variable
-	 *   |   predicate               predicate is a pre-defined abstraction
-	 *   |   חx.e                    abstraction
-	 *   |   e1e2                    application
-	 */
-
-	/**
-	 * expression user interface
-	 *
-	 * 1. user choses expression type
-	 * 2. define current expression type
-	 *
-	 * data = {
-	 *      predicates,
-	 *      predicatesMetaInfo: {
-	 *          ... {
-	 *              args: [{
-	 *                  name,
-	 *                  defaultValue: value
-	 *              }]
-	 *          }
-	 *      },
-	 *
-	 *      value: {
-	 *          path
-	 *      }
-	 * }
-	 */
-	module.exports = view((data = {}) => {
-	    style({
-	        style: data.styleStr
-	    });
-
-	    return n('div', {
-	        'class': 'lambda-ui'
-	    }, [
-	        expressionView(data)
-	    ]);
-	});
-
-	let expressionView = view((data, {
-	    update
-	}) => {
-	    completeDataWithDefault(data);
-
-	    return () => {
-	        let {
-	            value,
-	            variables,
-	            infixPath,
-
-	            // global config
-	            predicates,
-	            predicatesMetaInfo,
-	            expressAbility,
-	            nameMap,
-
-	            // ui states
-	            title,
-	            showSelectTree,
-
-	            // events
-	            onchange
-	        } = data;
-
-	        let globalConfig = {
-	            predicates,
-	            predicatesMetaInfo,
-	            expressAbility,
-	            nameMap
-	        };
-
-	        completeValueWithDefault(value);
-
-	        if (data.infixPath) {
-	            return expressionView(mergeMap(data, {
-	                infixPath: null,
-	                value: {
-	                    path: infixPath,
-	                    params: [value],
-	                    infix: 1
-	                }
-	            }));
-	        }
-
-	        let expresionType = getExpressionType(value.path);
-
-	        let optionsView = TreeOptionView({
-	            path: value.path,
-	            data: expressAbility ? expressAbility(data) : expressionTypes(data),
-	            title,
-	            showSelectTree,
-	            nameMap,
-	            onselected: (v, path) => {
-	                update([
-	                    ['value.path', path],
-	                    ['showSelectTree', false]
-	                ]);
-	            }
-	        });
-
-	        let expandor = data.value.path && ExpandorView({
-	            onExpand: (hide) => {
-	                update();
-	                data.onexpandchange && data.onexpandchange(hide, data);
-	            },
-
-	            onselected: () => {
-	                update();
-	            },
-
-	            data
-	        });
-
-	        let getAbstractionBody = () => {
-	            let expressionViewObj = mergeMap(globalConfig, {
-	                title: 'expression',
-	                value: value.expression,
-	                variables: variables.concat(value.currentVariables),
-	                onchange: (lambda) => {
-	                    value.expression = lambda;
-	                    onchange && onchange(value);
-	                }
+	    return LetaUI(mergeMap(data, {
+	        onchange: (v) => {
+	            data.onchange && data.onchange(v, {
+	                runLeta
 	            });
-
-	            return {
-	                getView: () => {
-	                    return expressionView(expressionViewObj);
-	                },
-
-	                updateVariables: (vars) => {
-	                    expressionViewObj.variables = vars;
-	                }
-	            };
-	        };
-
-	        let prefixParamItemRender = ({
-	            title,
-	            content,
-	            onchange
-	        }) => expressionView(mergeMap(globalConfig, {
-	            value: content,
-	            title,
-	            onchange,
-	            variables,
-
-	            onexpandchange: (hide, data) => {
-	                // close infix mode
-	                update([
-	                    ['infixPath', null],
-	                    ['value', data.value],
-	                    ['title', '']
-	                ]);
-	            }
-	        }));
-
-	        let suffixParamItemRender = ({
-	            title,
-	            content,
-	            onchange
-	        }) => expressionView(mergeMap(globalConfig, {
-	            title,
-	            onchange,
-	            variables,
-	            value: content,
-	        }));
-
-	        onchange(value);
-
-	        return n('div', {
-	            style: {
-	                position: 'relative',
-	                display: 'inline-block',
-	                borderRadius: 5
-	            }
-	        }, [
-	            // expression
-	            n('div', {
-	                style: {
-	                    display: 'inline-block',
-	                    padding: 8,
-	                    border: '1px solid rgba(200, 200, 200, 0.4)',
-	                    borderRadius: 5
-	                }
-	            }, [
-
-	                !data.value.path && optionsView,
-
-	                data.value.path && [
-	                    expresionType === PREDICATE && PredicateView({
-	                        prefixParams: getPrefixParams(data, {
-	                            // prefix param item
-	                            itemRender: prefixParamItemRender
-	                        }),
-
-	                        value,
-	                        optionsView,
-
-	                        suffixParams: getSuffixParams(data, {
-	                            expressionView,
-	                            // suffix param item
-	                            itemRender: suffixParamItemRender
-	                        })
-	                    }),
-
-	                    expresionType === JSON_DATA && JsonDataView({
-	                        value, onchange, optionsView
-	                    }),
-
-	                    expresionType === VARIABLE && VariableView({
-	                        optionsView
-	                    }),
-
-	                    expresionType === ABSTRACTION && AbstractionView({
-	                        value,
-	                        variables,
-	                        optionsView,
-	                        onchange,
-	                        expressionBody: getAbstractionBody()
-	                    })
-	                ]
-	            ]),
-
-	            // expandor
-	            expandor
-	        ]);
-	    };
-	});
+	        }
+	    }));
+	};
 
 
 /***/ },
@@ -25985,11 +25693,11 @@
 	} = __webpack_require__(38);
 
 	let {
-	    dsl
+	    dsl, interpreter
 	} = __webpack_require__(64);
 
 	let {
-	    PREDICATE, VARIABLE, JSON_DATA, ABSTRACTION,
+	    PREDICATE, VARIABLE, JSON_DATA, ABSTRACTION, APPLICATION,
 	    NUMBER, BOOLEAN, STRING, JSON_TYPE, NULL, DEFAULT_DATA_MAP
 	} = __webpack_require__(62);
 
@@ -25997,11 +25705,27 @@
 	    reduce, get
 	} = __webpack_require__(38);
 
+	let getLambdaUiValue = __webpack_require__(71);
+
 	let {
-	    v, r
+	    v, r, method, getJson
 	} = dsl;
 
-	let method = dsl.require;
+	/**
+	 * get lambda from lambda-ui value
+	 *
+	 * lambda ui value = {
+	 *     path,
+	 *
+	 *     expression,    // for abstraction
+	 *
+	 *     currentVariables,    // for abstraction
+	 *
+	 *     params,    // predicate
+	 *
+	 *     value    // json data
+	 * }
+	 */
 
 	let getLambda = (value) => {
 	    let expressionType = getExpressionType(value.path);
@@ -26018,7 +25742,25 @@
 	            return method(predicatePath)(...map(value.params, getLambda));
 	        case JSON_DATA:
 	            return value.value;
+	        case APPLICATION:
+	            // TODO
 	    }
+	};
+
+	let runner = (predicates) => {
+	    let run = interpreter(predicates);
+
+	    return (v) => {
+	        let ret = getLambda(v);
+	        if (ret instanceof Error) {
+	            return ret;
+	        }
+	        try {
+	            return run(getJson(ret));
+	        } catch (err) {
+	            return err;
+	        }
+	    };
 	};
 
 	let getVariableName = (path) => {
@@ -26047,7 +25789,8 @@
 	            [NULL]: 1
 	        }, // declare json data
 	        [PREDICATE]: predicates, // declare function
-	        [ABSTRACTION]: 1 // declare function
+	        [ABSTRACTION]: 1, // declare function
+	        [APPLICATION]: 1
 	    };
 
 	    if (variables.length) {
@@ -26123,6 +25866,7 @@
 	module.exports = {
 	    completeDataWithDefault,
 	    getLambda,
+	    runner,
 	    getExpressionType,
 	    getPredicatePath,
 	    getVariableName,
@@ -26131,7 +25875,9 @@
 	    getPredicateMetaInfo,
 	    getContext,
 	    getDataTypePath,
-	    completeValueWithDefault
+	    completeValueWithDefault,
+
+	    getLambdaUiValue
 	};
 
 
@@ -26169,7 +25915,7 @@
 	 */
 
 	let dsl = __webpack_require__(65);
-	let interpreter = __webpack_require__(69);
+	let interpreter = __webpack_require__(66);
 
 	module.exports = {
 	    dsl,
@@ -26185,6 +25931,14 @@
 
 	/**
 	 * dsl used to contruct lambda json
+	 *
+	 * ח based on predicates and json expansion
+	 *
+	 * e ::= json                    as meta data, also a pre-defined π expression
+	 *   |   x                       variable
+	 *   |   predicate               predicate is a pre-defined abstraction
+	 *   |   חx.e                    abstraction
+	 *   |   e1e2                    application
 	 *
 	 * ## translate lambda to json
 	 *
@@ -26244,14 +25998,24 @@
 	 */
 
 	let {
-	    map
-	} = __webpack_require__(66);
+	    map, contain
+	} = __webpack_require__(38);
 
 	let {
-	    isFunction
+	    isFunction, likeArray, funType
 	} = __webpack_require__(13);
 
 	let unique = {};
+
+	const EXPRESSION_PREFIXES = ['a', 'p', 'f', 'v', 'd', 'l'];
+	const [
+	    APPLICATION_PREFIX,
+	    PREDICATE_PREFIX,
+	    PREDICATE_VARIABLE_PREFIX,
+	    VARIABLE_PREFIX,
+	    META_DATA_PREFIX,
+	    ABSTRACTION_PREFIX
+	] = EXPRESSION_PREFIXES;
 
 	/**
 	 * get expression
@@ -26259,7 +26023,7 @@
 	let exp = (json) => {
 	    // application
 	    let e = (...args) => {
-	        return exp(['a', getJson(e), map(args, getJson)]);
+	        return exp([APPLICATION_PREFIX, getJson(e), map(args, getJson)]);
 	    };
 	    e.unique = unique;
 	    e.json = json;
@@ -26274,10 +26038,10 @@
 	        /**
 	         * predicate
 	         */
-	        return exp(['p', name.trim(), map(args, getJson)]);
+	        return exp([PREDICATE_PREFIX, name.trim(), map(args, getJson)]);
 	    };
 	    predicate.unique = unique;
-	    predicate.json = ['f', name];
+	    predicate.json = [PREDICATE_VARIABLE_PREFIX, name];
 
 	    return predicate;
 	};
@@ -26287,22 +26051,84 @@
 	 *
 	 * TODO type
 	 */
-	let v = (name) => exp(['v', name]);
+	let v = (name) => exp([VARIABLE_PREFIX, name]);
 
 	/**
 	 * e → חx₁x₂...x . e
 	 */
-	let r = (...args) => exp(['l', args.slice(0, args.length - 1), getJson(args[args.length - 1])]);
+	let r = (...args) => exp([ABSTRACTION_PREFIX, args.slice(0, args.length - 1), getJson(args[args.length - 1])]);
 
 	let isExp = v => isFunction(v) && v.unique === unique;
 
-	let getJson = (e) => isExp(e) ? e.json : ['d', e];
+	let getJson = (e) => isExp(e) ? e.json : [META_DATA_PREFIX, e];
+
+	let getExpressionType = funType((json) => {
+	    let type = json[0];
+	    if (!contain(EXPRESSION_PREFIXES, type)) {
+	        throw new Error(`unexpected expression type ${json[0]}. The context json is ${JSON.stringify(json, null, 4)}`);
+	    }
+	    return type;
+	}, [likeArray]);
+
+	let destruct = (json) => {
+	    let type = getExpressionType(json);
+
+	    switch (type) {
+	        case META_DATA_PREFIX:
+	            return {
+	                type,
+	                metaData: json[1]
+	            };
+	        case VARIABLE_PREFIX:
+	            return {
+	                type,
+	                variableName: json[1]
+	            };
+	        case ABSTRACTION_PREFIX:
+	            return {
+	                abstractionArgs: json[1],
+	                abstractionBody: json[2],
+	                type,
+	            };
+	        case PREDICATE_PREFIX:
+	            return {
+	                predicateName: json[1],
+	                predicateParams: json[2],
+	                type,
+	            };
+	        case APPLICATION_PREFIX:
+	            return {
+	                applicationFun: json[1],
+	                applicationParams: json[2],
+	                type
+	            };
+	        case PREDICATE_VARIABLE_PREFIX:
+	            return {
+	                type,
+	                predicateName: json[1]
+	            };
+	    }
+	};
 
 	module.exports = {
 	    require: requirePredicate,
+	    method: requirePredicate,
 	    r,
 	    v,
-	    getJson
+	    getJson,
+
+	    getExpressionType,
+
+	    APPLICATION_PREFIX,
+	    PREDICATE_PREFIX,
+	    PREDICATE_VARIABLE_PREFIX,
+	    VARIABLE_PREFIX,
+	    META_DATA_PREFIX,
+	    ABSTRACTION_PREFIX,
+
+	    EXPRESSION_PREFIXES,
+
+	    destruct
 	};
 
 
@@ -26313,368 +26139,8 @@
 	'use strict';
 
 	let {
-	    isObject, funType, or, isString, isFalsy, likeArray
-	} = __webpack_require__(13);
-
-	let iterate = __webpack_require__(67);
-
-	let {
-	    map, reduce, find, findIndex, forEach, filter, any, exist, compact
-	} = __webpack_require__(68);
-
-	let contain = (list, item, fopts) => findIndex(list, item, fopts) !== -1;
-
-	let difference = (list1, list2, fopts) => {
-	    return reduce(list1, (prev, item) => {
-	        if (!contain(list2, item, fopts) &&
-	            !contain(prev, item, fopts)) {
-	            prev.push(item);
-	        }
-	        return prev;
-	    }, []);
-	};
-
-	let union = (list1, list2, fopts) => deRepeat(list2, fopts, deRepeat(list1, fopts));
-
-	let mergeMap = (map1 = {}, map2 = {}) => reduce(map2, setValueKey, reduce(map1, setValueKey, {}));
-
-	let setValueKey = (obj, value, key) => {
-	    obj[key] = value;
-	    return obj;
-	};
-
-	let interset = (list1, list2, fopts) => {
-	    return reduce(list1, (prev, cur) => {
-	        if (contain(list2, cur, fopts)) {
-	            prev.push(cur);
-	        }
-	        return prev;
-	    }, []);
-	};
-
-	let deRepeat = (list, fopts, init = []) => {
-	    return reduce(list, (prev, cur) => {
-	        if (!contain(prev, cur, fopts)) {
-	            prev.push(cur);
-	        }
-	        return prev;
-	    }, init);
-	};
-
-	/**
-	 * a.b.c
-	 */
-	let get = funType((sandbox, name = '') => {
-	    name = name.trim();
-	    let parts = !name ? [] : name.split('.');
-	    return reduce(parts, getValue, sandbox, invertLogic);
-	}, [
-	    isObject,
-	    or(isString, isFalsy)
-	]);
-
-	let getValue = (obj, key) => obj[key];
-
-	let invertLogic = v => !v;
-
-	let delay = (time) => new Promise((resolve) => {
-	    setTimeout(resolve, time);
-	});
-
-	let flat = (list) => {
-	    if (likeArray(list) && !isString(list)) {
-	        return reduce(list, (prev, item) => {
-	            prev = prev.concat(flat(item));
-	            return prev;
-	        }, []);
-	    } else {
-	        return [list];
-	    }
-	};
-
-	module.exports = {
-	    flat,
-	    contain,
-	    difference,
-	    union,
-	    interset,
-	    map,
-	    reduce,
-	    iterate,
-	    find,
-	    findIndex,
-	    deRepeat,
-	    forEach,
-	    filter,
-	    any,
-	    exist,
-	    get,
-	    delay,
-	    mergeMap,
-	    compact
-	};
-
-
-/***/ },
-/* 67 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	let {
-	    isPromise, likeArray, isObject, funType, isFunction, isUndefined, or, isNumber, isFalsy, isReadableStream, mapType
-	} = __webpack_require__(13);
-
-	/**
-	 * @param opts
-	 *      preidcate: chose items to iterate
-	 *      limit: when to stop iteration
-	 *      transfer: transfer item
-	 *      output
-	 *      def: default result
-	 */
-	let iterate = funType((domain, opts = {}) => {
-	    domain = domain || [];
-	    if (isPromise(domain)) {
-	        return domain.then(list => {
-	            return iterate(list, opts);
-	        });
-	    }
-	    return iterateList(domain, opts);
-	}, [
-	    or(isPromise, isObject, isFunction, isFalsy),
-	    or(isUndefined, mapType({
-	        predicate: or(isFunction, isFalsy),
-	        transfer: or(isFunction, isFalsy),
-	        output: or(isFunction, isFalsy),
-	        limit: or(isUndefined, isNumber, isFunction)
-	    }))
-	]);
-
-	let iterateList = (domain, opts) => {
-	    opts = initOpts(opts, domain);
-
-	    let rets = opts.def;
-	    let count = 0; // iteration times
-
-	    if (isReadableStream(domain)) {
-	        let index = -1;
-
-	        return new Promise((resolve, reject) => {
-	            domain.on('data', (chunk) => {
-	                // TODO try cache error
-	                let itemRet = iterateItem(chunk, domain, ++index, count, rets, opts);
-	                rets = itemRet.rets;
-	                count = itemRet.count;
-	                if (itemRet.stop) {
-	                    resolve(rets);
-	                }
-	            });
-	            domain.on('end', () => {
-	                resolve(rets);
-	            });
-	            domain.on('error', (err) => {
-	                reject(err);
-	            });
-	        });
-	    } else if (likeArray(domain)) {
-	        for (let i = 0; i < domain.length; i++) {
-	            let item = domain[i];
-	            let itemRet = iterateItem(item, domain, i, count, rets, opts);
-	            rets = itemRet.rets;
-	            count = itemRet.count;
-	            if (itemRet.stop) return rets;
-	        }
-	    } else if (isObject(domain)) {
-	        for (let name in domain) {
-	            let item = domain[name];
-	            let itemRet = iterateItem(item, domain, name, count, rets, opts);
-	            rets = itemRet.rets;
-	            count = itemRet.count;
-	            if (itemRet.stop) return rets;
-	        }
-	    }
-
-	    return rets;
-	};
-
-	let initOpts = (opts, domain) => {
-	    let {
-	        predicate, transfer, output, limit
-	    } = opts;
-
-	    opts.predicate = predicate || truthy;
-	    opts.transfer = transfer || id;
-	    opts.output = output || toList;
-	    if (limit === undefined) limit = domain && domain.length;
-	    limit = opts.limit = stopCondition(limit);
-	    return opts;
-	};
-
-	let iterateItem = (item, domain, name, count, rets, {
-	    predicate, transfer, output, limit
-	}) => {
-	    if (limit(rets, item, name, domain, count)) {
-	        // stop
-	        return {
-	            stop: true,
-	            count,
-	            rets
-	        };
-	    }
-
-	    if (predicate(item)) {
-	        rets = output(rets, transfer(item, name, domain, rets), name, domain);
-	        count++;
-	    }
-	    return {
-	        stop: false,
-	        count,
-	        rets
-	    };
-	};
-
-	let stopCondition = (limit) => {
-	    if (isUndefined(limit)) {
-	        return falsy;
-	    } else if (isNumber(limit)) {
-	        return (rets, item, name, domain, count) => count >= limit;
-	    } else {
-	        return limit;
-	    }
-	};
-
-	let toList = (prev, v) => {
-	    prev.push(v);
-	    return prev;
-	};
-
-	let truthy = () => true;
-
-	let falsy = () => false;
-
-	let id = v => v;
-
-	module.exports = {
-	    iterate
-	};
-
-
-/***/ },
-/* 68 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	let {
-	    iterate
-	} = __webpack_require__(67);
-
-	let defauls = {
-	    eq: (v1, v2) => v1 === v2
-	};
-
-	let setDefault = (opts, defauls) => {
-	    for (let name in defauls) {
-	        opts[name] = opts[name] || defauls[name];
-	    }
-	};
-
-	let forEach = (list, handler) => iterate(list, {
-	    limit: (rets) => {
-	        if (rets === true) return true;
-	        return false;
-	    },
-	    transfer: handler,
-	    output: (prev, cur) => cur,
-	    def: false
-	});
-
-	let map = (list, handler, limit) => iterate(list, {
-	    transfer: handler,
-	    def: [],
-	    limit
-	});
-
-	let reduce = (list, handler, def, limit) => iterate(list, {
-	    output: handler,
-	    def,
-	    limit
-	});
-
-	let filter = (list, handler, limit) => reduce(list, (prev, cur, index, list) => {
-	    handler && handler(cur, index, list) && prev.push(cur);
-	    return prev;
-	}, [], limit);
-
-	let find = (list, item, fopts) => {
-	    let index = findIndex(list, item, fopts);
-	    if (index === -1) return undefined;
-	    return list[index];
-	};
-
-	let any = (list, handler) => reduce(list, (prev, cur, index, list) => {
-	    let curLogic = handler && handler(cur, index, list);
-	    return prev && originLogic(curLogic);
-	}, true, falsyIt);
-
-	let exist = (list, handler) => reduce(list, (prev, cur, index, list) => {
-	    let curLogic = handler && handler(cur, index, list);
-	    return prev || originLogic(curLogic);
-	}, false, originLogic);
-
-	let findIndex = (list, item, fopts = {}) => {
-	    setDefault(fopts, defauls);
-
-	    let {
-	        eq
-	    } = fopts;
-	    let predicate = (v) => eq(item, v);
-	    let ret = iterate(list, {
-	        transfer: indexTransfer,
-	        limit: onlyOne,
-	        predicate,
-	        def: []
-	    });
-	    if (!ret.length) return -1;
-	    return ret[0];
-	};
-
-	let compact = (list) => reduce(list, (prev, cur) => {
-	    if (cur) prev.push(cur);
-	    return prev;
-	}, []);
-
-	let indexTransfer = (item, index) => index;
-
-	let onlyOne = (rets, item, name, domain, count) => count >= 1;
-
-	let falsyIt = v => !v;
-
-	let originLogic = v => !!v;
-
-	module.exports = {
-	    map,
-	    forEach,
-	    reduce,
-	    find,
-	    findIndex,
-	    filter,
-	    any,
-	    exist,
-	    compact
-	};
-
-
-/***/ },
-/* 69 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	let {
 	    map, reduce
-	} = __webpack_require__(66);
+	} = __webpack_require__(38);
 
 	let {
 	    funType, isObject, isFunction
@@ -26682,7 +26148,18 @@
 
 	let {
 	    hasOwnProperty, get
-	} = __webpack_require__(70);
+	} = __webpack_require__(67);
+
+	let {
+	    APPLICATION_PREFIX,
+	    PREDICATE_PREFIX,
+	    PREDICATE_VARIABLE_PREFIX,
+	    VARIABLE_PREFIX,
+	    META_DATA_PREFIX,
+	    ABSTRACTION_PREFIX,
+
+	    destruct
+	} = __webpack_require__(65);
 
 	/**
 	 * used to interpret lambda json
@@ -26722,50 +26199,69 @@
 	                throw new Error(msg + ' . Context json is ' + JSON.stringify(json));
 	            };
 
-	            switch (json[0]) {
-	                case 'd': // meta data
-	                    return json[1];
-	                case 'v': // variable
+	            let {
+	                type,
+	                metaData,
+
+	                variableName,
+
+	                predicateName,
+	                predicateParams,
+
+	                abstractionArgs,
+	                abstractionBody,
+
+	                applicationFun,
+	                applicationParams
+	            } = destruct(json);
+
+	            switch (type) {
+	                case META_DATA_PREFIX: // meta data
+	                    return metaData;
+
+	                case VARIABLE_PREFIX: // variable
 	                    var context = ctx;
 	                    while (context) {
-	                        if (hasOwnProperty(context.curVars, json[1])) {
-	                            return context.curVars[json[1]];
+	                        if (hasOwnProperty(context.curVars, variableName)) {
+	                            return context.curVars[variableName];
 	                        }
 	                        context = context.parentCtx;
 	                    }
 
-	                    return error(`undefined variable ${json[1]}`);
-	                case 'l': // subtraction
+	                    return error(`undefined variable ${variableName}`);
+
+	                case ABSTRACTION_PREFIX: // abstraction
 	                    return (...args) => {
 	                        // update variable map
-	                        return translate(json[2], {
-	                            curVars: reduce(json[1], (prev, name, index) => {
+	                        return translate(abstractionBody, {
+	                            curVars: reduce(abstractionArgs, (prev, name, index) => {
 	                                prev[name] = args[index];
 	                                return prev;
 	                            }, {}),
 	                            parentCtx: ctx
 	                        });
 	                    };
-	                case 'p': // predicate
-	                    var predicate = get(predicateSet, json[1]);
+
+	                case PREDICATE_PREFIX: // predicate
+	                    var predicate = get(predicateSet, predicateName);
 	                    if (!isFunction(predicate)) {
-	                        return error(`missing predicate ${json[1]}`);
+	                        return error(`missing predicate ${predicateName}`);
 	                    }
-	                    return predicate(...map(json[2], translateWithCtx));
-	                case 'a': // application
-	                    var subtraction = translateWithCtx(json[1]);
-	                    if (!isFunction(subtraction)) {
-	                        return error(`expected function, but got ${subtraction} from ${json[1]}.`);
+	                    return predicate(...map(predicateParams, translateWithCtx));
+
+	                case APPLICATION_PREFIX: // application
+	                    var abstraction = translateWithCtx(applicationFun);
+	                    if (!isFunction(abstraction)) {
+	                        return error(`expected function, but got ${fun} from ${applicationFun}.`);
 	                    }
-	                    return subtraction(...map(json[2], translateWithCtx));
-	                case 'f': // predicate as a variable
-	                    var fun = get(predicateSet, json[1]);
+	                    return abstraction(...map(applicationParams, translateWithCtx));
+
+	                case PREDICATE_VARIABLE_PREFIX: // predicate as a variable
+	                    var fun = get(predicateSet, predicateName);
 	                    if (!isFunction(fun)) {
-	                        return error(`missing predicate ${json[1]}`);
+	                        return error(`missing predicate ${predicateName}`);
 	                    }
 	                    return fun;
-	                default:
-	                    return error(`unexpected type ${json[0]}`);
 	            }
 	        }, [
 	            isObject, isObject
@@ -26779,14 +26275,14 @@
 
 
 /***/ },
-/* 70 */
+/* 67 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 	let {
 	    reduce
-	} = __webpack_require__(71);
+	} = __webpack_require__(68);
 	let {
 	    funType, isObject, or, isString, isFalsy
 	} = __webpack_require__(13);
@@ -26836,13 +26332,16 @@
 	    if (!parts.length) return;
 	    for (let i = 0; i < parts.length - 1; i++) {
 	        let part = parts[i];
-	        parent = parent[part];
-	        // avoid exception
-	        if (!isObject(parent)) return null;
+	        let next = parent[part];
+	        if (!isObject(next)) {
+	            next = {};
+	            parent[part] = next;
+	        }
+	        parent = next;
 	    }
 
 	    parent[parts[parts.length - 1]] = value;
-	    return true;
+	    return sandbox;
 	};
 
 	/**
@@ -26939,7 +26438,7 @@
 
 
 /***/ },
-/* 71 */
+/* 68 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -26948,11 +26447,11 @@
 	    isObject, funType, or, isString, isFalsy, likeArray
 	} = __webpack_require__(13);
 
-	let iterate = __webpack_require__(72);
+	let iterate = __webpack_require__(69);
 
 	let {
 	    map, reduce, find, findIndex, forEach, filter, any, exist, compact
-	} = __webpack_require__(73);
+	} = __webpack_require__(70);
 
 	let contain = (list, item, fopts) => findIndex(list, item, fopts) !== -1;
 
@@ -27048,7 +26547,7 @@
 
 
 /***/ },
-/* 72 */
+/* 69 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -27154,12 +26653,12 @@
 
 
 /***/ },
-/* 73 */
+/* 70 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	let iterate = __webpack_require__(72);
+	let iterate = __webpack_require__(69);
 
 	let defauls = {
 	    eq: (v1, v2) => v1 === v2
@@ -27258,7 +26757,100 @@
 
 
 /***/ },
-/* 74 */
+/* 71 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    dsl
+	} = __webpack_require__(64);
+
+	let {
+	    destruct,
+
+	    APPLICATION_PREFIX,
+	    PREDICATE_PREFIX,
+	    PREDICATE_VARIABLE_PREFIX,
+	    VARIABLE_PREFIX,
+	    META_DATA_PREFIX,
+	    ABSTRACTION_PREFIX
+	} = dsl;
+
+	let {
+	    JSON_DATA,
+	    VARIABLE,
+	    ABSTRACTION,
+	    PREDICATE
+	} = __webpack_require__(62);
+
+	let {
+	    compact, map
+	} = __webpack_require__(38);
+
+	/**
+	 * lambda ui value = {
+	 *     path,
+	 *
+	 *     expression,    // for abstraction
+	 *
+	 *     currentVariables,    // for abstraction
+	 *
+	 *     params,    // predicate
+	 *
+	 *     value    // json data
+	 * }
+	 */
+
+	let getLambdaUiValue = (lambdaJson) => {
+	    let {
+	        type,
+	        metaData,
+
+	        variableName,
+
+	        abstractionArgs,
+	        abstractionBody,
+
+	        predicateName,
+	        predicateParams
+	    } = destruct(lambdaJson);
+
+	    switch (type) {
+	        case META_DATA_PREFIX:
+	            return {
+	                path: JSON_DATA,
+	                value: metaData
+	            };
+	        case VARIABLE_PREFIX:
+	            return {
+	                path: [VARIABLE, variableName].join('.')
+	            };
+	        case ABSTRACTION_PREFIX:
+	            return {
+	                path: ABSTRACTION,
+	                expression: getLambdaUiValue(abstractionBody),
+	                currentVariables: abstractionArgs
+	            };
+	        case PREDICATE_PREFIX:
+	            return {
+	                path: compact([PREDICATE, predicateName]).join('.'),
+	                params: map(predicateParams, getLambdaUiValue)
+	            };
+	        case APPLICATION_PREFIX:
+	            // TODO
+	            break;
+	        case PREDICATE_VARIABLE_PREFIX:
+	            // TODO
+	            break;
+	    }
+	};
+
+	module.exports = getLambdaUiValue;
+
+
+/***/ },
+/* 72 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -27267,7 +26859,7 @@
 	    n, view
 	} = __webpack_require__(8);
 
-	let VariableDeclareView = __webpack_require__(75);
+	let VariableDeclareView = __webpack_require__(73);
 
 	let {
 	    VARIABLE
@@ -27323,7 +26915,7 @@
 
 
 /***/ },
-/* 75 */
+/* 73 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -27332,7 +26924,7 @@
 	    n, view
 	} = __webpack_require__(8);
 
-	let InputList = __webpack_require__(76);
+	let InputList = __webpack_require__(74);
 
 	let {
 	    reduce, map
@@ -27378,12 +26970,12 @@
 
 
 /***/ },
-/* 76 */
+/* 74 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	let dynamicList = __webpack_require__(77);
+	let dynamicList = __webpack_require__(75);
 
 	let {
 	    map, mergeMap
@@ -27393,9 +26985,9 @@
 	    n
 	} = __webpack_require__(8);
 
-	let plus = __webpack_require__(78);
+	let plus = __webpack_require__(76);
 
-	let line = __webpack_require__(79);
+	let line = __webpack_require__(77);
 
 	module.exports = ({
 	    listData,
@@ -27475,7 +27067,7 @@
 
 
 /***/ },
-/* 77 */
+/* 75 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -27544,7 +27136,7 @@
 
 
 /***/ },
-/* 78 */
+/* 76 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -27553,7 +27145,7 @@
 	    n
 	} = __webpack_require__(8);
 
-	let line = __webpack_require__(79);
+	let line = __webpack_require__(77);
 
 	module.exports = ({
 	    width,
@@ -27601,7 +27193,7 @@
 
 
 /***/ },
-/* 79 */
+/* 77 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -27631,7 +27223,7 @@
 
 
 /***/ },
-/* 80 */
+/* 78 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -27663,7 +27255,7 @@
 
 
 /***/ },
-/* 81 */
+/* 79 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -27680,12 +27272,12 @@
 
 
 /***/ },
-/* 82 */
+/* 80 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	let Expandor = __webpack_require__(83);
+	let Expandor = __webpack_require__(81);
 
 	let {
 	    getPredicateMetaInfo,
@@ -27733,7 +27325,7 @@
 
 
 /***/ },
-/* 83 */
+/* 81 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -27744,9 +27336,9 @@
 
 	let fold = __webpack_require__(41);
 
-	let triangle = __webpack_require__(84);
+	let triangle = __webpack_require__(82);
 
-	let TreeSelect = __webpack_require__(85);
+	let TreeSelect = __webpack_require__(83);
 
 	let {
 	    mergeMap
@@ -27817,7 +27409,7 @@
 
 
 /***/ },
-/* 84 */
+/* 82 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -27868,7 +27460,7 @@
 
 
 /***/ },
-/* 85 */
+/* 83 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -27879,7 +27471,7 @@
 
 	let {
 	    map, compact, mergeMap
-	} = __webpack_require__(86);
+	} = __webpack_require__(84);
 
 	let {
 	    isObject
@@ -27887,15 +27479,15 @@
 
 	let {
 	    getWindowWidth, getWindowHeight
-	} = __webpack_require__(89);
+	} = __webpack_require__(87);
 
 	let {
 	    hasOwnProperty
-	} = __webpack_require__(92);
+	} = __webpack_require__(90);
 
-	let idgener = __webpack_require__(96);
+	let idgener = __webpack_require__(94);
 
-	let triangle = __webpack_require__(98);
+	let triangle = __webpack_require__(96);
 
 	/**
 	 * @param data Object
@@ -28079,7 +27671,7 @@
 
 
 /***/ },
-/* 86 */
+/* 84 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -28088,11 +27680,11 @@
 	    isObject, funType, or, isString, isFalsy, likeArray
 	} = __webpack_require__(13);
 
-	let iterate = __webpack_require__(87);
+	let iterate = __webpack_require__(85);
 
 	let {
 	    map, reduce, find, findIndex, forEach, filter, any, exist, compact, reverse
-	} = __webpack_require__(88);
+	} = __webpack_require__(86);
 
 	let contain = (list, item, fopts) => findIndex(list, item, fopts) !== -1;
 
@@ -28189,7 +27781,7 @@
 
 
 /***/ },
-/* 87 */
+/* 85 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -28334,14 +27926,14 @@
 
 
 /***/ },
-/* 88 */
+/* 86 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 	let {
 	    iterate
-	} = __webpack_require__(87);
+	} = __webpack_require__(85);
 
 	let {isFunction} = __webpack_require__(13);
 
@@ -28448,14 +28040,14 @@
 
 
 /***/ },
-/* 89 */
+/* 87 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	let shadowFrame = __webpack_require__(90);
+	let shadowFrame = __webpack_require__(88);
 
-	let startMomenter = __webpack_require__(91);
+	let startMomenter = __webpack_require__(89);
 
 	let getX = (elem) => {
 	    var x = 0;
@@ -28552,7 +28144,7 @@
 
 
 /***/ },
-/* 90 */
+/* 88 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -28606,7 +28198,7 @@
 
 
 /***/ },
-/* 91 */
+/* 89 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -28657,14 +28249,14 @@
 
 
 /***/ },
-/* 92 */
+/* 90 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 	let {
 	    reduce
-	} = __webpack_require__(93);
+	} = __webpack_require__(91);
 	let {
 	    funType, isObject, or, isString, isFalsy
 	} = __webpack_require__(13);
@@ -28820,7 +28412,7 @@
 
 
 /***/ },
-/* 93 */
+/* 91 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -28829,11 +28421,11 @@
 	    isObject, funType, or, isString, isFalsy, likeArray
 	} = __webpack_require__(13);
 
-	let iterate = __webpack_require__(94);
+	let iterate = __webpack_require__(92);
 
 	let {
 	    map, reduce, find, findIndex, forEach, filter, any, exist, compact
-	} = __webpack_require__(95);
+	} = __webpack_require__(93);
 
 	let contain = (list, item, fopts) => findIndex(list, item, fopts) !== -1;
 
@@ -28929,7 +28521,7 @@
 
 
 /***/ },
-/* 94 */
+/* 92 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -29035,12 +28627,12 @@
 
 
 /***/ },
-/* 95 */
+/* 93 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	let iterate = __webpack_require__(94);
+	let iterate = __webpack_require__(92);
 
 	let defauls = {
 	    eq: (v1, v2) => v1 === v2
@@ -29139,14 +28731,14 @@
 
 
 /***/ },
-/* 96 */
+/* 94 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(97);
+	module.exports = __webpack_require__(95);
 
 
 /***/ },
-/* 97 */
+/* 95 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -29196,7 +28788,7 @@
 
 
 /***/ },
-/* 98 */
+/* 96 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -29247,8 +28839,7 @@
 
 
 /***/ },
-/* 99 */,
-/* 100 */
+/* 97 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -29265,9 +28856,9 @@
 	    isFunction
 	} = __webpack_require__(13);
 
-	let TreeSelect = __webpack_require__(85);
+	let TreeSelect = __webpack_require__(83);
 
-	let triangle = __webpack_require__(84);
+	let triangle = __webpack_require__(82);
 
 	let {
 	    PREDICATE, VARIABLE
@@ -29390,12 +28981,12 @@
 
 
 /***/ },
-/* 101 */
+/* 98 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	let ParamsFieldView = __webpack_require__(102);
+	let ParamsFieldView = __webpack_require__(99);
 
 	let {
 	    getPredicatePath, getPredicateMetaInfo
@@ -29469,7 +29060,7 @@
 
 
 /***/ },
-/* 102 */
+/* 99 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -29523,12 +29114,12 @@
 
 
 /***/ },
-/* 103 */
+/* 100 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	const LAMBDA_STYLE = __webpack_require__(104);
+	const LAMBDA_STYLE = __webpack_require__(101);
 
 	let {
 	    n
@@ -29546,7 +29137,7 @@
 
 
 /***/ },
-/* 104 */
+/* 101 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -29629,6 +29220,312 @@
 	    min-width: 160px;
 	}
 	`;
+
+
+/***/ },
+/* 102 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    view, n
+	} = __webpack_require__(8);
+
+	let JsonDataView = __webpack_require__(37);
+
+	let AbstractionView = __webpack_require__(72);
+
+	let PredicateView = __webpack_require__(78);
+
+	let VariableView = __webpack_require__(79);
+
+	let ExpandorView = __webpack_require__(80);
+
+	let TreeOptionView = __webpack_require__(97);
+
+	let {
+	    getSuffixParams,
+	    getPrefixParams
+	} = __webpack_require__(98);
+
+	let {
+	    mergeMap
+	} = __webpack_require__(38);
+
+	const style = __webpack_require__(100);
+
+	let {
+	    JSON_DATA,
+	    ABSTRACTION,
+	    VARIABLE,
+	    PREDICATE
+	} = __webpack_require__(62);
+
+	let {
+	    getExpressionType,
+	    completeDataWithDefault,
+	    completeValueWithDefault,
+	    expressionTypes
+	} = __webpack_require__(63);
+
+	/**
+	 * lambda UI editor
+	 *
+	 * π calculus
+	 *
+	 * e ::= x              a variable
+	 *   |   חx.e           an abstraction (function)
+	 *   |   e₁e₂           a (function) application
+	 *
+	 * 1. meta data
+	 *    json
+	 *
+	 * 2. predicate
+	 *    f(x, ...)
+	 *
+	 * 3. variable
+	 *    x
+	 *
+	 * 4. abstraction
+	 *    חx₁x₂...x.e
+	 *
+	 * 5. application
+	 *    e₁e₂e₃...
+	 *
+	 * ח based on predicates and json expansion
+	 *
+	 * e ::= json                    as meta data, also a pre-defined π expression
+	 *   |   x                       variable
+	 *   |   predicate               predicate is a pre-defined abstraction
+	 *   |   חx.e                    abstraction
+	 *   |   e1e2                    application
+	 */
+
+	/**
+	 * expression user interface
+	 *
+	 * 1. user choses expression type
+	 * 2. define current expression type
+	 *
+	 * data = {
+	 *      predicates,
+	 *      predicatesMetaInfo: {
+	 *          ... {
+	 *              args: [{
+	 *                  name,
+	 *                  defaultValue: value
+	 *              }]
+	 *          }
+	 *      },
+	 *
+	 *      value: {
+	 *          path
+	 *      }
+	 * }
+	 *
+	 * TODO: application option
+	 */
+	module.exports = view((data = {}) => {
+	    style({
+	        style: data.styleStr
+	    });
+
+	    return n('div', {
+	        'class': 'lambda-ui'
+	    }, [
+	        expressionView(data)
+	    ]);
+	});
+
+	let expressionView = view((data, {
+	    update
+	}) => {
+	    completeDataWithDefault(data);
+
+	    return () => {
+	        let {
+	            value,
+	            variables,
+	            infixPath,
+
+	            // global config
+	            predicates,
+	            predicatesMetaInfo,
+	            expressAbility,
+	            nameMap,
+
+	            // ui states
+	            title,
+	            showSelectTree,
+
+	            // events
+	            onchange
+	        } = data;
+
+	        let globalConfig = {
+	            predicates,
+	            predicatesMetaInfo,
+	            expressAbility,
+	            nameMap
+	        };
+
+	        completeValueWithDefault(value);
+
+	        if (data.infixPath) {
+	            return expressionView(mergeMap(data, {
+	                infixPath: null,
+	                value: {
+	                    path: infixPath,
+	                    params: [value],
+	                    infix: 1
+	                }
+	            }));
+	        }
+
+	        let expresionType = getExpressionType(value.path);
+
+	        let optionsView = TreeOptionView({
+	            path: value.path,
+	            data: expressAbility ? expressAbility(data) : expressionTypes(data),
+	            title,
+	            showSelectTree,
+	            nameMap,
+	            onselected: (v, path) => {
+	                update([
+	                    ['value.path', path],
+	                    ['showSelectTree', false]
+	                ]);
+	            }
+	        });
+
+	        let expandor = data.value.path && ExpandorView({
+	            onExpand: (hide) => {
+	                update();
+	                data.onexpandchange && data.onexpandchange(hide, data);
+	            },
+
+	            onselected: () => {
+	                update();
+	            },
+
+	            data
+	        });
+
+	        let getAbstractionBody = () => {
+	            let expressionViewObj = mergeMap(globalConfig, {
+	                title: 'expression',
+	                value: value.expression,
+	                variables: variables.concat(value.currentVariables),
+	                onchange: (lambda) => {
+	                    value.expression = lambda;
+	                    onchange && onchange(value);
+	                }
+	            });
+
+	            return {
+	                getView: () => {
+	                    return expressionView(expressionViewObj);
+	                },
+
+	                updateVariables: (vars) => {
+	                    expressionViewObj.variables = vars;
+	                }
+	            };
+	        };
+
+	        let prefixParamItemRender = ({
+	            title,
+	            content,
+	            onchange
+	        }) => expressionView(mergeMap(globalConfig, {
+	            value: content,
+	            title,
+	            onchange,
+	            variables,
+
+	            onexpandchange: (hide, data) => {
+	                // close infix mode
+	                update([
+	                    ['infixPath', null],
+	                    ['value', data.value],
+	                    ['title', '']
+	                ]);
+	            }
+	        }));
+
+	        let suffixParamItemRender = ({
+	            title,
+	            content,
+	            onchange
+	        }) => expressionView(mergeMap(globalConfig, {
+	            title,
+	            onchange,
+	            variables,
+	            value: content,
+	        }));
+
+	        onchange(value);
+
+	        return n('div', {
+	            style: {
+	                position: 'relative',
+	                display: 'inline-block',
+	                borderRadius: 5
+	            }
+	        }, [
+	            // expression
+	            n('div', {
+	                style: {
+	                    display: 'inline-block',
+	                    padding: 8,
+	                    border: '1px solid rgba(200, 200, 200, 0.4)',
+	                    borderRadius: 5
+	                }
+	            }, [
+
+	                !data.value.path && optionsView,
+
+	                data.value.path && [
+	                    expresionType === PREDICATE && PredicateView({
+	                        prefixParams: getPrefixParams(data, {
+	                            // prefix param item
+	                            itemRender: prefixParamItemRender
+	                        }),
+
+	                        value,
+	                        optionsView,
+
+	                        suffixParams: getSuffixParams(data, {
+	                            expressionView,
+	                            // suffix param item
+	                            itemRender: suffixParamItemRender
+	                        })
+	                    }),
+
+	                    expresionType === JSON_DATA && JsonDataView({
+	                        value, onchange, optionsView
+	                    }),
+
+	                    expresionType === VARIABLE && VariableView({
+	                        optionsView
+	                    }),
+
+	                    expresionType === ABSTRACTION && AbstractionView({
+	                        value,
+	                        variables,
+	                        optionsView,
+	                        onchange,
+	                        expressionBody: getAbstractionBody()
+	                    })
+	                ]
+	            ]),
+
+	            // expandor
+	            expandor
+	        ]);
+	    };
+	});
 
 
 /***/ }

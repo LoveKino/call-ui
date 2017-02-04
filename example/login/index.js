@@ -1,6 +1,14 @@
 'use strict';
 
-let LambdaUI = require('../..');
+let letaUI = require('../..');
+
+let {
+    dsl
+} = require('leta');
+
+let {
+    method
+} = dsl;
 
 /**
  * 1. no expand
@@ -12,33 +20,40 @@ let LambdaUI = require('../..');
  * 4. custome expression ui
  */
 
-document.body.appendChild(LambdaUI({
+let login = method('login');
+let captcha = method('captcha');
+
+document.body.appendChild(letaUI(login('', '', captcha('img')), {
     predicates: {
-        login: 1
+        login: () => {},
+        captcha: () => {}
     },
 
     predicatesMetaInfo: {
         login: {
             args: [{
                 name: 'username',
-                defaultValue: {
-                    path: 'data.string',
-                    value: '',
+                content: {
                     placeholder: 'username, eg: ddchen'
                 }
             }, {
                 name: 'password',
-                defaultValue: {
-                    path: 'data.string',
-                    type: 'password',
-                    value: ''
+                content: {
+                    placeholder: 'password, eg: 123',
+                    type: 'password'
+                }
+            }, {
+                name: 'captcha'
+            }]
+        },
+
+        captcha: {
+            args: [{
+                name: 'img',
+                content: {
                 }
             }]
         }
-    },
-
-    value: {
-        path: 'predicate.login'
     },
 
     expressAbility: () => null
