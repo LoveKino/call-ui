@@ -18,6 +18,8 @@ let {
 
 let InputView = require('../view/input');
 
+let expandorWrapper = require('./expandorWrapper');
+
 const {
     INLINE_TYPES, DEFAULT_DATA_MAP
 } = require('../const');
@@ -30,7 +32,7 @@ let {
  * used to define json data
  */
 module.exports = view(({
-    value, onchange = id, optionsView
+    value, onchange = id, optionsView, expandor
 }) => {
     let type = getDataTypePath(value.path);
 
@@ -48,7 +50,7 @@ module.exports = view(({
         }, type);
     };
 
-    return n('div', {
+    return expandorWrapper(n('div', {
         style: {
             border: contain(INLINE_TYPES, type) ? '0' : '1px solid rgba(200, 200, 200, 0.4)',
             minWidth: 160
@@ -86,7 +88,7 @@ module.exports = view(({
             body: renderInputArea,
             hide: false
         }) : renderInputArea()
-    ]);
+    ]), expandor);
 });
 
 let abbreText = (data) => {

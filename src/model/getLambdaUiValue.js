@@ -23,7 +23,9 @@ let {
 
     NUMBER,
     BOOLEAN,
-    STRING
+    STRING,
+    NULL,
+    JSON_TYPE
 } = require('../const');
 
 let {
@@ -31,7 +33,7 @@ let {
 } = require('bolzano');
 
 let {
-    isString, isNumber, isBool
+    isString, isNumber, isBool, isNull, isObject
 } = require('basetype');
 
 /**
@@ -40,7 +42,7 @@ let {
  *
  *     expression,    // for abstraction
  *
- *     currentVariables,    // for abstraction
+ *     variables,    // for abstraction
  *
  *     params,    // predicate
  *
@@ -76,7 +78,7 @@ let getLambdaUiValue = (lambdaJson) => {
             return {
                 path: ABSTRACTION,
                 expression: getLambdaUiValue(abstractionBody),
-                currentVariables: abstractionArgs
+                variables: abstractionArgs
             };
         case PREDICATE_PREFIX:
             return {
@@ -98,6 +100,10 @@ let getMetaType = (data) => {
     else if (isNumber(data)) return NUMBER;
 
     else if (isBool(data)) return BOOLEAN;
+
+    else if (isNull(data)) return NULL;
+
+    else if (isObject(data)) return JSON_TYPE;
 };
 
 module.exports = getLambdaUiValue;

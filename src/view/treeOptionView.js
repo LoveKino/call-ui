@@ -28,6 +28,7 @@ module.exports = view(({
     showSelectTree,
     onselected,
     title,
+    guideLine,
     nameMap
 }, {
     update
@@ -58,7 +59,7 @@ module.exports = view(({
             onclick: () => {
                 update('showSelectTree', !showSelectTree);
             }
-        }, path ? renderGuideLine(path) : n('div class="input-style"', {
+        }, path ? (guideLine === false ? null : (!guideLine ? renderGuideLine(path) : guideLine)) : n('div class="input-style"', {
             style: {
                 color: '#9b9b9b',
                 overflow: 'auto'
@@ -121,7 +122,7 @@ let renderGuideLine = (path) => {
         n('span', {
             style: {
                 fontWeight: (type === PREDICATE || type === VARIABLE) ? 'bold' : 'inherit',
-                fontSize: type === PREDICATE ? 16 : 12,
+                fontSize: 12,
                 color: '#b4881d',
                 padding: '0 5px'
             }

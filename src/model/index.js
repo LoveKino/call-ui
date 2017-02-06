@@ -1,10 +1,6 @@
 'use strict';
 
 let {
-    map
-} = require('bolzano');
-
-let {
     dsl, interpreter
 } = require('leta');
 
@@ -14,8 +10,12 @@ let {
 } = require('../const');
 
 let {
-    reduce, get
+    reduce, get, forEach, map
 } = require('bolzano');
+
+let {
+    isFunction, isObject
+} = require('basetype');
 
 let getLambdaUiValue = require('./getLambdaUiValue');
 
@@ -158,7 +158,39 @@ let completeDataWithDefault = (data) => {
     data.variables = data.variables || [];
     data.funs = data.funs || [JSON_DATA, PREDICATE, ABSTRACTION, VARIABLE];
     data.onchange = data.onchange || id;
+    data.predicates = data.predicates || {};
+    data.predicatesMetaInfo = data.predicatesMetaInfo || {};
+
+    // TODO complete predicate meta info
+    completePredicatesMetaInfo(data.predicates, data.predicatesMetaInfo);
+
+    // make title
+    let expresionType = getExpressionType(data.value.path);
+    if (expresionType === PREDICATE) {
+        let predicatePath = getPredicatePath(data.value.path);
+        let {
+            title
+        } = getPredicateMetaInfo(data.predicatesMetaInfo, predicatePath) || {};
+        if (title) {
+            data.title = title;
+        }
+    }
+
     return data;
+};
+
+let completePredicatesMetaInfo = (predicates, predicatesMetaInfo) => {
+    forEach(predicates, (v, name) => {
+        predicatesMetaInfo[name] = predicatesMetaInfo[name] || {};
+
+        if (isFunction(v) && !predicatesMetaInfo[name].args) {
+            predicatesMetaInfo[name].args = map(new Array(v.length), () => {
+                return {};
+            });
+        } else if (v && isObject(v)) {
+            completePredicatesMetaInfo(v, predicatesMetaInfo[name]);
+        }
+    });
 };
 
 let completeValueWithDefault = (value) => {

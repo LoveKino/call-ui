@@ -80,7 +80,7 @@ describe('getLambdaUiValue', () => {
                         'value': 1
                     }]
                 },
-                'currentVariables': ['x']
+                'variables': ['x']
             }
         );
     });

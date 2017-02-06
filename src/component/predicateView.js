@@ -4,14 +4,21 @@ let {
     n, view
 } = require('kabanery');
 
+let {
+    map
+} = require('bolzano');
+
+let expandorWrapper = require('./expandorWrapper');
+
 module.exports = view(({
     value,
     optionsView,
-    prefixParams,
-    suffixParams
+    expandor,
+    getPrefixParams,
+    getSuffixParams
 }) => {
-    return n('div', [
-        prefixParams,
+    return expandorWrapper(n('div', [
+        arrangeItems(getPrefixParams(value.infix)),
 
         optionsView,
 
@@ -20,7 +27,22 @@ module.exports = view(({
                 display: value.infix ? 'inline-block' : 'block'
             }
         }, [
-            suffixParams
+            arrangeItems(getSuffixParams(value.infix))
         ])
-    ]);
+    ]), expandor);
 });
+
+let arrangeItems = (itemViews) => n('div', {
+    'class': 'lambda-params',
+    style: {
+        display: 'inline-block'
+    }
+}, [
+    map(itemViews, (itemView) => {
+        return n('fieldset', {
+            style: {
+                padding: '4px'
+            }
+        }, itemView);
+    })
+]);

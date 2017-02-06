@@ -9,8 +9,12 @@ let {
 } = require('kabanery');
 
 let {
-    map
-} = require('bolzano');
+    dsl
+} = require('leta');
+
+let {
+    method, r, v
+} = dsl;
 
 let test = (name, data, assertFun) => {
     let changed = false;
@@ -49,231 +53,91 @@ let test = (name, data, assertFun) => {
     ]));
 };
 
-test('number', {
-    predicates: {
-        math: {
-            '+': (x, y) => x + y
-        },
+let testWithLeta = (name, lambda, data, assertFun) => {
+    data = data || {};
+    let changed = false;
 
-        map
-    },
-
-    predicatesMetaInfo: {
-        math: {
-            '+': {
-                args: [{
-                    type: 'number',
-                    name: 'number'
-                }, {
-                    type: 'number',
-                    name: 'number'
-                }]
-            }
-        },
-
-        map: {
-            args: [{
-                type: 'Array',
-                name: 'list'
-            }, {
-                type: 'function',
-                name: 'handler'
-            }]
+    data.onchange = (v, {
+        runLeta
+    }) => {
+        if (!changed) {
+            changed = true;
+            assertFun(runLeta(v));
         }
-    },
+    };
 
-    value: {
-        value: 10,
-        path: 'data.number'
-    }
-}, (v) => assert.equal(v, 10));
+    setTimeout(() => {
+        if (!changed) {
+            throw new Error('expect onchange event');
+        }
+    }, 500);
 
-test('bool: true', {
-    predicates: {},
-    predicatesMetaInfo: {},
-    value: {
-        value: true,
-        path: 'data.boolean'
-    }
-}, (v) => assert.equal(v, true));
+    document.body.appendChild(n('div', {
+        style: {
+            marginBottom: 50
+        }
+    }, [
+        n('label', {
+            style: {
+                fontSize: 14
+            }
+        }, name),
+        LetaUI(lambda, data),
+        n('pre', {
+            style: {
+                fontSize: 10
+            }
+        }, assertFun.toString())
+    ]));
+};
 
-test('bool: false', {
-    predicates: {},
-    predicatesMetaInfo: {},
-    value: {
-        value: false,
-        path: 'data.boolean'
-    }
-}, (v) => assert.equal(v, false));
+testWithLeta('number', 10, null, (v) => assert.equal(v, 10));
 
-test('string', {
-    predicates: {},
-    predicatesMetaInfo: {},
-    value: {
-        value: '12345',
-        path: 'data.string'
-    }
-}, (v) => assert.equal(v, '12345'));
+testWithLeta('bool: true', true, null, (v) => assert.equal(v, true));
 
-test('null', {
-    predicates: {},
-    predicatesMetaInfo: {},
-    value: {
-        path: 'data.null'
-    }
-}, (v) => assert.equal(v, null));
+testWithLeta('string', '12345', null, (v) => assert.equal(v, '12345'));
 
-test('json', {
-    predicates: {},
-    predicatesMetaInfo: {},
-    value: {
-        value: {
-            a: 1,
-            b: 2
-        },
-        path: 'data.json'
-    }
-}, (v) => assert.deepEqual(v, {
+testWithLeta('null', null, null, (v) => assert.equal(v, null));
+
+testWithLeta('json', {
+    a: 1,
+    b: 2
+}, null, (v) => assert.deepEqual(v, {
     a: 1,
     b: 2
 }));
 
-test('predicate:+', {
+testWithLeta('predicate:+', method('math.+')(1, 2), {
     predicates: {
         math: {
             '+': (x, y) => x + y
         }
-    },
-    predicatesMetaInfo: {
-        math: {
-            '+': {
-                args: [{
-                    type: 'number',
-                    name: 'number'
-                }, {
-                    type: 'number',
-                    name: 'number'
-                }]
-            }
-        }
-    },
-
-    value: {
-        path: 'predicate.math.+',
-        params: [{
-            path: 'data.number',
-            value: 1
-        }, {
-            path: 'data.number',
-            value: 2
-        }]
     }
 }, (v) => assert.equal(v, 3));
 
-test('abstraction:', {
+testWithLeta('abstraction:', r('x', 'y', method('math.+')(v('x'), v('y'))), {
     predicates: {
         math: {
             '+': (x, y) => x + y
-        }
-    },
-    predicatesMetaInfo: {
-        math: {
-            '+': {
-                args: [{
-                    type: 'number',
-                    name: 'number'
-                }, {
-                    type: 'number',
-                    name: 'number'
-                }]
-            }
-        }
-    },
-
-    value: {
-        path: 'abstraction',
-        variables: ['x', 'y'],
-        expression: {
-            path: 'predicate.math.+',
-            params: [{
-                path: 'variable.x'
-            }, {
-                path: 'variable.y'
-            }]
         }
     }
 }, (v) => assert.equal(v(3, 4), 7));
 
-test('predicate: deep', {
+testWithLeta('predicate: deep', method('math.+')(method('math.+')(1, 3), 2), {
     predicates: {
         math: {
             '+': (x, y) => x + y
         }
-    },
-    predicatesMetaInfo: {
-        math: {
-            '+': {
-                args: [{
-                    type: 'number',
-                    name: 'number'
-                }, {
-                    type: 'number',
-                    name: 'number'
-                }]
-            }
-        }
-    },
-
-    value: {
-        path: 'predicate.math.+',
-        params: [{
-            path: 'predicate.math.+',
-            params: [{
-                path: 'data.number',
-                value: 1
-            }, {
-                path: 'data.number',
-                value: 3
-            }]
-        }, {
-            path: 'data.number',
-            value: 2
-        }]
     }
 }, (v) => assert.equal(v, 6));
 
-test('infix', {
+// TODO infix information
+// TODO support infix expression in leta
+testWithLeta('infix', method('math.+')(2, 5), {
     predicates: {
         math: {
             '+': (x, y) => x + y
         }
-    },
-
-    predicatesMetaInfo: {
-        math: {
-            '+': {
-                args: [{
-                    type: 'number',
-                    name: 'number'
-                }, {
-                    type: 'number',
-                    name: 'number'
-                }]
-            }
-        }
-    },
-
-    value: {
-        path: 'predicate.math.+',
-        params: [{
-            path: 'data.number',
-            value: 2
-
-        }, {
-            path: 'data.number',
-            value: 5
-        }],
-        infix: 1
     }
 }, (v) => assert.equal(v, 7));
 

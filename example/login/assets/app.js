@@ -66,17 +66,19 @@
 	 * 4. custome expression ui
 	 */
 
-	let login = method('login');
-	let captcha = method('captcha');
+	let inputLogin = method('inputLogin');
+	let inputCaptcha = method('inputCaptcha');
 
-	document.body.appendChild(letaUI(login('', '', captcha('img')), {
+	document.body.appendChild(letaUI(inputLogin('', '', inputCaptcha('img')), {
 	    predicates: {
-	        login: () => {},
-	        captcha: () => {}
+	        inputLogin: () => {},
+	        inputCaptcha: () => {}
 	    },
 
 	    predicatesMetaInfo: {
-	        login: {
+	        inputLogin: {
+	            title: 'login',
+
 	            args: [{
 	                name: 'username',
 	                content: {
@@ -89,11 +91,11 @@
 	                    type: 'password'
 	                }
 	            }, {
-	                name: 'captcha'
+	                name: 'inputCaptcha'
 	            }]
 	        },
 
-	        captcha: {
+	        inputCaptcha: {
 	            args: [{
 	                name: 'img',
 	                content: {
@@ -150,6 +152,8 @@
 	        throw new Error(`unexpected number of arguments. Expect one or two but got ${args.length}`);
 	    }
 
+	    data = data || {};
+
 	    let runLeta = runner(data.predicates);
 
 	    return LetaUI(mergeMap(data, {
@@ -172,6 +176,8 @@
 	    view, n
 	} = __webpack_require__(4);
 
+	let EmptyExpressionView = __webpack_require__(98);
+
 	let JsonDataView = __webpack_require__(33);
 
 	let AbstractionView = __webpack_require__(68);
@@ -185,8 +191,8 @@
 	let TreeOptionView = __webpack_require__(93);
 
 	let {
-	    getSuffixParams,
-	    getPrefixParams
+	    getPrefixParamser,
+	    getSuffixParamser
 	} = __webpack_require__(94);
 
 	let {
@@ -281,7 +287,7 @@
 	let expressionView = view((data, {
 	    update
 	}) => {
-	    completeDataWithDefault(data);
+	    data = completeDataWithDefault(data);
 
 	    return () => {
 	        let {
@@ -297,6 +303,7 @@
 
 	            // ui states
 	            title,
+	            guideLine,
 	            showSelectTree,
 
 	            // events
@@ -323,12 +330,11 @@
 	            }));
 	        }
 
-	        let expresionType = getExpressionType(value.path);
-
 	        let optionsView = TreeOptionView({
 	            path: value.path,
 	            data: expressAbility ? expressAbility(data) : expressionTypes(data),
 	            title,
+	            guideLine,
 	            showSelectTree,
 	            nameMap,
 	            onselected: (v, path) => {
@@ -405,67 +411,86 @@
 	            value: content,
 	        }));
 
-	        onchange(value);
-
-	        return n('div', {
-	            style: {
-	                position: 'relative',
-	                display: 'inline-block',
-	                borderRadius: 5
-	            }
-	        }, [
-	            // expression
-	            n('div', {
-	                style: {
-	                    display: 'inline-block',
-	                    padding: 8,
-	                    border: '1px solid rgba(200, 200, 200, 0.4)',
-	                    borderRadius: 5
-	                }
-	            }, [
-
-	                !data.value.path && optionsView,
-
-	                data.value.path && [
-	                    expresionType === PREDICATE && PredicateView({
-	                        prefixParams: getPrefixParams(data, {
+	        let getExpressionViewOptions = () => {
+	            let expressionType = getExpressionType(value.path);
+	            switch (expressionType) {
+	                case PREDICATE:
+	                    return {
+	                        getPrefixParams: getPrefixParamser(data, {
 	                            // prefix param item
 	                            itemRender: prefixParamItemRender
 	                        }),
 
 	                        value,
-	                        optionsView,
 
-	                        suffixParams: getSuffixParams(data, {
+	                        getSuffixParams: getSuffixParamser(data, {
 	                            expressionView,
 	                            // suffix param item
 	                            itemRender: suffixParamItemRender
-	                        })
-	                    }),
+	                        }),
 
-	                    expresionType === JSON_DATA && JsonDataView({
-	                        value, onchange, optionsView
-	                    }),
+	                        optionsView,
 
-	                    expresionType === VARIABLE && VariableView({
-	                        optionsView
-	                    }),
-
-	                    expresionType === ABSTRACTION && AbstractionView({
+	                        expandor
+	                    };
+	                case JSON_DATA:
+	                    return {
+	                        value,
+	                        onchange,
+	                        optionsView,
+	                        expandor
+	                    };
+	                case VARIABLE:
+	                    return {
+	                        optionsView,
+	                        expandor
+	                    };
+	                case ABSTRACTION:
+	                    return {
 	                        value,
 	                        variables,
+
 	                        optionsView,
+	                        expandor,
+
 	                        onchange,
 	                        expressionBody: getAbstractionBody()
-	                    })
-	                ]
-	            ]),
+	                    };
+	                default:
+	                    return {
+	                        optionsView,
+	                        expandor
+	                    };
+	            }
+	        };
 
-	            // expandor
-	            expandor
-	        ]);
+	        onchange(value);
+
+	        return getExpressionViewer(data)(getExpressionViewOptions());
 	    };
 	});
+
+	/**
+	 * choose the viewer to render expression
+	 */
+	let getExpressionViewer = ({
+	    value
+	}) => {
+	    let expressionType = getExpressionType(value.path);
+
+	    switch (expressionType) {
+	        case PREDICATE:
+	            return PredicateView;
+	        case JSON_DATA:
+	            return JsonDataView;
+	        case VARIABLE:
+	            return VariableView;
+	        case ABSTRACTION:
+	            return AbstractionView;
+	        default:
+	            return EmptyExpressionView;
+	    }
+	};
 
 
 /***/ },
@@ -3113,6 +3138,8 @@
 
 	let InputView = __webpack_require__(41);
 
+	let expandorWrapper = __webpack_require__(99);
+
 	const {
 	    INLINE_TYPES, DEFAULT_DATA_MAP
 	} = __webpack_require__(58);
@@ -3125,7 +3152,7 @@
 	 * used to define json data
 	 */
 	module.exports = view(({
-	    value, onchange = id, optionsView
+	    value, onchange = id, optionsView, expandor
 	}) => {
 	    let type = getDataTypePath(value.path);
 
@@ -3143,7 +3170,7 @@
 	        }, type);
 	    };
 
-	    return n('div', {
+	    return expandorWrapper(n('div', {
 	        style: {
 	            border: contain(INLINE_TYPES, type) ? '0' : '1px solid rgba(200, 200, 200, 0.4)',
 	            minWidth: 160
@@ -3181,7 +3208,7 @@
 	            body: renderInputArea,
 	            hide: false
 	        }) : renderInputArea()
-	    ]);
+	    ]), expandor);
 	});
 
 	let abbreText = (data) => {
@@ -24391,10 +24418,6 @@
 	'use strict';
 
 	let {
-	    map
-	} = __webpack_require__(34);
-
-	let {
 	    dsl, interpreter
 	} = __webpack_require__(60);
 
@@ -24404,8 +24427,12 @@
 	} = __webpack_require__(58);
 
 	let {
-	    reduce, get
+	    reduce, get, forEach, map
 	} = __webpack_require__(34);
+
+	let {
+	    isFunction, isObject
+	} = __webpack_require__(9);
 
 	let getLambdaUiValue = __webpack_require__(67);
 
@@ -24548,7 +24575,39 @@
 	    data.variables = data.variables || [];
 	    data.funs = data.funs || [JSON_DATA, PREDICATE, ABSTRACTION, VARIABLE];
 	    data.onchange = data.onchange || id;
+	    data.predicates = data.predicates || {};
+	    data.predicatesMetaInfo = data.predicatesMetaInfo || {};
+
+	    // TODO complete predicate meta info
+	    completePredicatesMetaInfo(data.predicates, data.predicatesMetaInfo);
+
+	    // make title
+	    let expresionType = getExpressionType(data.value.path);
+	    if (expresionType === PREDICATE) {
+	        let predicatePath = getPredicatePath(data.value.path);
+	        let {
+	            title
+	        } = getPredicateMetaInfo(data.predicatesMetaInfo, predicatePath) || {};
+	        if (title) {
+	            data.title = title;
+	        }
+	    }
+
 	    return data;
+	};
+
+	let completePredicatesMetaInfo = (predicates, predicatesMetaInfo) => {
+	    forEach(predicates, (v, name) => {
+	        predicatesMetaInfo[name] = predicatesMetaInfo[name] || {};
+
+	        if (isFunction(v) && !predicatesMetaInfo[name].args) {
+	            predicatesMetaInfo[name].args = map(new Array(v.length), () => {
+	                return {};
+	            });
+	        } else if (v && isObject(v)) {
+	            completePredicatesMetaInfo(v, predicatesMetaInfo[name]);
+	        }
+	    });
 	};
 
 	let completeValueWithDefault = (value) => {
@@ -25487,7 +25546,9 @@
 
 	    NUMBER,
 	    BOOLEAN,
-	    STRING
+	    STRING,
+	    NULL,
+	    JSON_TYPE
 	} = __webpack_require__(58);
 
 	let {
@@ -25495,7 +25556,7 @@
 	} = __webpack_require__(34);
 
 	let {
-	    isString, isNumber, isBool
+	    isString, isNumber, isBool, isNull, isObject
 	} = __webpack_require__(9);
 
 	/**
@@ -25504,7 +25565,7 @@
 	 *
 	 *     expression,    // for abstraction
 	 *
-	 *     currentVariables,    // for abstraction
+	 *     variables,    // for abstraction
 	 *
 	 *     params,    // predicate
 	 *
@@ -25540,7 +25601,7 @@
 	            return {
 	                path: ABSTRACTION,
 	                expression: getLambdaUiValue(abstractionBody),
-	                currentVariables: abstractionArgs
+	                variables: abstractionArgs
 	            };
 	        case PREDICATE_PREFIX:
 	            return {
@@ -25562,6 +25623,10 @@
 	    else if (isNumber(data)) return NUMBER;
 
 	    else if (isBool(data)) return BOOLEAN;
+
+	    else if (isNull(data)) return NULL;
+
+	    else if (isObject(data)) return JSON_TYPE;
 	};
 
 	module.exports = getLambdaUiValue;
@@ -25579,6 +25644,8 @@
 
 	let VariableDeclareView = __webpack_require__(69);
 
+	let expandorWrapper = __webpack_require__(99);
+
 	let {
 	    VARIABLE
 	} = __webpack_require__(58);
@@ -25587,10 +25654,11 @@
 	    value,
 	    variables,
 	    optionsView,
+	    expandor,
 	    onchange,
 	    expressionBody
 	}) => {
-	    return () => n('div', [
+	    return () => expandorWrapper(n('div', [
 	        optionsView,
 
 	        n('div', {
@@ -25628,7 +25696,7 @@
 	                expressionBody.getView()
 	            ])
 	        ])
-	    ]);
+	    ]), expandor);
 	});
 
 
@@ -25950,14 +26018,21 @@
 	    n, view
 	} = __webpack_require__(4);
 
+	let {
+	    map
+	} = __webpack_require__(34);
+
+	let expandorWrapper = __webpack_require__(99);
+
 	module.exports = view(({
 	    value,
 	    optionsView,
-	    prefixParams,
-	    suffixParams
+	    expandor,
+	    getPrefixParams,
+	    getSuffixParams
 	}) => {
-	    return n('div', [
-	        prefixParams,
+	    return expandorWrapper(n('div', [
+	        arrangeItems(getPrefixParams(value.infix)),
 
 	        optionsView,
 
@@ -25966,10 +26041,25 @@
 	                display: value.infix ? 'inline-block' : 'block'
 	            }
 	        }, [
-	            suffixParams
+	            arrangeItems(getSuffixParams(value.infix))
 	        ])
-	    ]);
+	    ]), expandor);
 	});
+
+	let arrangeItems = (itemViews) => n('div', {
+	    'class': 'lambda-params',
+	    style: {
+	        display: 'inline-block'
+	    }
+	}, [
+	    map(itemViews, (itemView) => {
+	        return n('fieldset', {
+	            style: {
+	                padding: '4px'
+	            }
+	        }, itemView);
+	    })
+	]);
 
 
 /***/ },
@@ -25982,10 +26072,12 @@
 	    n, view
 	} = __webpack_require__(4);
 
+	let expandorWrapper = __webpack_require__(99);
+
 	module.exports = view(({
-	    optionsView
+	    optionsView, expandor
 	}) => {
-	    return () => n('div', [optionsView]);
+	    return () => expandorWrapper(n('div', [optionsView]), expandor);
 	});
 
 
@@ -27590,6 +27682,7 @@
 	    showSelectTree,
 	    onselected,
 	    title,
+	    guideLine,
 	    nameMap
 	}, {
 	    update
@@ -27620,7 +27713,7 @@
 	            onclick: () => {
 	                update('showSelectTree', !showSelectTree);
 	            }
-	        }, path ? renderGuideLine(path) : n('div class="input-style"', {
+	        }, path ? (guideLine === false ? null : (!guideLine ? renderGuideLine(path) : guideLine)) : n('div class="input-style"', {
 	            style: {
 	                color: '#9b9b9b',
 	                overflow: 'auto'
@@ -27683,7 +27776,7 @@
 	        n('span', {
 	            style: {
 	                fontWeight: (type === PREDICATE || type === VARIABLE) ? 'bold' : 'inherit',
-	                fontSize: type === PREDICATE ? 16 : 12,
+	                fontSize: 12,
 	                color: '#b4881d',
 	                padding: '0 5px'
 	            }
@@ -27704,11 +27797,13 @@
 
 	'use strict';
 
-	let ParamsFieldView = __webpack_require__(95);
-
 	let {
 	    getPredicatePath, getPredicateMetaInfo
 	} = __webpack_require__(59);
+
+	let {
+	    map, mergeMap
+	} = __webpack_require__(34);
 
 	let getArgs = ({
 	    value,
@@ -27723,9 +27818,9 @@
 
 	const id = v => v;
 
-	let getPrefixParams = (data, {
+	let getPrefixParamser = (data, {
 	    itemRender
-	}) => {
+	}) => (infix = 0) => {
 	    let {
 	        value,
 	        onchange = id
@@ -27733,23 +27828,29 @@
 
 	    let args = getArgs(data);
 
-	    return ParamsFieldView({
-	        itemRender,
+	    let params = value.params.slice(0, infix);
 
-	        onchange: (params) => {
-	            value.params = params.concat(value.params.slice(value.infix));
-	            onchange(value);
-	        },
+	    return map(args.slice(0, infix), ({
+	        name,
+	        content
+	    }, index) => {
+	        return itemRender({
+	            title: name,
 
-	        args: args.slice(0, value.infix),
+	            content: mergeMap(params[index] || {}, content || {}),
 
-	        params: value.params.slice(0, value.infix)
+	            onchange: (itemValue) => {
+	                params[index] = itemValue;
+	                value.params = params.concat(value.params.slice(infix));
+	                onchange(value);
+	            }
+	        });
 	    });
 	};
 
-	let getSuffixParams = (data, {
+	let getSuffixParamser = (data, {
 	    itemRender
-	}) => {
+	}) => (infix = 0) => {
 	    let {
 	        value,
 	        onchange = id
@@ -27757,81 +27858,34 @@
 
 	    let args = getArgs(data);
 
-	    return ParamsFieldView({
-	        itemRender,
+	    let params = value.params.slice(infix);
 
-	        onchange: (params) => {
-	            value.params = value.params.slice(0, value.infix).concat(params);
-	            onchange(value);
-	        },
+	    return map(args.slice(infix), ({
+	        name,
+	        content
+	    }, index) => {
+	        return itemRender({
+	            title: name,
 
-	        args: args.slice(value.infix),
+	            content: mergeMap(params[index] || {}, content || {}),
 
-	        params: value.params.slice(value.infix)
+	            onchange: (itemValue) => {
+	                params[index] = itemValue;
+	                value.params = value.params.slice(0, infix).concat(params);
+	                onchange(value);
+	            }
+	        });
 	    });
 	};
 
 	module.exports = {
-	    getPrefixParams,
-	    getSuffixParams
+	    getPrefixParamser,
+	    getSuffixParamser
 	};
 
 
 /***/ },
-/* 95 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	let {
-	    n, view
-	} = __webpack_require__(4);
-
-	let {
-	    map, mergeMap
-	} = __webpack_require__(34);
-
-	module.exports = view(({
-	    args,
-	    itemRender,
-	    onchange = id, params = []
-	}) => {
-	    return () => n('div', {
-	        'class': 'lambda-params',
-	        style: {
-	            display: 'inline-block'
-	        }
-	    }, [
-	        map(args, ({
-	            name,
-	            content
-	        }, index) => {
-	            let value = mergeMap(params[index] || {}, content || {});
-
-	            return n('fieldset', {
-	                style: {
-	                    padding: '4px'
-	                }
-	            }, [
-	                itemRender({
-	                    title: name,
-
-	                    content: value,
-
-	                    onchange: (itemValue) => {
-	                        params[index] = itemValue;
-	                        onchange(params);
-	                    }
-	                })
-	            ]);
-	        })
-	    ]);
-	});
-
-	const id = v => v;
-
-
-/***/ },
+/* 95 */,
 /* 96 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -27938,6 +27992,56 @@
 	    min-width: 160px;
 	}
 	`;
+
+
+/***/ },
+/* 98 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let expandorWrapper = __webpack_require__(99);
+
+	module.exports = ({
+	    optionsView,
+	    expandor
+	}) => {
+	    return expandorWrapper(optionsView, expandor);
+	};
+
+
+/***/ },
+/* 99 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    n
+	} = __webpack_require__(4);
+
+	module.exports = (expView, expandor) => {
+	    return n('div', {
+	        style: {
+	            position: 'relative',
+	            display: 'inline-block',
+	            borderRadius: 5
+	        }
+	    }, [
+	        // expression
+	        n('div', {
+	            style: {
+	                display: 'inline-block',
+	                padding: 8,
+	                border: '1px solid rgba(200, 200, 200, 0.4)',
+	                borderRadius: 5
+	            }
+	        }, expView),
+
+	        // expandor
+	        expandor
+	    ]);
+	};
 
 
 /***/ }

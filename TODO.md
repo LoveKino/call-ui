@@ -17,3 +17,5 @@
 - type check or validation or arguments type filter...
 
 - ability options
+ 
+- define UI predicates to control the UI parts

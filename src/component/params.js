@@ -1,10 +1,12 @@
 'use strict';
 
-let ParamsFieldView = require('../view/paramsFieldView');
-
 let {
     getPredicatePath, getPredicateMetaInfo
 } = require('../model');
+
+let {
+    map, mergeMap
+} = require('bolzano');
 
 let getArgs = ({
     value,
@@ -19,9 +21,9 @@ let getArgs = ({
 
 const id = v => v;
 
-let getPrefixParams = (data, {
+let getPrefixParamser = (data, {
     itemRender
-}) => {
+}) => (infix = 0) => {
     let {
         value,
         onchange = id
@@ -29,23 +31,29 @@ let getPrefixParams = (data, {
 
     let args = getArgs(data);
 
-    return ParamsFieldView({
-        itemRender,
+    let params = value.params.slice(0, infix);
 
-        onchange: (params) => {
-            value.params = params.concat(value.params.slice(value.infix));
-            onchange(value);
-        },
+    return map(args.slice(0, infix), ({
+        name,
+        content
+    }, index) => {
+        return itemRender({
+            title: name,
 
-        args: args.slice(0, value.infix),
+            content: mergeMap(params[index] || {}, content || {}),
 
-        params: value.params.slice(0, value.infix)
+            onchange: (itemValue) => {
+                params[index] = itemValue;
+                value.params = params.concat(value.params.slice(infix));
+                onchange(value);
+            }
+        });
     });
 };
 
-let getSuffixParams = (data, {
+let getSuffixParamser = (data, {
     itemRender
-}) => {
+}) => (infix = 0) => {
     let {
         value,
         onchange = id
@@ -53,21 +61,27 @@ let getSuffixParams = (data, {
 
     let args = getArgs(data);
 
-    return ParamsFieldView({
-        itemRender,
+    let params = value.params.slice(infix);
 
-        onchange: (params) => {
-            value.params = value.params.slice(0, value.infix).concat(params);
-            onchange(value);
-        },
+    return map(args.slice(infix), ({
+        name,
+        content
+    }, index) => {
+        return itemRender({
+            title: name,
 
-        args: args.slice(value.infix),
+            content: mergeMap(params[index] || {}, content || {}),
 
-        params: value.params.slice(value.infix)
+            onchange: (itemValue) => {
+                params[index] = itemValue;
+                value.params = value.params.slice(0, infix).concat(params);
+                onchange(value);
+            }
+        });
     });
 };
 
 module.exports = {
-    getPrefixParams,
-    getSuffixParams
+    getPrefixParamser,
+    getSuffixParamser
 };

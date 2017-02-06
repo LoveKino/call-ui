@@ -20,17 +20,19 @@ let {
  * 4. custome expression ui
  */
 
-let login = method('login');
-let captcha = method('captcha');
+let inputLogin = method('inputLogin');
+let inputCaptcha = method('inputCaptcha');
 
-document.body.appendChild(letaUI(login('', '', captcha('img')), {
+document.body.appendChild(letaUI(inputLogin('', '', inputCaptcha('img')), {
     predicates: {
-        login: () => {},
-        captcha: () => {}
+        inputLogin: () => {},
+        inputCaptcha: () => {}
     },
 
     predicatesMetaInfo: {
-        login: {
+        inputLogin: {
+            title: 'login',
+
             args: [{
                 name: 'username',
                 content: {
@@ -43,11 +45,11 @@ document.body.appendChild(letaUI(login('', '', captcha('img')), {
                     type: 'password'
                 }
             }, {
-                name: 'captcha'
+                name: 'inputCaptcha'
             }]
         },
 
-        captcha: {
+        inputCaptcha: {
             args: [{
                 name: 'img',
                 content: {

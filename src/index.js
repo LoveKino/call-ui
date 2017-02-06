@@ -31,6 +31,8 @@ module.exports = (...args) => {
         throw new Error(`unexpected number of arguments. Expect one or two but got ${args.length}`);
     }
 
+    data = data || {};
+
     let runLeta = runner(data.predicates);
 
     return LetaUI(mergeMap(data, {

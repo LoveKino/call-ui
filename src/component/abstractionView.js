@@ -6,6 +6,8 @@ let {
 
 let VariableDeclareView = require('../view/variableDeclareView');
 
+let expandorWrapper = require('./expandorWrapper');
+
 let {
     VARIABLE
 } = require('../const');
@@ -14,10 +16,11 @@ module.exports = view(({
     value,
     variables,
     optionsView,
+    expandor,
     onchange,
     expressionBody
 }) => {
-    return () => n('div', [
+    return () => expandorWrapper(n('div', [
         optionsView,
 
         n('div', {
@@ -55,5 +58,5 @@ module.exports = view(({
                 expressionBody.getView()
             ])
         ])
-    ]);
+    ]), expandor);
 });

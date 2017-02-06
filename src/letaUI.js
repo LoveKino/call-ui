@@ -4,6 +4,8 @@ let {
     view, n
 } = require('kabanery');
 
+let EmptyExpressionView = require('./component/emptyExpressionView');
+
 let JsonDataView = require('./component/jsonDataView');
 
 let AbstractionView = require('./component/abstractionView');
@@ -17,8 +19,8 @@ let ExpandorView = require('./component/expandorView');
 let TreeOptionView = require('./view/treeOptionView');
 
 let {
-    getSuffixParams,
-    getPrefixParams
+    getPrefixParamser,
+    getSuffixParamser
 } = require('./component/params');
 
 let {
@@ -113,7 +115,7 @@ module.exports = view((data = {}) => {
 let expressionView = view((data, {
     update
 }) => {
-    completeDataWithDefault(data);
+    data = completeDataWithDefault(data);
 
     return () => {
         let {
@@ -129,6 +131,7 @@ let expressionView = view((data, {
 
             // ui states
             title,
+            guideLine,
             showSelectTree,
 
             // events
@@ -155,12 +158,11 @@ let expressionView = view((data, {
             }));
         }
 
-        let expresionType = getExpressionType(value.path);
-
         let optionsView = TreeOptionView({
             path: value.path,
             data: expressAbility ? expressAbility(data) : expressionTypes(data),
             title,
+            guideLine,
             showSelectTree,
             nameMap,
             onselected: (v, path) => {
@@ -237,64 +239,83 @@ let expressionView = view((data, {
             value: content,
         }));
 
-        onchange(value);
-
-        return n('div', {
-            style: {
-                position: 'relative',
-                display: 'inline-block',
-                borderRadius: 5
-            }
-        }, [
-            // expression
-            n('div', {
-                style: {
-                    display: 'inline-block',
-                    padding: 8,
-                    border: '1px solid rgba(200, 200, 200, 0.4)',
-                    borderRadius: 5
-                }
-            }, [
-
-                !data.value.path && optionsView,
-
-                data.value.path && [
-                    expresionType === PREDICATE && PredicateView({
-                        prefixParams: getPrefixParams(data, {
+        let getExpressionViewOptions = () => {
+            let expressionType = getExpressionType(value.path);
+            switch (expressionType) {
+                case PREDICATE:
+                    return {
+                        getPrefixParams: getPrefixParamser(data, {
                             // prefix param item
                             itemRender: prefixParamItemRender
                         }),
 
                         value,
-                        optionsView,
 
-                        suffixParams: getSuffixParams(data, {
+                        getSuffixParams: getSuffixParamser(data, {
                             expressionView,
                             // suffix param item
                             itemRender: suffixParamItemRender
-                        })
-                    }),
+                        }),
 
-                    expresionType === JSON_DATA && JsonDataView({
-                        value, onchange, optionsView
-                    }),
+                        optionsView,
 
-                    expresionType === VARIABLE && VariableView({
-                        optionsView
-                    }),
-
-                    expresionType === ABSTRACTION && AbstractionView({
+                        expandor
+                    };
+                case JSON_DATA:
+                    return {
+                        value,
+                        onchange,
+                        optionsView,
+                        expandor
+                    };
+                case VARIABLE:
+                    return {
+                        optionsView,
+                        expandor
+                    };
+                case ABSTRACTION:
+                    return {
                         value,
                         variables,
+
                         optionsView,
+                        expandor,
+
                         onchange,
                         expressionBody: getAbstractionBody()
-                    })
-                ]
-            ]),
+                    };
+                default:
+                    return {
+                        optionsView,
+                        expandor
+                    };
+            }
+        };
 
-            // expandor
-            expandor
-        ]);
+        onchange(value);
+
+        return getExpressionViewer(data)(getExpressionViewOptions());
     };
 });
+
+/**
+ * choose the viewer to render expression
+ */
+let getExpressionViewer = ({
+    value
+}) => {
+    let expressionType = getExpressionType(value.path);
+
+    switch (expressionType) {
+        case PREDICATE:
+            return PredicateView;
+        case JSON_DATA:
+            return JsonDataView;
+        case VARIABLE:
+            return VariableView;
+        case ABSTRACTION:
+            return AbstractionView;
+        default:
+            return EmptyExpressionView;
+    }
+};
