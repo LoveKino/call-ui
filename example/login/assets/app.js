@@ -56,6 +56,14 @@
 	    method
 	} = dsl;
 
+	let {
+	    n
+	} = __webpack_require__(4);
+
+	let {
+	    map
+	} = __webpack_require__(34);
+
 	/**
 	 * 1. no expand
 	 *
@@ -66,46 +74,146 @@
 	 * 4. custome expression ui
 	 */
 
-	let inputLogin = method('inputLogin');
-	let inputCaptcha = method('inputCaptcha');
-
-	document.body.appendChild(letaUI(inputLogin('', '', inputCaptcha('img')), {
-	    predicates: {
-	        inputLogin: () => {},
-	        inputCaptcha: () => {}
-	    },
-
-	    predicatesMetaInfo: {
-	        inputLogin: {
-	            title: 'login',
-
-	            args: [{
-	                name: 'username',
-	                content: {
-	                    placeholder: 'username, eg: ddchen'
-	                }
-	            }, {
-	                name: 'password',
-	                content: {
-	                    placeholder: 'password, eg: 123',
-	                    type: 'password'
-	                }
-	            }, {
-	                name: 'inputCaptcha'
-	            }]
-	        },
-
-	        inputCaptcha: {
-	            args: [{
-	                name: 'img',
-	                content: {
-	                }
-	            }]
+	let simpleInput = ({
+	    title,
+	    placeholder,
+	    type = 'text'
+	}) => ({
+	    onchange
+	}) => {
+	    return n('fieldset', {
+	        style: {
+	            border: 0
 	        }
-	    },
+	    }, [
+	        n('label', {
+	            style: {
+	                marginRight: 8
+	            }
+	        }, title),
 
-	    expressAbility: () => null
-	}));
+	        n(`input type="${type}" placeholder="${placeholder}"`, {
+	            oninput: (e) => {
+	                onchange({
+	                    path: 'data.string',
+	                    value: e.target.value
+	                });
+	            }
+	        })
+	    ]);
+	};
+
+	let button = ({
+	    text
+	}) => ({
+	    onchange
+	}) => {
+	    return n('button', {
+	        onclick: (e) => {
+	            e.preventDefault();
+	            e.stopPropagation();
+
+	            onchange({
+	                path: 'data.number',
+	                value: 1
+	            });
+
+	            onchange({
+	                path: 'data.number',
+	                value: 0
+	            });
+	        }
+	    }, text);
+	};
+
+	let login = method('login');
+	let UserNameInput = method('UI.userNameInput');
+	let PasswordInput = method('UI.passwordInput');
+	let Form = method('UI.form');
+	let Submit = method('UI.submit');
+	let CaptchaInput = method('UI.captchaInput');
+
+	document.body.appendChild(
+	    letaUI(
+	        Form(
+	            login(
+	                UserNameInput(''),
+	                PasswordInput(''),
+	                CaptchaInput(''),
+	                Submit(0))
+	        ),
+
+	        {
+	            predicates: {
+	                // TODO can update view of param
+	                // reflect logic to view by update some data
+	                login: (username, password, captcha, doSubmit) => {
+	                    console.log(username, password, captcha, doSubmit); // eslint-disable-line
+	                    // TODO
+	                }
+	            },
+
+	            UI: {
+	                userNameInput: simpleInput({
+	                    title: 'username',
+	                    placeholder: 'input your username'
+	                }),
+
+	                passwordInput: simpleInput({
+	                    title: 'password',
+	                    placeholder: 'input your password',
+	                    type: 'password'
+	                }),
+
+	                captchaInput: ({
+	                    onchange
+	                }) => {
+	                    return n('div', [
+	                        n('input', {
+	                            oninput: (e) => {
+	                                onchange({
+	                                    path: 'data.string',
+	                                    value: e.target.value
+	                                });
+	                            }
+	                        }),
+
+	                        n('img src="https://www.google.com.hk/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png"', {
+	                            style: {
+	                                width: 40
+	                            }
+	                        })
+	                    ]);
+	                },
+
+	                form: ({
+	                    getSuffixParams
+	                }) => {
+	                    return n('form class="expression-wrapper"', [
+	                        n('div', 'login'),
+	                        map(getSuffixParams(0), (item) => {
+	                            return n('div', {
+	                                style: {
+	                                    padding: 8
+	                                }
+	                            }, item);
+	                        })
+	                    ]);
+	                },
+
+	                submit: button({
+	                    text: 'submit'
+	                })
+	            },
+
+	            onchange: (v, {
+	                runLeta
+	            }) => {
+	                runLeta(v);
+	            }
+	        }
+	    )
+	);
 
 
 /***/ },
@@ -161,7 +269,9 @@
 	            data.onchange && data.onchange(v, {
 	                runLeta
 	            });
-	        }
+	        },
+
+	        runLeta
 	    }));
 	};
 
@@ -188,7 +298,7 @@
 	} = __webpack_require__(94);
 
 	let {
-	    mergeMap
+	    mergeMap, get, map
 	} = __webpack_require__(34);
 
 	let getExpressionViewer = __webpack_require__(101);
@@ -206,7 +316,9 @@
 	    getExpressionType,
 	    completeDataWithDefault,
 	    completeValueWithDefault,
-	    expressionTypes
+	    expressionTypes,
+	    isUIPredicate,
+	    getUIPredicatePath
 	} = __webpack_require__(59);
 
 	/**
@@ -286,30 +398,26 @@
 	    return () => {
 	        let {
 	            value,
-	            variables,
 	            infixPath,
 
-	            // global config
-	            predicates,
-	            predicatesMetaInfo,
-	            nameMap,
-
-	            // ui states
-	            title,
-	            guideLine,
-	            showSelectTree,
-
 	            // events
-	            onchange
+	            onchange,
+
+	            runLeta
 	        } = data;
 
-	        let globalConfig = {
-	            predicates,
-	            predicatesMetaInfo,
-	            nameMap
-	        };
-
 	        completeValueWithDefault(value);
+
+	        if (isUIPredicate(value.path)) {
+	            //
+	            let render = get(data.UI, getUIPredicatePath(value.path));
+	            return expressionView(mergeMap(data, {
+	                viewer: (v) => render(v, ...map(value.params.slice(1), (item) => {
+	                    return runLeta(item);
+	                })),
+	                value: value.params[0]
+	            }));
+	        }
 
 	        if (data.infixPath) {
 	            return expressionView(mergeMap(data, {
@@ -322,147 +430,189 @@
 	            }));
 	        }
 
-	        let getOptionsView = (OptionsView = TreeOptionView) => OptionsView({
-	            path: value.path,
-	            data: expressionTypes(data),
-	            title,
-	            guideLine,
-	            showSelectTree,
-	            nameMap,
-	            onselected: (v, path) => {
-	                update([
-	                    ['value.path', path],
-	                    ['showSelectTree', false]
-	                ]);
-	            }
-	        });
-
-	        let getExpandor = (ExpandorView = Expandor) => data.value.path && ExpandorComponent({
-	            onExpand: (hide) => {
-	                update();
-	                data.onexpandchange && data.onexpandchange(hide, data);
-	            },
-
-	            onselected: () => {
-	                update();
-	            },
-
-	            data,
-
-	            ExpandorView
-	        });
-
-	        let getAbstractionBody = () => {
-	            let expressionViewObj = mergeMap(globalConfig, {
-	                title: 'expression',
-	                value: value.expression,
-	                variables: variables.concat(value.currentVariables),
-	                onchange: (lambda) => {
-	                    value.expression = lambda;
-	                    onchange && onchange(value);
-	                }
-	            });
-
-	            return {
-	                getView: () => {
-	                    return expressionView(expressionViewObj);
-	                },
-
-	                updateVariables: (vars) => {
-	                    expressionViewObj.variables = vars;
-	                }
-	            };
-	        };
-
-	        let prefixParamItemRender = ({
-	            title,
-	            content,
-	            onchange
-	        }) => expressionView(mergeMap(globalConfig, {
-	            value: content,
-	            title,
-	            onchange,
-	            variables,
-
-	            onexpandchange: (hide, data) => {
-	                // close infix mode
-	                update([
-	                    ['infixPath', null],
-	                    ['value', data.value],
-	                    ['title', '']
-	                ]);
-	            }
-	        }));
-
-	        let suffixParamItemRender = ({
-	            title,
-	            content,
-	            onchange
-	        }) => expressionView(mergeMap(globalConfig, {
-	            title,
-	            onchange,
-	            variables,
-	            value: content,
-	        }));
-
-	        let getExpressionViewOptions = () => {
-	            let expressionType = getExpressionType(value.path);
-	            switch (expressionType) {
-	                case PREDICATE:
-	                    return {
-	                        getPrefixParams: getPrefixParamser(data, {
-	                            // prefix param item
-	                            itemRender: prefixParamItemRender
-	                        }),
-
-	                        value,
-
-	                        getSuffixParams: getSuffixParamser(data, {
-	                            expressionView,
-	                            // suffix param item
-	                            itemRender: suffixParamItemRender
-	                        }),
-
-	                        getOptionsView,
-
-	                        getExpandor
-	                    };
-	                case JSON_DATA:
-	                    return {
-	                        value,
-	                        onchange,
-	                        getOptionsView,
-	                        getExpandor
-	                    };
-	                case VARIABLE:
-	                    return {
-	                        getOptionsView,
-	                        getExpandor
-	                    };
-	                case ABSTRACTION:
-	                    return {
-	                        value,
-	                        variables,
-
-	                        getOptionsView,
-	                        getExpandor,
-
-	                        onchange,
-	                        expressionBody: getAbstractionBody()
-	                    };
-	                default:
-	                    return {
-	                        getOptionsView,
-	                        getExpandor
-	                    };
-	            }
-	        };
-
 	        onchange(value);
 
-	        return getExpressionViewer(data)(getExpressionViewOptions());
+	        return getExpressionViewer(data)(
+	            getExpressionViewOptions(data, update)
+	        );
 	    };
 	});
+
+	let getExpressionViewOptions = (data, update) => {
+	    let {
+	        value,
+	        variables,
+
+	        // global config
+	        predicates,
+	        predicatesMetaInfo,
+	        UI,
+	        nameMap,
+
+	        // ui states
+	        title,
+	        guideLine,
+	        showSelectTree,
+
+	        // events
+	        onchange,
+
+	        runLeta
+	    } = data;
+
+	    let globalConfig = {
+	        predicates,
+	        runLeta,
+	        UI,
+	        predicatesMetaInfo,
+	        nameMap
+	    };
+
+	    let getOptionsView = (OptionsView = TreeOptionView) => OptionsView({
+	        path: value.path,
+	        data: expressionTypes(data),
+	        title,
+	        guideLine,
+	        showSelectTree,
+	        nameMap,
+	        onselected: (v, path) => {
+	            update([
+	                ['value.path', path],
+	                ['showSelectTree', false]
+	            ]);
+	        }
+	    });
+
+	    let getExpandor = (ExpandorView = Expandor) => data.value.path && ExpandorComponent({
+	        onExpand: (hide) => {
+	            update();
+	            data.onexpandchange && data.onexpandchange(hide, data);
+	        },
+
+	        onselected: () => {
+	            update();
+	        },
+
+	        data,
+
+	        ExpandorView
+	    });
+
+	    let getAbstractionBody = () => {
+	        let expressionViewObj = mergeMap(globalConfig, {
+	            title: 'expression',
+	            value: value.expression,
+	            variables: variables.concat(value.currentVariables),
+	            onchange: (lambda) => {
+	                value.expression = lambda;
+	                onchange && onchange(value);
+	            }
+	        });
+
+	        return {
+	            getView: () => {
+	                return expressionView(expressionViewObj);
+	            },
+
+	            updateVariables: (vars) => {
+	                expressionViewObj.variables = vars;
+	            }
+	        };
+	    };
+
+	    let prefixParamItemRender = ({
+	        title,
+	        content,
+	        onchange
+	    }) => expressionView(mergeMap(globalConfig, {
+	        value: content,
+	        title,
+	        onchange,
+	        variables,
+
+	        onexpandchange: (hide, data) => {
+	            // close infix mode
+	            update([
+	                ['infixPath', null],
+	                ['value', data.value],
+	                ['title', '']
+	            ]);
+	        }
+	    }));
+
+	    let suffixParamItemRender = ({
+	        title,
+	        content,
+	        onchange
+	    }) => expressionView(mergeMap(globalConfig, {
+	        title,
+	        onchange,
+	        variables,
+	        value: content,
+	    }));
+
+	    let expressionType = getExpressionType(value.path);
+
+	    switch (expressionType) {
+	        case PREDICATE:
+	            return {
+	                getPrefixParams: getPrefixParamser(data, {
+	                    // prefix param item
+	                    itemRender: prefixParamItemRender
+	                }),
+
+	                value,
+
+	                getSuffixParams: getSuffixParamser(data, {
+	                    expressionView,
+	                    // suffix param item
+	                    itemRender: suffixParamItemRender
+	                }),
+
+	                getOptionsView,
+
+	                getExpandor,
+
+	                expressionType
+	            };
+	        case JSON_DATA:
+	            return {
+	                value,
+	                onchange,
+	                getOptionsView,
+	                getExpandor,
+
+	                expressionType
+	            };
+	        case VARIABLE:
+	            return {
+	                getOptionsView,
+	                getExpandor,
+
+	                expressionType
+	            };
+	        case ABSTRACTION:
+	            return {
+	                value,
+	                variables,
+
+	                getOptionsView,
+	                getExpandor,
+
+	                onchange,
+	                expressionBody: getAbstractionBody(),
+
+	                expressionType
+	            };
+	        default:
+	            return {
+	                getOptionsView,
+	                getExpandor,
+
+	                expressionType
+	            };
+	    }
+	};
 
 
 /***/ },
@@ -3087,117 +3237,7 @@
 
 
 /***/ },
-/* 33 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	let {
-	    n, view
-	} = __webpack_require__(4);
-
-	let {
-	    contain
-	} = __webpack_require__(34);
-
-	let fold = __webpack_require__(37);
-
-	let foldArrow = __webpack_require__(38);
-
-	let {
-	    isObject
-	} = __webpack_require__(9);
-
-	let InputView = __webpack_require__(41);
-
-	let expandorWrapper = __webpack_require__(99);
-
-	const {
-	    INLINE_TYPES, DEFAULT_DATA_MAP
-	} = __webpack_require__(58);
-
-	let {
-	    getDataTypePath
-	} = __webpack_require__(59);
-
-	/**
-	 * used to define json data
-	 */
-	module.exports = view(({
-	    value, onchange = id, getOptionsView, getExpandor
-	}) => {
-	    let type = getDataTypePath(value.path);
-
-	    let onValueChanged = (v) => {
-	        value.value = v;
-	        onchange(value);
-	    };
-
-	    let renderInputArea = () => {
-	        return InputView({
-	            content: value.value || DEFAULT_DATA_MAP[type],
-	            type: value.type,
-	            placeholder: value.placeholder,
-	            onchange: onValueChanged
-	        }, type);
-	    };
-
-	    return expandorWrapper(n('div', {
-	        style: {
-	            border: contain(INLINE_TYPES, type) ? '0' : '1px solid rgba(200, 200, 200, 0.4)',
-	            minWidth: 160
-	        }
-	    }, [
-	        getOptionsView(),
-
-	        n('div', {
-	            style: {
-	                display: !type ? 'block' : contain(INLINE_TYPES, type) ? 'inline-block' : 'block'
-	            }
-	        }),
-
-	        !contain(INLINE_TYPES, type) ? fold({
-	            head: (ops) => n('div', {
-	                style: {
-	                    textAlign: 'right',
-	                    cursor: 'pointer'
-	                },
-	                'class': 'lambda-ui-hover',
-	                onclick: () => {
-	                    ops.toggle();
-	                }
-	            }, [
-	                ops.isHide() && n('span', {
-	                    style: {
-	                        color: '#9b9b9b',
-	                        paddingRight: 60
-	                    }
-	                }, abbreText(value.value)),
-
-	                foldArrow(ops)
-	            ]),
-
-	            body: renderInputArea,
-	            hide: false
-	        }) : renderInputArea()
-	    ]), getExpandor());
-	});
-
-	let abbreText = (data) => {
-	    let str = data;
-	    if (isObject(data)) {
-	        str = JSON.stringify(data);
-	    }
-	    if (str.length > 30) {
-	        return str.substring(0, 27) + '...';
-	    }
-	    return str;
-	};
-
-	const id = v => v;
-
-
-/***/ },
+/* 33 */,
 /* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -24550,6 +24590,10 @@
 	    data.predicates = data.predicates || {};
 	    data.predicatesMetaInfo = data.predicatesMetaInfo || {};
 
+	    data.predicates.UI = {};
+	    // add UI predicates
+	    appendUIAsIds(data.predicates.UI, data.UI);
+
 	    // TODO complete predicate meta info
 	    completePredicatesMetaInfo(data.predicates, data.predicatesMetaInfo);
 
@@ -24566,6 +24610,17 @@
 	    }
 
 	    return data;
+	};
+
+	let appendUIAsIds = (predicates, UI = {}) => {
+	    forEach(UI, (v, name) => {
+	        if (isFunction(v)) {
+	            predicates[name] = id;
+	        } else if (isObject(v)) {
+	            predicates[name] = {};
+	            appendUIAsIds(v, predicates[name]);
+	        }
+	    });
 	};
 
 	let completePredicatesMetaInfo = (predicates, predicatesMetaInfo) => {
@@ -24594,6 +24649,15 @@
 	    return value;
 	};
 
+	let isUIPredicate = (path) => {
+	    return /^predicate\.UI\./.test(path);
+	};
+
+	let getUIPredicatePath = (path) => {
+	    let ret = path.match(/^predicate\.UI\.(.*)$/);
+	    return ret && ret[1];
+	};
+
 	let id = v => v;
 
 	module.exports = {
@@ -24610,7 +24674,10 @@
 	    getDataTypePath,
 	    completeValueWithDefault,
 
-	    getLambdaUiValue
+	    getLambdaUiValue,
+
+	    isUIPredicate,
+	    getUIPredicatePath
 	};
 
 
@@ -25605,74 +25672,7 @@
 
 
 /***/ },
-/* 68 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	let {
-	    n, view
-	} = __webpack_require__(4);
-
-	let VariableDeclareView = __webpack_require__(69);
-
-	let expandorWrapper = __webpack_require__(99);
-
-	let {
-	    VARIABLE
-	} = __webpack_require__(58);
-
-	module.exports = view(({
-	    value,
-	    variables,
-	    getOptionsView,
-	    getExpandor,
-	    onchange,
-	    expressionBody
-	}) => {
-	    return () => expandorWrapper(n('div', [
-	        getOptionsView(),
-
-	        n('div', {
-	            style: {
-	                marginLeft: 15,
-	                marginTop: 5,
-	                padding: 5
-	            }
-	        }, [
-	            n('div', {
-	                style: {
-	                    border: '1px solid rgba(200, 200, 200, 0.4)',
-	                    borderRadius: 5,
-	                    padding: 5
-	                }
-	            }, [
-	                VariableDeclareView({
-	                    onchange: (v) => {
-	                        value.currentVariables = v;
-	                        expressionBody.updateVariables(variables.concat(value.currentVariables));
-	                        onchange(value);
-	                    },
-
-	                    variables: value.currentVariables,
-	                    prevVariables: variables,
-	                    title: VARIABLE,
-	                })
-	            ]),
-
-	            n('div', {
-	                style: {
-	                    marginTop: 5
-	                }
-	            }, [
-	                expressionBody.getView()
-	            ])
-	        ])
-	    ]), getExpandor());
-	});
-
-
-/***/ },
+/* 68 */,
 /* 69 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -25981,79 +25981,8 @@
 
 
 /***/ },
-/* 74 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	let {
-	    n, view
-	} = __webpack_require__(4);
-
-	let {
-	    map
-	} = __webpack_require__(34);
-
-	let expandorWrapper = __webpack_require__(99);
-
-	module.exports = view(({
-	    value,
-	    getOptionsView,
-	    getExpandor,
-	    getPrefixParams,
-	    getSuffixParams
-	}) => {
-	    return expandorWrapper(n('div', [
-	        arrangeItems(getPrefixParams(value.infix)),
-
-	        getOptionsView(),
-
-	        n('div', {
-	            style: {
-	                display: value.infix ? 'inline-block' : 'block'
-	            }
-	        }, [
-	            arrangeItems(getSuffixParams(value.infix))
-	        ])
-	    ]), getExpandor());
-	});
-
-	let arrangeItems = (itemViews) => n('div', {
-	    'class': 'lambda-params',
-	    style: {
-	        display: 'inline-block'
-	    }
-	}, [
-	    map(itemViews, (itemView) => {
-	        return n('fieldset', {
-	            style: {
-	                padding: '4px'
-	            }
-	        }, itemView);
-	    })
-	]);
-
-
-/***/ },
-/* 75 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	let {
-	    n, view
-	} = __webpack_require__(4);
-
-	let expandorWrapper = __webpack_require__(99);
-
-	module.exports = view(({
-	    getOptionsView, getExpandor
-	}) => {
-	    return () => expandorWrapper(n('div', [getOptionsView()]), getExpandor());
-	});
-
-
-/***/ },
+/* 74 */,
+/* 75 */,
 /* 76 */,
 /* 77 */
 /***/ function(module, exports, __webpack_require__) {
@@ -27918,26 +27847,24 @@
 	    height: 28px;
 	    min-width: 160px;
 	}
+
+	.lambda-ui .expandor-wrapper {
+	    position: relative;
+	    display: inline-block;
+	    border-radius: 5px;
+	}
+
+	.lambda-ui .expression-wrapper {
+	    display: inline-block;
+	    padding: 8px;
+	    border: 1px solid rgba(200, 200, 200, 0.4);
+	    border-radius: 5px
+	}
 	`;
 
 
 /***/ },
-/* 98 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	let expandorWrapper = __webpack_require__(99);
-
-	module.exports = ({
-	    getOptionsView,
-	    getExpandor
-	}) => {
-	    return expandorWrapper(getOptionsView(), getExpandor());
-	};
-
-
-/***/ },
+/* 98 */,
 /* 99 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -27948,22 +27875,9 @@
 	} = __webpack_require__(4);
 
 	module.exports = (expView, expandor) => {
-	    return n('div', {
-	        style: {
-	            position: 'relative',
-	            display: 'inline-block',
-	            borderRadius: 5
-	        }
-	    }, [
+	    return n('div class="expandor-wrapper"', [
 	        // expression
-	        n('div', {
-	            style: {
-	                display: 'inline-block',
-	                padding: 8,
-	                border: '1px solid rgba(200, 200, 200, 0.4)',
-	                borderRadius: 5
-	            }
-	        }, expView),
+	        n('div class="expression-wrapper"', expView),
 
 	        // expandor
 	        expandor
@@ -28030,15 +27944,15 @@
 
 	'use strict';
 
-	let EmptyExpressionView = __webpack_require__(98);
+	let EmptyExpressionView = __webpack_require__(102);
 
-	let JsonDataView = __webpack_require__(33);
+	let JsonDataView = __webpack_require__(103);
 
-	let AbstractionView = __webpack_require__(68);
+	let AbstractionView = __webpack_require__(104);
 
-	let PredicateView = __webpack_require__(74);
+	let PredicateView = __webpack_require__(105);
 
-	let VariableView = __webpack_require__(75);
+	let VariableView = __webpack_require__(106);
 
 	let {
 	    getExpressionType
@@ -28055,8 +27969,9 @@
 	 * choose the viewer to render expression
 	 */
 	module.exports = ({
-	    value
+	    value, viewer
 	}) => {
+	    if(viewer) return viewer;
 	    let expressionType = getExpressionType(value.path);
 
 	    switch (expressionType) {
@@ -28072,6 +27987,274 @@
 	            return EmptyExpressionView;
 	    }
 	};
+
+
+/***/ },
+/* 102 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let expandorWrapper = __webpack_require__(99);
+
+	module.exports = ({
+	    getOptionsView,
+	    getExpandor
+	}) => {
+	    return expandorWrapper(getOptionsView(), getExpandor());
+	};
+
+
+/***/ },
+/* 103 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    n, view
+	} = __webpack_require__(4);
+
+	let {
+	    contain
+	} = __webpack_require__(34);
+
+	let fold = __webpack_require__(37);
+
+	let foldArrow = __webpack_require__(38);
+
+	let {
+	    isObject
+	} = __webpack_require__(9);
+
+	let InputView = __webpack_require__(41);
+
+	let expandorWrapper = __webpack_require__(99);
+
+	const {
+	    INLINE_TYPES, DEFAULT_DATA_MAP
+	} = __webpack_require__(58);
+
+	let {
+	    getDataTypePath
+	} = __webpack_require__(59);
+
+	/**
+	 * used to define json data
+	 */
+	module.exports = view(({
+	    value, onchange = id, getOptionsView, getExpandor
+	}) => {
+	    let type = getDataTypePath(value.path);
+
+	    let onValueChanged = (v) => {
+	        value.value = v;
+	        onchange(value);
+	    };
+
+	    let renderInputArea = () => {
+	        return InputView({
+	            content: value.value || DEFAULT_DATA_MAP[type],
+	            type: value.type,
+	            placeholder: value.placeholder,
+	            onchange: onValueChanged
+	        }, type);
+	    };
+
+	    return expandorWrapper(n('div', {
+	        style: {
+	            border: contain(INLINE_TYPES, type) ? '0' : '1px solid rgba(200, 200, 200, 0.4)',
+	            minWidth: 160
+	        }
+	    }, [
+	        getOptionsView(),
+
+	        n('div', {
+	            style: {
+	                display: !type ? 'block' : contain(INLINE_TYPES, type) ? 'inline-block' : 'block'
+	            }
+	        }),
+
+	        !contain(INLINE_TYPES, type) ? fold({
+	            head: (ops) => n('div', {
+	                style: {
+	                    textAlign: 'right',
+	                    cursor: 'pointer'
+	                },
+	                'class': 'lambda-ui-hover',
+	                onclick: () => {
+	                    ops.toggle();
+	                }
+	            }, [
+	                ops.isHide() && n('span', {
+	                    style: {
+	                        color: '#9b9b9b',
+	                        paddingRight: 60
+	                    }
+	                }, abbreText(value.value)),
+
+	                foldArrow(ops)
+	            ]),
+
+	            body: renderInputArea,
+	            hide: false
+	        }) : renderInputArea()
+	    ]), getExpandor());
+	});
+
+	let abbreText = (data) => {
+	    let str = data;
+	    if (isObject(data)) {
+	        str = JSON.stringify(data);
+	    }
+	    if (str.length > 30) {
+	        return str.substring(0, 27) + '...';
+	    }
+	    return str;
+	};
+
+	const id = v => v;
+
+
+/***/ },
+/* 104 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    n, view
+	} = __webpack_require__(4);
+
+	let VariableDeclareView = __webpack_require__(69);
+
+	let expandorWrapper = __webpack_require__(99);
+
+	let {
+	    VARIABLE
+	} = __webpack_require__(58);
+
+	module.exports = view(({
+	    value,
+	    variables,
+	    getOptionsView,
+	    getExpandor,
+	    onchange,
+	    expressionBody
+	}) => {
+	    return () => expandorWrapper(n('div', [
+	        getOptionsView(),
+
+	        n('div', {
+	            style: {
+	                marginLeft: 15,
+	                marginTop: 5,
+	                padding: 5
+	            }
+	        }, [
+	            n('div', {
+	                style: {
+	                    border: '1px solid rgba(200, 200, 200, 0.4)',
+	                    borderRadius: 5,
+	                    padding: 5
+	                }
+	            }, [
+	                VariableDeclareView({
+	                    onchange: (v) => {
+	                        value.currentVariables = v;
+	                        expressionBody.updateVariables(variables.concat(value.currentVariables));
+	                        onchange(value);
+	                    },
+
+	                    variables: value.currentVariables,
+	                    prevVariables: variables,
+	                    title: VARIABLE,
+	                })
+	            ]),
+
+	            n('div', {
+	                style: {
+	                    marginTop: 5
+	                }
+	            }, [
+	                expressionBody.getView()
+	            ])
+	        ])
+	    ]), getExpandor());
+	});
+
+
+/***/ },
+/* 105 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    n, view
+	} = __webpack_require__(4);
+
+	let {
+	    map
+	} = __webpack_require__(34);
+
+	let expandorWrapper = __webpack_require__(99);
+
+	module.exports = view(({
+	    value,
+	    getOptionsView,
+	    getExpandor,
+	    getPrefixParams,
+	    getSuffixParams
+	}) => {
+	    return expandorWrapper(n('div', [
+	        arrangeItems(getPrefixParams(value.infix)),
+
+	        getOptionsView(),
+
+	        n('div', {
+	            style: {
+	                display: value.infix ? 'inline-block' : 'block'
+	            }
+	        }, [
+	            arrangeItems(getSuffixParams(value.infix))
+	        ])
+	    ]), getExpandor());
+	});
+
+	let arrangeItems = (itemViews) => n('div', {
+	    'class': 'lambda-params',
+	    style: {
+	        display: 'inline-block'
+	    }
+	}, [
+	    map(itemViews, (itemView) => {
+	        return n('fieldset', {
+	            style: {
+	                padding: '4px'
+	            }
+	        }, itemView);
+	    })
+	]);
+
+
+/***/ },
+/* 106 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    n, view
+	} = __webpack_require__(4);
+
+	let expandorWrapper = __webpack_require__(99);
+
+	module.exports = view(({
+	    getOptionsView, getExpandor
+	}) => {
+	    return () => expandorWrapper(n('div', [getOptionsView()]), getExpandor());
+	});
 
 
 /***/ }

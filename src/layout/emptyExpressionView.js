@@ -1,6 +1,6 @@
 'use strict';
 
-let expandorWrapper = require('./expandorWrapper');
+let expandorWrapper = require('../component/expandorWrapper');
 
 module.exports = ({
     getOptionsView,

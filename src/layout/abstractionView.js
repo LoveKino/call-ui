@@ -6,7 +6,7 @@ let {
 
 let VariableDeclareView = require('../view/variableDeclareView');
 
-let expandorWrapper = require('./expandorWrapper');
+let expandorWrapper = require('../component/expandorWrapper');
 
 let {
     VARIABLE

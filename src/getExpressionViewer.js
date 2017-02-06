@@ -1,14 +1,14 @@
 'use strict';
 
-let EmptyExpressionView = require('./component/emptyExpressionView');
+let EmptyExpressionView = require('./layout/emptyExpressionView');
 
-let JsonDataView = require('./component/jsonDataView');
+let JsonDataView = require('./layout/jsonDataView');
 
-let AbstractionView = require('./component/abstractionView');
+let AbstractionView = require('./layout/abstractionView');
 
-let PredicateView = require('./component/predicateView');
+let PredicateView = require('./layout/predicateView');
 
-let VariableView = require('./component/variableView');
+let VariableView = require('./layout/variableView');
 
 let {
     getExpressionType
@@ -25,8 +25,9 @@ let {
  * choose the viewer to render expression
  */
 module.exports = ({
-    value
+    value, viewer
 }) => {
+    if(viewer) return viewer;
     let expressionType = getExpressionType(value.path);
 
     switch (expressionType) {

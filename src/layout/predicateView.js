@@ -8,7 +8,7 @@ let {
     map
 } = require('bolzano');
 
-let expandorWrapper = require('./expandorWrapper');
+let expandorWrapper = require('../component/expandorWrapper');
 
 module.exports = view(({
     value,

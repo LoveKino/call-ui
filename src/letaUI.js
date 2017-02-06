@@ -16,7 +16,7 @@ let {
 } = require('./component/params');
 
 let {
-    mergeMap
+    mergeMap, get, map
 } = require('bolzano');
 
 let getExpressionViewer = require('./getExpressionViewer');
@@ -34,7 +34,9 @@ let {
     getExpressionType,
     completeDataWithDefault,
     completeValueWithDefault,
-    expressionTypes
+    expressionTypes,
+    isUIPredicate,
+    getUIPredicatePath
 } = require('./model');
 
 /**
@@ -114,30 +116,26 @@ let expressionView = view((data, {
     return () => {
         let {
             value,
-            variables,
             infixPath,
 
-            // global config
-            predicates,
-            predicatesMetaInfo,
-            nameMap,
-
-            // ui states
-            title,
-            guideLine,
-            showSelectTree,
-
             // events
-            onchange
+            onchange,
+
+            runLeta
         } = data;
 
-        let globalConfig = {
-            predicates,
-            predicatesMetaInfo,
-            nameMap
-        };
-
         completeValueWithDefault(value);
+
+        if (isUIPredicate(value.path)) {
+            //
+            let render = get(data.UI, getUIPredicatePath(value.path));
+            return expressionView(mergeMap(data, {
+                viewer: (v) => render(v, ...map(value.params.slice(1), (item) => {
+                    return runLeta(item);
+                })),
+                value: value.params[0]
+            }));
+        }
 
         if (data.infixPath) {
             return expressionView(mergeMap(data, {
@@ -150,144 +148,186 @@ let expressionView = view((data, {
             }));
         }
 
-        let getOptionsView = (OptionsView = TreeOptionView) => OptionsView({
-            path: value.path,
-            data: expressionTypes(data),
-            title,
-            guideLine,
-            showSelectTree,
-            nameMap,
-            onselected: (v, path) => {
-                update([
-                    ['value.path', path],
-                    ['showSelectTree', false]
-                ]);
-            }
-        });
-
-        let getExpandor = (ExpandorView = Expandor) => data.value.path && ExpandorComponent({
-            onExpand: (hide) => {
-                update();
-                data.onexpandchange && data.onexpandchange(hide, data);
-            },
-
-            onselected: () => {
-                update();
-            },
-
-            data,
-
-            ExpandorView
-        });
-
-        let getAbstractionBody = () => {
-            let expressionViewObj = mergeMap(globalConfig, {
-                title: 'expression',
-                value: value.expression,
-                variables: variables.concat(value.currentVariables),
-                onchange: (lambda) => {
-                    value.expression = lambda;
-                    onchange && onchange(value);
-                }
-            });
-
-            return {
-                getView: () => {
-                    return expressionView(expressionViewObj);
-                },
-
-                updateVariables: (vars) => {
-                    expressionViewObj.variables = vars;
-                }
-            };
-        };
-
-        let prefixParamItemRender = ({
-            title,
-            content,
-            onchange
-        }) => expressionView(mergeMap(globalConfig, {
-            value: content,
-            title,
-            onchange,
-            variables,
-
-            onexpandchange: (hide, data) => {
-                // close infix mode
-                update([
-                    ['infixPath', null],
-                    ['value', data.value],
-                    ['title', '']
-                ]);
-            }
-        }));
-
-        let suffixParamItemRender = ({
-            title,
-            content,
-            onchange
-        }) => expressionView(mergeMap(globalConfig, {
-            title,
-            onchange,
-            variables,
-            value: content,
-        }));
-
-        let getExpressionViewOptions = () => {
-            let expressionType = getExpressionType(value.path);
-            switch (expressionType) {
-                case PREDICATE:
-                    return {
-                        getPrefixParams: getPrefixParamser(data, {
-                            // prefix param item
-                            itemRender: prefixParamItemRender
-                        }),
-
-                        value,
-
-                        getSuffixParams: getSuffixParamser(data, {
-                            expressionView,
-                            // suffix param item
-                            itemRender: suffixParamItemRender
-                        }),
-
-                        getOptionsView,
-
-                        getExpandor
-                    };
-                case JSON_DATA:
-                    return {
-                        value,
-                        onchange,
-                        getOptionsView,
-                        getExpandor
-                    };
-                case VARIABLE:
-                    return {
-                        getOptionsView,
-                        getExpandor
-                    };
-                case ABSTRACTION:
-                    return {
-                        value,
-                        variables,
-
-                        getOptionsView,
-                        getExpandor,
-
-                        onchange,
-                        expressionBody: getAbstractionBody()
-                    };
-                default:
-                    return {
-                        getOptionsView,
-                        getExpandor
-                    };
-            }
-        };
-
         onchange(value);
 
-        return getExpressionViewer(data)(getExpressionViewOptions());
+        return getExpressionViewer(data)(
+            getExpressionViewOptions(data, update)
+        );
     };
 });
+
+let getExpressionViewOptions = (data, update) => {
+    let {
+        value,
+        variables,
+
+        // global config
+        predicates,
+        predicatesMetaInfo,
+        UI,
+        nameMap,
+
+        // ui states
+        title,
+        guideLine,
+        showSelectTree,
+
+        // events
+        onchange,
+
+        runLeta
+    } = data;
+
+    let globalConfig = {
+        predicates,
+        runLeta,
+        UI,
+        predicatesMetaInfo,
+        nameMap
+    };
+
+    let getOptionsView = (OptionsView = TreeOptionView) => OptionsView({
+        path: value.path,
+        data: expressionTypes(data),
+        title,
+        guideLine,
+        showSelectTree,
+        nameMap,
+        onselected: (v, path) => {
+            update([
+                ['value.path', path],
+                ['showSelectTree', false]
+            ]);
+        }
+    });
+
+    let getExpandor = (ExpandorView = Expandor) => data.value.path && ExpandorComponent({
+        onExpand: (hide) => {
+            update();
+            data.onexpandchange && data.onexpandchange(hide, data);
+        },
+
+        onselected: () => {
+            update();
+        },
+
+        data,
+
+        ExpandorView
+    });
+
+    let getAbstractionBody = () => {
+        let expressionViewObj = mergeMap(globalConfig, {
+            title: 'expression',
+            value: value.expression,
+            variables: variables.concat(value.currentVariables),
+            onchange: (lambda) => {
+                value.expression = lambda;
+                onchange && onchange(value);
+            }
+        });
+
+        return {
+            getView: () => {
+                return expressionView(expressionViewObj);
+            },
+
+            updateVariables: (vars) => {
+                expressionViewObj.variables = vars;
+            }
+        };
+    };
+
+    let prefixParamItemRender = ({
+        title,
+        content,
+        onchange
+    }) => expressionView(mergeMap(globalConfig, {
+        value: content,
+        title,
+        onchange,
+        variables,
+
+        onexpandchange: (hide, data) => {
+            // close infix mode
+            update([
+                ['infixPath', null],
+                ['value', data.value],
+                ['title', '']
+            ]);
+        }
+    }));
+
+    let suffixParamItemRender = ({
+        title,
+        content,
+        onchange
+    }) => expressionView(mergeMap(globalConfig, {
+        title,
+        onchange,
+        variables,
+        value: content,
+    }));
+
+    let expressionType = getExpressionType(value.path);
+
+    switch (expressionType) {
+        case PREDICATE:
+            return {
+                getPrefixParams: getPrefixParamser(data, {
+                    // prefix param item
+                    itemRender: prefixParamItemRender
+                }),
+
+                value,
+
+                getSuffixParams: getSuffixParamser(data, {
+                    expressionView,
+                    // suffix param item
+                    itemRender: suffixParamItemRender
+                }),
+
+                getOptionsView,
+
+                getExpandor,
+
+                expressionType
+            };
+        case JSON_DATA:
+            return {
+                value,
+                onchange,
+                getOptionsView,
+                getExpandor,
+
+                expressionType
+            };
+        case VARIABLE:
+            return {
+                getOptionsView,
+                getExpandor,
+
+                expressionType
+            };
+        case ABSTRACTION:
+            return {
+                value,
+                variables,
+
+                getOptionsView,
+                getExpandor,
+
+                onchange,
+                expressionBody: getAbstractionBody(),
+
+                expressionType
+            };
+        default:
+            return {
+                getOptionsView,
+                getExpandor,
+
+                expressionType
+            };
+    }
+};

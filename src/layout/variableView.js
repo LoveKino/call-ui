@@ -4,7 +4,7 @@ let {
     n, view
 } = require('kabanery');
 
-let expandorWrapper = require('./expandorWrapper');
+let expandorWrapper = require('../component/expandorWrapper');
 
 module.exports = view(({
     getOptionsView, getExpandor

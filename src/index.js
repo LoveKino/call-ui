@@ -40,6 +40,8 @@ module.exports = (...args) => {
             data.onchange && data.onchange(v, {
                 runLeta
             });
-        }
+        },
+
+        runLeta
     }));
 };

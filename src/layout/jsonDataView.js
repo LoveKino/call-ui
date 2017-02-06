@@ -18,7 +18,7 @@ let {
 
 let InputView = require('../view/input');
 
-let expandorWrapper = require('./expandorWrapper');
+let expandorWrapper = require('../component/expandorWrapper');
 
 const {
     INLINE_TYPES, DEFAULT_DATA_MAP

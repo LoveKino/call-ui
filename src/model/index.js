@@ -161,6 +161,10 @@ let completeDataWithDefault = (data) => {
     data.predicates = data.predicates || {};
     data.predicatesMetaInfo = data.predicatesMetaInfo || {};
 
+    data.predicates.UI = {};
+    // add UI predicates
+    appendUIAsIds(data.predicates.UI, data.UI);
+
     // TODO complete predicate meta info
     completePredicatesMetaInfo(data.predicates, data.predicatesMetaInfo);
 
@@ -177,6 +181,17 @@ let completeDataWithDefault = (data) => {
     }
 
     return data;
+};
+
+let appendUIAsIds = (predicates, UI = {}) => {
+    forEach(UI, (v, name) => {
+        if (isFunction(v)) {
+            predicates[name] = id;
+        } else if (isObject(v)) {
+            predicates[name] = {};
+            appendUIAsIds(v, predicates[name]);
+        }
+    });
 };
 
 let completePredicatesMetaInfo = (predicates, predicatesMetaInfo) => {
@@ -205,6 +220,15 @@ let completeValueWithDefault = (value) => {
     return value;
 };
 
+let isUIPredicate = (path) => {
+    return /^predicate\.UI\./.test(path);
+};
+
+let getUIPredicatePath = (path) => {
+    let ret = path.match(/^predicate\.UI\.(.*)$/);
+    return ret && ret[1];
+};
+
 let id = v => v;
 
 module.exports = {
@@ -221,5 +245,8 @@ module.exports = {
     getDataTypePath,
     completeValueWithDefault,
 
-    getLambdaUiValue
+    getLambdaUiValue,
+
+    isUIPredicate,
+    getUIPredicatePath
 };

@@ -77,4 +77,17 @@ module.exports = `
     height: 28px;
     min-width: 160px;
 }
+
+.lambda-ui .expandor-wrapper {
+    position: relative;
+    display: inline-block;
+    border-radius: 5px;
+}
+
+.lambda-ui .expression-wrapper {
+    display: inline-block;
+    padding: 8px;
+    border: 1px solid rgba(200, 200, 200, 0.4);
+    border-radius: 5px
+}
 `;
