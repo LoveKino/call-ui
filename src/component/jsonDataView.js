@@ -32,7 +32,7 @@ let {
  * used to define json data
  */
 module.exports = view(({
-    value, onchange = id, optionsView, getExpandor
+    value, onchange = id, getOptionsView, getExpandor
 }) => {
     let type = getDataTypePath(value.path);
 
@@ -56,7 +56,7 @@ module.exports = view(({
             minWidth: 160
         }
     }, [
-        optionsView,
+        getOptionsView(),
 
         n('div', {
             style: {

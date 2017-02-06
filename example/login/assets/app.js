@@ -176,16 +176,6 @@
 	    view, n
 	} = __webpack_require__(4);
 
-	let EmptyExpressionView = __webpack_require__(98);
-
-	let JsonDataView = __webpack_require__(33);
-
-	let AbstractionView = __webpack_require__(68);
-
-	let PredicateView = __webpack_require__(74);
-
-	let VariableView = __webpack_require__(75);
-
 	let ExpandorComponent = __webpack_require__(100);
 
 	let TreeOptionView = __webpack_require__(93);
@@ -200,6 +190,8 @@
 	let {
 	    mergeMap
 	} = __webpack_require__(34);
+
+	let getExpressionViewer = __webpack_require__(101);
 
 	const style = __webpack_require__(96);
 
@@ -330,7 +322,7 @@
 	            }));
 	        }
 
-	        let optionsView = TreeOptionView({
+	        let getOptionsView = (OptionsView = TreeOptionView) => OptionsView({
 	            path: value.path,
 	            data: expressionTypes(data),
 	            title,
@@ -431,7 +423,7 @@
 	                            itemRender: suffixParamItemRender
 	                        }),
 
-	                        optionsView,
+	                        getOptionsView,
 
 	                        getExpandor
 	                    };
@@ -439,12 +431,12 @@
 	                    return {
 	                        value,
 	                        onchange,
-	                        optionsView,
+	                        getOptionsView,
 	                        getExpandor
 	                    };
 	                case VARIABLE:
 	                    return {
-	                        optionsView,
+	                        getOptionsView,
 	                        getExpandor
 	                    };
 	                case ABSTRACTION:
@@ -452,7 +444,7 @@
 	                        value,
 	                        variables,
 
-	                        optionsView,
+	                        getOptionsView,
 	                        getExpandor,
 
 	                        onchange,
@@ -460,7 +452,7 @@
 	                    };
 	                default:
 	                    return {
-	                        optionsView,
+	                        getOptionsView,
 	                        getExpandor
 	                    };
 	            }
@@ -471,28 +463,6 @@
 	        return getExpressionViewer(data)(getExpressionViewOptions());
 	    };
 	});
-
-	/**
-	 * choose the viewer to render expression
-	 */
-	let getExpressionViewer = ({
-	    value
-	}) => {
-	    let expressionType = getExpressionType(value.path);
-
-	    switch (expressionType) {
-	        case PREDICATE:
-	            return PredicateView;
-	        case JSON_DATA:
-	            return JsonDataView;
-	        case VARIABLE:
-	            return VariableView;
-	        case ABSTRACTION:
-	            return AbstractionView;
-	        default:
-	            return EmptyExpressionView;
-	    }
-	};
 
 
 /***/ },
@@ -3154,7 +3124,7 @@
 	 * used to define json data
 	 */
 	module.exports = view(({
-	    value, onchange = id, optionsView, getExpandor
+	    value, onchange = id, getOptionsView, getExpandor
 	}) => {
 	    let type = getDataTypePath(value.path);
 
@@ -3178,7 +3148,7 @@
 	            minWidth: 160
 	        }
 	    }, [
-	        optionsView,
+	        getOptionsView(),
 
 	        n('div', {
 	            style: {
@@ -25655,13 +25625,13 @@
 	module.exports = view(({
 	    value,
 	    variables,
-	    optionsView,
+	    getOptionsView,
 	    getExpandor,
 	    onchange,
 	    expressionBody
 	}) => {
 	    return () => expandorWrapper(n('div', [
-	        optionsView,
+	        getOptionsView(),
 
 	        n('div', {
 	            style: {
@@ -26028,7 +25998,7 @@
 
 	module.exports = view(({
 	    value,
-	    optionsView,
+	    getOptionsView,
 	    getExpandor,
 	    getPrefixParams,
 	    getSuffixParams
@@ -26036,7 +26006,7 @@
 	    return expandorWrapper(n('div', [
 	        arrangeItems(getPrefixParams(value.infix)),
 
-	        optionsView,
+	        getOptionsView(),
 
 	        n('div', {
 	            style: {
@@ -26077,9 +26047,9 @@
 	let expandorWrapper = __webpack_require__(99);
 
 	module.exports = view(({
-	    optionsView, getExpandor
+	    getOptionsView, getExpandor
 	}) => {
-	    return () => expandorWrapper(n('div', [optionsView]), getExpandor());
+	    return () => expandorWrapper(n('div', [getOptionsView()]), getExpandor());
 	});
 
 
@@ -27960,10 +27930,10 @@
 	let expandorWrapper = __webpack_require__(99);
 
 	module.exports = ({
-	    optionsView,
+	    getOptionsView,
 	    getExpandor
 	}) => {
-	    return expandorWrapper(optionsView, getExpandor());
+	    return expandorWrapper(getOptionsView(), getExpandor());
 	};
 
 
@@ -28052,6 +28022,56 @@
 	    });
 	};
 
+
+
+/***/ },
+/* 101 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let EmptyExpressionView = __webpack_require__(98);
+
+	let JsonDataView = __webpack_require__(33);
+
+	let AbstractionView = __webpack_require__(68);
+
+	let PredicateView = __webpack_require__(74);
+
+	let VariableView = __webpack_require__(75);
+
+	let {
+	    getExpressionType
+	} = __webpack_require__(59);
+
+	let {
+	    JSON_DATA,
+	    ABSTRACTION,
+	    VARIABLE,
+	    PREDICATE
+	} = __webpack_require__(58);
+
+	/**
+	 * choose the viewer to render expression
+	 */
+	module.exports = ({
+	    value
+	}) => {
+	    let expressionType = getExpressionType(value.path);
+
+	    switch (expressionType) {
+	        case PREDICATE:
+	            return PredicateView;
+	        case JSON_DATA:
+	            return JsonDataView;
+	        case VARIABLE:
+	            return VariableView;
+	        case ABSTRACTION:
+	            return AbstractionView;
+	        default:
+	            return EmptyExpressionView;
+	    }
+	};
 
 
 /***/ }

@@ -3,8 +3,8 @@
 let expandorWrapper = require('./expandorWrapper');
 
 module.exports = ({
-    optionsView,
+    getOptionsView,
     getExpandor
 }) => {
-    return expandorWrapper(optionsView, getExpandor());
+    return expandorWrapper(getOptionsView(), getExpandor());
 };

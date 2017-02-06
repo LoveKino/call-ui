@@ -12,7 +12,7 @@ let expandorWrapper = require('./expandorWrapper');
 
 module.exports = view(({
     value,
-    optionsView,
+    getOptionsView,
     getExpandor,
     getPrefixParams,
     getSuffixParams
@@ -20,7 +20,7 @@ module.exports = view(({
     return expandorWrapper(n('div', [
         arrangeItems(getPrefixParams(value.infix)),
 
-        optionsView,
+        getOptionsView(),
 
         n('div', {
             style: {

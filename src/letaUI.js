@@ -4,16 +4,6 @@ let {
     view, n
 } = require('kabanery');
 
-let EmptyExpressionView = require('./component/emptyExpressionView');
-
-let JsonDataView = require('./component/jsonDataView');
-
-let AbstractionView = require('./component/abstractionView');
-
-let PredicateView = require('./component/predicateView');
-
-let VariableView = require('./component/variableView');
-
 let ExpandorComponent = require('./component/expandorComponent');
 
 let TreeOptionView = require('./view/treeOptionView');
@@ -28,6 +18,8 @@ let {
 let {
     mergeMap
 } = require('bolzano');
+
+let getExpressionViewer = require('./getExpressionViewer');
 
 const style = require('./style');
 
@@ -158,7 +150,7 @@ let expressionView = view((data, {
             }));
         }
 
-        let optionsView = TreeOptionView({
+        let getOptionsView = (OptionsView = TreeOptionView) => OptionsView({
             path: value.path,
             data: expressionTypes(data),
             title,
@@ -259,7 +251,7 @@ let expressionView = view((data, {
                             itemRender: suffixParamItemRender
                         }),
 
-                        optionsView,
+                        getOptionsView,
 
                         getExpandor
                     };
@@ -267,12 +259,12 @@ let expressionView = view((data, {
                     return {
                         value,
                         onchange,
-                        optionsView,
+                        getOptionsView,
                         getExpandor
                     };
                 case VARIABLE:
                     return {
-                        optionsView,
+                        getOptionsView,
                         getExpandor
                     };
                 case ABSTRACTION:
@@ -280,7 +272,7 @@ let expressionView = view((data, {
                         value,
                         variables,
 
-                        optionsView,
+                        getOptionsView,
                         getExpandor,
 
                         onchange,
@@ -288,7 +280,7 @@ let expressionView = view((data, {
                     };
                 default:
                     return {
-                        optionsView,
+                        getOptionsView,
                         getExpandor
                     };
             }
@@ -299,25 +291,3 @@ let expressionView = view((data, {
         return getExpressionViewer(data)(getExpressionViewOptions());
     };
 });
-
-/**
- * choose the viewer to render expression
- */
-let getExpressionViewer = ({
-    value
-}) => {
-    let expressionType = getExpressionType(value.path);
-
-    switch (expressionType) {
-        case PREDICATE:
-            return PredicateView;
-        case JSON_DATA:
-            return JsonDataView;
-        case VARIABLE:
-            return VariableView;
-        case ABSTRACTION:
-            return AbstractionView;
-        default:
-            return EmptyExpressionView;
-    }
-};

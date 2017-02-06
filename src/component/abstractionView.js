@@ -15,13 +15,13 @@ let {
 module.exports = view(({
     value,
     variables,
-    optionsView,
+    getOptionsView,
     getExpandor,
     onchange,
     expressionBody
 }) => {
     return () => expandorWrapper(n('div', [
-        optionsView,
+        getOptionsView(),
 
         n('div', {
             style: {
