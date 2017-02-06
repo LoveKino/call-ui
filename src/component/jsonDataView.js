@@ -32,7 +32,7 @@ let {
  * used to define json data
  */
 module.exports = view(({
-    value, onchange = id, optionsView, expandor
+    value, onchange = id, optionsView, getExpandor
 }) => {
     let type = getDataTypePath(value.path);
 
@@ -88,7 +88,7 @@ module.exports = view(({
             body: renderInputArea,
             hide: false
         }) : renderInputArea()
-    ]), expandor);
+    ]), getExpandor());
 });
 
 let abbreText = (data) => {

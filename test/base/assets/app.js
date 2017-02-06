@@ -1662,9 +1662,11 @@
 
 	let VariableView = __webpack_require__(80);
 
-	let ExpandorView = __webpack_require__(81);
+	let ExpandorComponent = __webpack_require__(105);
 
 	let TreeOptionView = __webpack_require__(98);
+
+	let Expandor = __webpack_require__(82);
 
 	let {
 	    getPrefixParamser,
@@ -1774,7 +1776,6 @@
 	            // global config
 	            predicates,
 	            predicatesMetaInfo,
-	            expressAbility,
 	            nameMap,
 
 	            // ui states
@@ -1789,7 +1790,6 @@
 	        let globalConfig = {
 	            predicates,
 	            predicatesMetaInfo,
-	            expressAbility,
 	            nameMap
 	        };
 
@@ -1808,7 +1808,7 @@
 
 	        let optionsView = TreeOptionView({
 	            path: value.path,
-	            data: expressAbility ? expressAbility(data) : expressionTypes(data),
+	            data: expressionTypes(data),
 	            title,
 	            guideLine,
 	            showSelectTree,
@@ -1821,7 +1821,7 @@
 	            }
 	        });
 
-	        let expandor = data.value.path && ExpandorView({
+	        let getExpandor = (ExpandorView = Expandor) => data.value.path && ExpandorComponent({
 	            onExpand: (hide) => {
 	                update();
 	                data.onexpandchange && data.onexpandchange(hide, data);
@@ -1831,7 +1831,9 @@
 	                update();
 	            },
 
-	            data
+	            data,
+
+	            ExpandorView
 	        });
 
 	        let getAbstractionBody = () => {
@@ -1907,19 +1909,19 @@
 
 	                        optionsView,
 
-	                        expandor
+	                        getExpandor
 	                    };
 	                case JSON_DATA:
 	                    return {
 	                        value,
 	                        onchange,
 	                        optionsView,
-	                        expandor
+	                        getExpandor
 	                    };
 	                case VARIABLE:
 	                    return {
 	                        optionsView,
-	                        expandor
+	                        getExpandor
 	                    };
 	                case ABSTRACTION:
 	                    return {
@@ -1927,7 +1929,7 @@
 	                        variables,
 
 	                        optionsView,
-	                        expandor,
+	                        getExpandor,
 
 	                        onchange,
 	                        expressionBody: getAbstractionBody()
@@ -1935,7 +1937,7 @@
 	                default:
 	                    return {
 	                        optionsView,
-	                        expandor
+	                        getExpandor
 	                    };
 	            }
 	        };
@@ -4628,7 +4630,7 @@
 	 * used to define json data
 	 */
 	module.exports = view(({
-	    value, onchange = id, optionsView, expandor
+	    value, onchange = id, optionsView, getExpandor
 	}) => {
 	    let type = getDataTypePath(value.path);
 
@@ -4684,7 +4686,7 @@
 	            body: renderInputArea,
 	            hide: false
 	        }) : renderInputArea()
-	    ]), expandor);
+	    ]), getExpandor());
 	});
 
 	let abbreText = (data) => {
@@ -27130,7 +27132,7 @@
 	    value,
 	    variables,
 	    optionsView,
-	    expandor,
+	    getExpandor,
 	    onchange,
 	    expressionBody
 	}) => {
@@ -27172,7 +27174,7 @@
 	                expressionBody.getView()
 	            ])
 	        ])
-	    ]), expandor);
+	    ]), getExpandor());
 	});
 
 
@@ -27503,7 +27505,7 @@
 	module.exports = view(({
 	    value,
 	    optionsView,
-	    expandor,
+	    getExpandor,
 	    getPrefixParams,
 	    getSuffixParams
 	}) => {
@@ -27519,7 +27521,7 @@
 	        }, [
 	            arrangeItems(getSuffixParams(value.infix))
 	        ])
-	    ]), expandor);
+	    ]), getExpandor());
 	});
 
 	let arrangeItems = (itemViews) => n('div', {
@@ -27551,66 +27553,14 @@
 	let expandorWrapper = __webpack_require__(104);
 
 	module.exports = view(({
-	    optionsView, expandor
+	    optionsView, getExpandor
 	}) => {
-	    return () => expandorWrapper(n('div', [optionsView]), expandor);
+	    return () => expandorWrapper(n('div', [optionsView]), getExpandor());
 	});
 
 
 /***/ },
-/* 81 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	let Expandor = __webpack_require__(82);
-
-	let {
-	    getPredicateMetaInfo,
-	    getPredicatePath,
-	    infixTypes
-	} = __webpack_require__(64);
-
-	let {
-	    get
-	} = __webpack_require__(39);
-
-	module.exports = ({
-	    data,
-	    onExpand,
-	    onselected
-	}) => {
-	    let {
-	        predicates, expandAbility
-	    } = data;
-
-	    let options = expandAbility ? expandAbility(data) : infixTypes({
-	        predicates
-	    });
-
-	    return Expandor({
-	        hide: data.hideExpressionExpandor,
-
-	        options,
-
-	        onExpand: (hide) => {
-	            data.hideExpressionExpandor = hide;
-	            data.infixPath = null;
-	            onExpand && onExpand();
-	        },
-
-	        onselected: (v, path) => {
-	            data.infixPath = path;
-	            data.title = get(getPredicateMetaInfo(data.predicatesMetaInfo, getPredicatePath(path)), 'args.0.name');
-	            data.hideExpressionExpandor = true;
-	            onselected && onselected(v, path);
-	        }
-	    });
-	};
-
-
-
-/***/ },
+/* 81 */,
 /* 82 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -27630,6 +27580,13 @@
 	    mergeMap
 	} = __webpack_require__(39);
 
+	/**
+	 * @param options Array
+	 *  options used to select
+	 * @param onExpand
+	 * @param onselected
+	 *
+	 */
 	module.exports = view(({
 	    options,
 	    onExpand,
@@ -29480,9 +29437,9 @@
 
 	module.exports = ({
 	    optionsView,
-	    expandor
+	    getExpandor
 	}) => {
-	    return expandorWrapper(optionsView, expandor);
+	    return expandorWrapper(optionsView, getExpandor());
 	};
 
 
@@ -29518,6 +29475,59 @@
 	        expandor
 	    ]);
 	};
+
+
+/***/ },
+/* 105 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    getPredicateMetaInfo,
+	    getPredicatePath,
+	    infixTypes
+	} = __webpack_require__(64);
+
+	let {
+	    get
+	} = __webpack_require__(39);
+
+	module.exports = ({
+	    data,
+	    onExpand,
+	    onselected,
+
+	    ExpandorView
+	}) => {
+	    let {
+	        predicates
+	    } = data;
+
+	    let options = infixTypes({
+	        predicates
+	    });
+
+	    return ExpandorView({
+	        hide: data.hideExpressionExpandor,
+
+	        options,
+
+	        onExpand: (hide) => {
+	            data.hideExpressionExpandor = hide;
+	            data.infixPath = null;
+	            onExpand && onExpand();
+	        },
+
+	        onselected: (v, path) => {
+	            data.infixPath = path;
+	            data.title = get(getPredicateMetaInfo(data.predicatesMetaInfo, getPredicatePath(path)), 'args.0.name');
+	            data.hideExpressionExpandor = true;
+	            onselected && onselected(v, path);
+	        }
+	    });
+	};
+
 
 
 /***/ }

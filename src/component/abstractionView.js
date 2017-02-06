@@ -16,7 +16,7 @@ module.exports = view(({
     value,
     variables,
     optionsView,
-    expandor,
+    getExpandor,
     onchange,
     expressionBody
 }) => {
@@ -58,5 +58,5 @@ module.exports = view(({
                 expressionBody.getView()
             ])
         ])
-    ]), expandor);
+    ]), getExpandor());
 });

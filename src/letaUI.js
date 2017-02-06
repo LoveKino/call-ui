@@ -14,9 +14,11 @@ let PredicateView = require('./component/predicateView');
 
 let VariableView = require('./component/variableView');
 
-let ExpandorView = require('./component/expandorView');
+let ExpandorComponent = require('./component/expandorComponent');
 
 let TreeOptionView = require('./view/treeOptionView');
+
+let Expandor = require('./view/expandor');
 
 let {
     getPrefixParamser,
@@ -126,7 +128,6 @@ let expressionView = view((data, {
             // global config
             predicates,
             predicatesMetaInfo,
-            expressAbility,
             nameMap,
 
             // ui states
@@ -141,7 +142,6 @@ let expressionView = view((data, {
         let globalConfig = {
             predicates,
             predicatesMetaInfo,
-            expressAbility,
             nameMap
         };
 
@@ -160,7 +160,7 @@ let expressionView = view((data, {
 
         let optionsView = TreeOptionView({
             path: value.path,
-            data: expressAbility ? expressAbility(data) : expressionTypes(data),
+            data: expressionTypes(data),
             title,
             guideLine,
             showSelectTree,
@@ -173,7 +173,7 @@ let expressionView = view((data, {
             }
         });
 
-        let expandor = data.value.path && ExpandorView({
+        let getExpandor = (ExpandorView = Expandor) => data.value.path && ExpandorComponent({
             onExpand: (hide) => {
                 update();
                 data.onexpandchange && data.onexpandchange(hide, data);
@@ -183,7 +183,9 @@ let expressionView = view((data, {
                 update();
             },
 
-            data
+            data,
+
+            ExpandorView
         });
 
         let getAbstractionBody = () => {
@@ -259,19 +261,19 @@ let expressionView = view((data, {
 
                         optionsView,
 
-                        expandor
+                        getExpandor
                     };
                 case JSON_DATA:
                     return {
                         value,
                         onchange,
                         optionsView,
-                        expandor
+                        getExpandor
                     };
                 case VARIABLE:
                     return {
                         optionsView,
-                        expandor
+                        getExpandor
                     };
                 case ABSTRACTION:
                     return {
@@ -279,7 +281,7 @@ let expressionView = view((data, {
                         variables,
 
                         optionsView,
-                        expandor,
+                        getExpandor,
 
                         onchange,
                         expressionBody: getAbstractionBody()
@@ -287,7 +289,7 @@ let expressionView = view((data, {
                 default:
                     return {
                         optionsView,
-                        expandor
+                        getExpandor
                     };
             }
         };

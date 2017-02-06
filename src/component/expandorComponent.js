@@ -1,7 +1,5 @@
 'use strict';
 
-let Expandor = require('../view/expandor');
-
 let {
     getPredicateMetaInfo,
     getPredicatePath,
@@ -15,17 +13,19 @@ let {
 module.exports = ({
     data,
     onExpand,
-    onselected
+    onselected,
+
+    ExpandorView
 }) => {
     let {
-        predicates, expandAbility
+        predicates
     } = data;
 
-    let options = expandAbility ? expandAbility(data) : infixTypes({
+    let options = infixTypes({
         predicates
     });
 
-    return Expandor({
+    return ExpandorView({
         hide: data.hideExpressionExpandor,
 
         options,

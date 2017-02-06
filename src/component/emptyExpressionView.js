@@ -4,7 +4,7 @@ let expandorWrapper = require('./expandorWrapper');
 
 module.exports = ({
     optionsView,
-    expandor
+    getExpandor
 }) => {
-    return expandorWrapper(optionsView, expandor);
+    return expandorWrapper(optionsView, getExpandor());
 };

@@ -14,6 +14,13 @@ let {
     mergeMap
 } = require('bolzano');
 
+/**
+ * @param options Array
+ *  options used to select
+ * @param onExpand
+ * @param onselected
+ *
+ */
 module.exports = view(({
     options,
     onExpand,

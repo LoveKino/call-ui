@@ -13,7 +13,7 @@ let expandorWrapper = require('./expandorWrapper');
 module.exports = view(({
     value,
     optionsView,
-    expandor,
+    getExpandor,
     getPrefixParams,
     getSuffixParams
 }) => {
@@ -29,7 +29,7 @@ module.exports = view(({
         }, [
             arrangeItems(getSuffixParams(value.infix))
         ])
-    ]), expandor);
+    ]), getExpandor());
 });
 
 let arrangeItems = (itemViews) => n('div', {
