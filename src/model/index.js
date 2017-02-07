@@ -190,7 +190,7 @@ let transitionPredicateMetaViewer = (predicates, predicatesMetaInfo) => {
         let meta = predicatesMetaInfo[name];
         if (isFunction(v)) {
             forEach(meta.args, (item) => {
-                if (item.viewer) {
+                if (item && item.viewer) {
                     let viewer = item.viewer;
                     item.viewer = (_) => viewer(_, item);
                 }
@@ -219,10 +219,10 @@ let completePredicatesMetaInfo = (predicates, predicatesMetaInfo) => {
         }
 
         predicatesMetaInfo[name] = predicatesMetaInfo[name] || {};
-
-        if (isFunction(v) && !predicatesMetaInfo[name].args) {
-            predicatesMetaInfo[name].args = map(new Array(v.length), () => {
-                return {};
+        predicatesMetaInfo[name].args = predicatesMetaInfo[name].args || [];
+        if (isFunction(v)) {
+            forEach(new Array(v.length), (_, index) => {
+                predicatesMetaInfo[name].args[index] = predicatesMetaInfo[name].args[index] || {};
             });
         } else if (v && isObject(v)) {
             completePredicatesMetaInfo(v, predicatesMetaInfo[name]);

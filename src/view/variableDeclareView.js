@@ -22,10 +22,8 @@ module.exports = view((data) => {
         'class': 'lambda-variable'
     }, [
         InputList({
-            listData: map(variables, (variable) => {
-                return {
-                    value: variable || ''
-                };
+            value: map(variables, (variable) => {
+                return variable || '';
             }),
 
             title: n('span', {
@@ -38,11 +36,11 @@ module.exports = view((data) => {
             onchange: (v) => {
                 // TODO check variable definition
                 onchange(reduce(v, (prev, item) => {
-                    item.value && prev.push(item.value.trim());
+                    item && prev.push(item.trim());
                     return prev;
                 }, []));
 
-                data.variables = map(v, (item) => item.value);
+                data.variables = v;
             }
         })
     ]);

@@ -34,6 +34,8 @@ let getPrefixParamser = (data, {
     let params = value.params.slice(0, infix);
 
     return map(args.slice(0, infix), (opts, index) => {
+        opts = opts || {};
+
         return itemRender(mergeMap(opts, {
             title: opts.name,
 
@@ -61,6 +63,8 @@ let getSuffixParamser = (data, {
     let params = value.params.slice(infix);
 
     return map(args.slice(infix), (opts, index) => {
+        opts = opts || {};
+
         return itemRender(mergeMap(opts, {
             title: opts.name,
 

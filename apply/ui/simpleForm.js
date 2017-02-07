@@ -12,15 +12,13 @@ let {
     PREDICATE
 } = require('../../src/const');
 
-module.exports = ({
+let form = ({
     value,
     expressionType,
     getSuffixParams
 }, {
     title
 } = {}) => {
-    if (expressionType !== PREDICATE) return;
-
     let parts = value.path.split('.');
     title = title || parts[parts.length - 1];
 
@@ -36,3 +34,11 @@ module.exports = ({
         })
     ]);
 };
+
+form.detect = ({
+    expressionType
+}) => {
+    return expressionType === PREDICATE;
+};
+
+module.exports = form;

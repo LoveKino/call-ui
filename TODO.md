@@ -21,3 +21,5 @@
 - define UI predicates to control the UI parts
 
 - get through logic predicates and UI parts
+
+- layout theme configuration, automaticly choose viewer (according to type or other things)

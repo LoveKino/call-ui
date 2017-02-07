@@ -47,7 +47,7 @@
 	'use strict';
 
 	let {
-	    LetaUI, meta
+	    RealLetaUI, meta
 	} = __webpack_require__(1);
 
 	let {
@@ -62,9 +62,13 @@
 	    n
 	} = __webpack_require__(4);
 
-	let Button = __webpack_require__(101);
+	let button = __webpack_require__(101);
 
 	let simpleForm = __webpack_require__(103);
+
+	let simpleFolder = __webpack_require__(105);
+
+	let simpleList = __webpack_require__(106);
 
 	/**
 	 * 1. no expand
@@ -80,27 +84,6 @@
 
 	let login = method('login');
 
-	let captchaInput = ({
-	    onchange
-	}) => {
-	    return n('div', [
-	        n('input', {
-	            oninput: (e) => {
-	                onchange({
-	                    path: 'data.string',
-	                    value: e.target.value
-	                });
-	            }
-	        }),
-
-	        n('img src="https://www.google.com.hk/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png"', {
-	            style: {
-	                width: 40
-	            }
-	        })
-	    ]);
-	};
-
 	/**
 	 * scope:
 	 *      - runtime scope (in leta expression)
@@ -112,7 +95,7 @@
 	 * TODO expression viewer configuration in predicatesMetaInfo
 	 */
 	document.body.appendChild(
-	    LetaUI(
+	    RealLetaUI(
 	        login('', '', '', 0),
 
 	        {
@@ -134,18 +117,103 @@
 	                        placeholder: 'input your password',
 	                        inputType: 'password'
 	                    }, {
-	                        viewer: captchaInput
+	                        viewer: ({
+	                            onchange
+	                        }) => {
+	                            return n('div', [
+	                                n('input', {
+	                                    oninput: (e) => {
+	                                        onchange({
+	                                            path: 'data.string',
+	                                            value: e.target.value
+	                                        });
+	                                    }
+	                                }),
+
+	                                n('img src="https://www.google.com.hk/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png"', {
+	                                    style: {
+	                                        width: 40
+	                                    }
+	                                })
+	                            ]);
+	                        }
 	                    }, {
-	                        viewer: Button,
+	                        viewer: button,
 	                        title: 'submit'
 	                    }]
 	                })
-	            },
+	            }
+	        }
+	    )
+	);
 
-	            onchange: (v, {
-	                runLeta
-	            }) => {
-	                runLeta(v);
+	document.body.appendChild(n('br'));
+
+	let createProject = method('createProject');
+	let advanceOpts = method('advanceOpts');
+
+	document.body.appendChild(
+	    RealLetaUI(
+	        createProject('', '', advanceOpts([], [], ''), 0),
+
+	        {
+	            predicates: {
+	                createProject: meta(
+	                    (projectName, startUrl, advanceOpts, doSubmit) => {
+	                        console.log(projectName, startUrl, advanceOpts, doSubmit); // eslint-disable-line
+	                    },
+
+	                    {
+	                        viewer: simpleForm,
+	                        args: [
+
+	                            {
+	                                viewer: simpleInput,
+	                                title: 'username',
+	                                placeholder: 'input your username'
+	                            }, {
+	                                viewer: simpleInput,
+	                                title: 'username',
+	                                placeholder: 'input your username'
+	                            },
+	                            null,
+
+	                            {
+	                                viewer: button,
+	                                title: 'submit'
+	                            }
+	                        ]
+	                    }
+	                ),
+
+	                advanceOpts: meta((cookies, headers, agent) => {
+	                    return {
+	                        cookies,
+	                        headers,
+	                        agent
+	                    };
+	                }, {
+	                    viewer: simpleFolder,
+	                    title: 'advance options',
+	                    hide: true,
+	                    args: [{
+	                        viewer: simpleList,
+	                        title: 'cookie',
+	                        itemOptions: {
+	                            placeholder: 'a=b;path=/;',
+	                        }
+	                    }, {
+	                        viewer: simpleList,
+	                        title: 'header',
+	                        type: 'text',
+	                        itemOptions: {
+	                            placeholder: 'Pagram: no-cache',
+	                        }
+	                    }, {
+	                        viewer: simpleInput,
+	                        title: 'agent'
+	                    }]
+	                })
 	            }
 	        }
 	    )
@@ -185,6 +253,51 @@
 	    getJson, method, v, r
 	} = dsl;
 
+	let LetaUI = (...args) => {
+	    let data = getData(args);
+	    let runLeta = runner(data.predicates);
+
+	    return LetaUIView(mergeMap(data, {
+	        onchange: (v) => {
+	            data.onchange && data.onchange(v, {
+	                runLeta
+	            });
+	        },
+
+	        runLeta
+	    }));
+	};
+
+	let getData = (args) => {
+	    let data = null;
+	    if (args.length === 1) {
+	        data = args[0];
+	    } else if (args.length === 2) {
+	        data = args[1];
+	        data.value = getLambdaUiValue(
+	            getJson(args[0])
+	        ); // convert lambda json
+	    } else {
+	        throw new Error(`unexpected number of arguments. Expect one or two but got ${args.length}`);
+	    }
+
+	    data = data || {};
+
+	    return data;
+	};
+
+	let RealLetaUI = (...args) => {
+	    let data = getData(args);
+	    data.onchange = data.onchange || realOnchange;
+	    return LetaUI(data);
+	};
+
+	let realOnchange = (v, {
+	    runLeta
+	}) => {
+	    runLeta(v);
+	};
+
 	module.exports = {
 	    method,
 	    v,
@@ -192,33 +305,8 @@
 	    meta,
 	    runner,
 
-	    LetaUI: (...args) => {
-	        let data = null;
-	        if (args.length === 1) {
-	            data = args[0];
-	        } else if (args.length === 2) {
-	            data = args[1];
-	            data.value = getLambdaUiValue(
-	                getJson(args[0])
-	            ); // convert lambda json
-	        } else {
-	            throw new Error(`unexpected number of arguments. Expect one or two but got ${args.length}`);
-	        }
-
-	        data = data || {};
-
-	        let runLeta = runner(data.predicates);
-
-	        return LetaUIView(mergeMap(data, {
-	            onchange: (v) => {
-	                data.onchange && data.onchange(v, {
-	                    runLeta
-	                });
-	            },
-
-	            runLeta
-	        }));
-	    }
+	    LetaUI,
+	    RealLetaUI
 	};
 
 
@@ -3420,7 +3508,7 @@
 	        let meta = predicatesMetaInfo[name];
 	        if (isFunction(v)) {
 	            forEach(meta.args, (item) => {
-	                if (item.viewer) {
+	                if (item && item.viewer) {
 	                    let viewer = item.viewer;
 	                    item.viewer = (_) => viewer(_, item);
 	                }
@@ -3449,10 +3537,10 @@
 	        }
 
 	        predicatesMetaInfo[name] = predicatesMetaInfo[name] || {};
-
-	        if (isFunction(v) && !predicatesMetaInfo[name].args) {
-	            predicatesMetaInfo[name].args = map(new Array(v.length), () => {
-	                return {};
+	        predicatesMetaInfo[name].args = predicatesMetaInfo[name].args || [];
+	        if (isFunction(v)) {
+	            forEach(new Array(v.length), (_, index) => {
+	                predicatesMetaInfo[name].args[index] = predicatesMetaInfo[name].args[index] || {};
 	            });
 	        } else if (v && isObject(v)) {
 	            completePredicatesMetaInfo(v, predicatesMetaInfo[name]);
@@ -6657,6 +6745,8 @@
 	    let params = value.params.slice(0, infix);
 
 	    return map(args.slice(0, infix), (opts, index) => {
+	        opts = opts || {};
+
 	        return itemRender(mergeMap(opts, {
 	            title: opts.name,
 
@@ -6684,6 +6774,8 @@
 	    let params = value.params.slice(infix);
 
 	    return map(args.slice(infix), (opts, index) => {
+	        opts = opts || {};
+
 	        return itemRender(mergeMap(opts, {
 	            title: opts.name,
 
@@ -27690,6 +27782,8 @@
 	    getExpandor,
 	    onchange,
 	    expressionBody
+	}, {
+	    update
 	}) => {
 	    return () => expandorWrapper(n('div', [
 	        getOptionsView(),
@@ -27713,6 +27807,7 @@
 	                        value.currentVariables = v;
 	                        expressionBody.updateVariables(variables.concat(value.currentVariables));
 	                        onchange(value);
+	                        update();
 	                    },
 
 	                    variables: value.currentVariables,
@@ -27761,10 +27856,8 @@
 	        'class': 'lambda-variable'
 	    }, [
 	        InputList({
-	            listData: map(variables, (variable) => {
-	                return {
-	                    value: variable || ''
-	                };
+	            value: map(variables, (variable) => {
+	                return variable || '';
 	            }),
 
 	            title: n('span', {
@@ -27777,11 +27870,11 @@
 	            onchange: (v) => {
 	                // TODO check variable definition
 	                onchange(reduce(v, (prev, item) => {
-	                    item.value && prev.push(item.value.trim());
+	                    item && prev.push(item.trim());
 	                    return prev;
 	                }, []));
 
-	                data.variables = map(v, (item) => item.value);
+	                data.variables = v;
 	            }
 	        })
 	    ]);
@@ -27808,19 +27901,34 @@
 
 	let line = __webpack_require__(95);
 
+	let Input = ({
+	    value = '', onchange, type = 'text', style, placeholder = ''
+	}) => {
+	    return n(`input type="${type}" placeholder="${placeholder}"`, {
+	        value,
+	        style,
+	        oninput: (e) => {
+	            onchange && onchange(e.target.value);
+	        }
+	    });
+	};
+
 	module.exports = ({
-	    listData,
+	    value,
 	    defaultItem,
 	    title,
-	    onchange = id
+	    itemOptions = {}, onchange = id, itemRender = Input
 	}) => {
 	    return dynamicList({
-	        listData,
-	        defaultItem,
 	        // append or delete items happend
-	        onchangeList: () => onchange(listData),
+	        onchange: () => onchange(value),
+
+	        value,
+
+	        defaultItem,
+
 	        render: ({
-	            appendItem, deleteItem, listData
+	            appendItem, deleteItem, value
 	        }) => {
 	            return n('div', {
 	                style: {
@@ -27847,21 +27955,24 @@
 	                    })))
 	                ]),
 
-	                map(listData, (item) => {
+	                map(value, (item, index) => {
 	                    return n('fieldset', [
-	                        n('input type="text"', mergeMap({
-	                            onkeyup: (e) => {
-	                                item.value = e.target.value;
-	                                onchange(listData);
+	                        itemRender(mergeMap(
+	                            itemOptions, {
+	                                value: item,
+	                                onchange: (v) => {
+	                                    value[index] = v;
+	                                    onchange(value);
+	                                }
 	                            }
-	                        }, item)),
+	                        )),
 
 	                        n('span', {
 	                            style: {
 	                                cursor: 'pointer',
 	                                fontWeight: 'bold'
 	                            },
-	                            onclick: () => deleteItem(item)
+	                            onclick: () => deleteItem(item, index)
 	                        }, n('div', {
 	                            style: {
 	                                display: 'inline-block',
@@ -27892,10 +28003,6 @@
 	'use strict';
 
 	let {
-	    findIndex, mergeMap
-	} = __webpack_require__(37);
-
-	let {
 	    view
 	} = __webpack_require__(4);
 
@@ -27911,41 +28018,42 @@
 	 *   (4) maintain list data
 	 *
 	 * @param render function
-	 *  render dom by listData
+	 *  render dom by value
 	 */
 	module.exports = view(({
-	    listData,
-	    defaultItem,
-	    render,
-	    onchangeList = id,
+	    value,
+	    defaultItem = '', render, onchange = id,
 	}, {
 	    update
 	}) => {
 	    let appendItem = () => {
-	        let value = defaultItem;
+	        let item = defaultItem;
 	        if (isFunction(defaultItem)) {
-	            value = defaultItem();
+	            item = defaultItem();
 	        } else {
-	            value = mergeMap(defaultItem);
+	            item = JSON.parse(JSON.stringify(defaultItem));
 	        }
-	        listData.push(value);
-	        onchangeList(value, 'append', listData);
+	        value.push(item);
+	        onchange({
+	            value, type: 'append', item
+	        });
 	        // update view
 	        update();
 	    };
 
-	    let deleteItem = (item) => {
-	        let index = findIndex(listData, item);
+	    let deleteItem = (item, index) => {
 	        if (index !== -1) {
-	            listData.splice(index, 1);
+	            value.splice(index, 1);
 	            // update view
-	            onchangeList(item, index, 'delete', listData);
+	            onchange({
+	                item, index, type: 'delete', value
+	            });
 	            update();
 	        }
 	    };
 
 	    return render({
-	        listData,
+	        value,
 	        appendItem,
 	        deleteItem
 	    });
@@ -28401,15 +28509,13 @@
 	    PREDICATE
 	} = __webpack_require__(45);
 
-	module.exports = ({
+	let form = ({
 	    value,
 	    expressionType,
 	    getSuffixParams
 	}, {
 	    title
 	} = {}) => {
-	    if (expressionType !== PREDICATE) return;
-
 	    let parts = value.path.split('.');
 	    title = title || parts[parts.length - 1];
 
@@ -28425,6 +28531,14 @@
 	        })
 	    ]);
 	};
+
+	form.detect = ({
+	    expressionType
+	}) => {
+	    return expressionType === PREDICATE;
+	};
+
+	module.exports = form;
 
 
 /***/ },
@@ -28450,6 +28564,142 @@
 	    fun.meta = meta;
 	    return fun;
 	}, [isFunction, isObject]);
+
+
+/***/ },
+/* 105 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let fold = __webpack_require__(64);
+
+	let foldArrow = __webpack_require__(70);
+
+	let {
+	    n
+	} = __webpack_require__(4);
+
+	let {
+	    map
+	} = __webpack_require__(37);
+
+	let {
+	    PREDICATE
+	} = __webpack_require__(45);
+
+	let simpleFolder = ({
+	    value,
+	    expressionType,
+	    getSuffixParams
+	}, {
+	    title, hide
+	}) => {
+	    let parts = value.path.split('.');
+	    title = title || parts[parts.length - 1];
+
+	    return fold({
+	        head: (ops) => n('div', {
+	            style: {
+	                cursor: 'pointer'
+	            },
+	            onclick: () => {
+	                ops.toggle();
+	            }
+	        }, [
+	            foldArrow(ops),
+
+	            n('span', {
+	                style: {
+	                    color: '#9b9b9b'
+	                }
+	            }, title)
+	        ]),
+
+	        body: () => {
+	            return map(getSuffixParams(0), (item) => {
+	                return n('div', {
+	                    style: {
+	                        padding: 8
+	                    }
+	                }, item);
+	            });
+	        },
+
+	        hide
+	    });
+	};
+
+	simpleFolder.detect = ({
+	    expresionType
+	}) => {
+	    return expresionType === PREDICATE;
+	};
+
+	module.exports = simpleFolder;
+
+
+/***/ },
+/* 106 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let InputList = __webpack_require__(92);
+
+	let {
+	    JSON_DATA
+	} = __webpack_require__(45);
+
+	let {
+	    n
+	} = __webpack_require__(4);
+
+	let {
+	    mergeMap
+	} = __webpack_require__(37);
+
+	let simpleList = ({
+	    value,
+	    onchange
+	}, {
+	    defaultItem,
+	    title,
+	    itemRender,
+
+	    itemOptions = {}
+	}) => {
+	    let onValueChanged = (v) => {
+	        value.value = v;
+	        onchange(value);
+	    };
+
+	    return InputList({
+	        onchange: onValueChanged,
+
+	        value: value.value,
+	        defaultItem,
+	        itemRender,
+	        itemOptions: mergeMap({
+	            style: {
+	                marginLeft: 10
+	            }
+	        }, itemOptions),
+
+	        title: n('span', {
+	            style: {
+	                paddingLeft: 12,
+	                color: '#666666'
+	            }
+	        }, [title])
+	    });
+	};
+
+	simpleList.detect = ({
+	    expresionType
+	}) => expresionType === JSON_DATA;
+
+	module.exports = simpleList;
 
 
 /***/ }

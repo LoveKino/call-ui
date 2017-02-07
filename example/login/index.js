@@ -1,7 +1,7 @@
 'use strict';
 
 let {
-    LetaUI, meta
+    RealLetaUI, meta
 } = require('../..');
 
 let {
@@ -16,9 +16,13 @@ let {
     n
 } = require('kabanery');
 
-let Button = require('../../apply/ui/button');
+let button = require('../../apply/ui/button');
 
 let simpleForm = require('../../apply/ui/simpleForm');
+
+let simpleFolder = require('../../apply/ui/simpleFolder');
+
+let simpleList = require('../../apply/ui/simpleList');
 
 /**
  * 1. no expand
@@ -34,27 +38,6 @@ let simpleInput = require('../../apply/ui/simpleInput');
 
 let login = method('login');
 
-let captchaInput = ({
-    onchange
-}) => {
-    return n('div', [
-        n('input', {
-            oninput: (e) => {
-                onchange({
-                    path: 'data.string',
-                    value: e.target.value
-                });
-            }
-        }),
-
-        n('img src="https://www.google.com.hk/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png"', {
-            style: {
-                width: 40
-            }
-        })
-    ]);
-};
-
 /**
  * scope:
  *      - runtime scope (in leta expression)
@@ -66,7 +49,7 @@ let captchaInput = ({
  * TODO expression viewer configuration in predicatesMetaInfo
  */
 document.body.appendChild(
-    LetaUI(
+    RealLetaUI(
         login('', '', '', 0),
 
         {
@@ -88,18 +71,103 @@ document.body.appendChild(
                         placeholder: 'input your password',
                         inputType: 'password'
                     }, {
-                        viewer: captchaInput
+                        viewer: ({
+                            onchange
+                        }) => {
+                            return n('div', [
+                                n('input', {
+                                    oninput: (e) => {
+                                        onchange({
+                                            path: 'data.string',
+                                            value: e.target.value
+                                        });
+                                    }
+                                }),
+
+                                n('img src="https://www.google.com.hk/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png"', {
+                                    style: {
+                                        width: 40
+                                    }
+                                })
+                            ]);
+                        }
                     }, {
-                        viewer: Button,
+                        viewer: button,
                         title: 'submit'
                     }]
                 })
-            },
+            }
+        }
+    )
+);
 
-            onchange: (v, {
-                runLeta
-            }) => {
-                runLeta(v);
+document.body.appendChild(n('br'));
+
+let createProject = method('createProject');
+let advanceOpts = method('advanceOpts');
+
+document.body.appendChild(
+    RealLetaUI(
+        createProject('', '', advanceOpts([], [], ''), 0),
+
+        {
+            predicates: {
+                createProject: meta(
+                    (projectName, startUrl, advanceOpts, doSubmit) => {
+                        console.log(projectName, startUrl, advanceOpts, doSubmit); // eslint-disable-line
+                    },
+
+                    {
+                        viewer: simpleForm,
+                        args: [
+
+                            {
+                                viewer: simpleInput,
+                                title: 'username',
+                                placeholder: 'input your username'
+                            }, {
+                                viewer: simpleInput,
+                                title: 'username',
+                                placeholder: 'input your username'
+                            },
+                            null,
+
+                            {
+                                viewer: button,
+                                title: 'submit'
+                            }
+                        ]
+                    }
+                ),
+
+                advanceOpts: meta((cookies, headers, agent) => {
+                    return {
+                        cookies,
+                        headers,
+                        agent
+                    };
+                }, {
+                    viewer: simpleFolder,
+                    title: 'advance options',
+                    hide: true,
+                    args: [{
+                        viewer: simpleList,
+                        title: 'cookie',
+                        itemOptions: {
+                            placeholder: 'a=b;path=/;',
+                        }
+                    }, {
+                        viewer: simpleList,
+                        title: 'header',
+                        type: 'text',
+                        itemOptions: {
+                            placeholder: 'Pagram: no-cache',
+                        }
+                    }, {
+                        viewer: simpleInput,
+                        title: 'agent'
+                    }]
+                })
             }
         }
     )

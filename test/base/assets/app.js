@@ -1611,6 +1611,51 @@
 	    getJson, method, v, r
 	} = dsl;
 
+	let LetaUI = (...args) => {
+	    let data = getData(args);
+	    let runLeta = runner(data.predicates);
+
+	    return LetaUIView(mergeMap(data, {
+	        onchange: (v) => {
+	            data.onchange && data.onchange(v, {
+	                runLeta
+	            });
+	        },
+
+	        runLeta
+	    }));
+	};
+
+	let getData = (args) => {
+	    let data = null;
+	    if (args.length === 1) {
+	        data = args[0];
+	    } else if (args.length === 2) {
+	        data = args[1];
+	        data.value = getLambdaUiValue(
+	            getJson(args[0])
+	        ); // convert lambda json
+	    } else {
+	        throw new Error(`unexpected number of arguments. Expect one or two but got ${args.length}`);
+	    }
+
+	    data = data || {};
+
+	    return data;
+	};
+
+	let RealLetaUI = (...args) => {
+	    let data = getData(args);
+	    data.onchange = data.onchange || realOnchange;
+	    return LetaUI(data);
+	};
+
+	let realOnchange = (v, {
+	    runLeta
+	}) => {
+	    runLeta(v);
+	};
+
 	module.exports = {
 	    method,
 	    v,
@@ -1618,33 +1663,8 @@
 	    meta,
 	    runner,
 
-	    LetaUI: (...args) => {
-	        let data = null;
-	        if (args.length === 1) {
-	            data = args[0];
-	        } else if (args.length === 2) {
-	            data = args[1];
-	            data.value = getLambdaUiValue(
-	                getJson(args[0])
-	            ); // convert lambda json
-	        } else {
-	            throw new Error(`unexpected number of arguments. Expect one or two but got ${args.length}`);
-	        }
-
-	        data = data || {};
-
-	        let runLeta = runner(data.predicates);
-
-	        return LetaUIView(mergeMap(data, {
-	            onchange: (v) => {
-	                data.onchange && data.onchange(v, {
-	                    runLeta
-	                });
-	            },
-
-	            runLeta
-	        }));
-	    }
+	    LetaUI,
+	    RealLetaUI
 	};
 
 
@@ -4846,7 +4866,7 @@
 	        let meta = predicatesMetaInfo[name];
 	        if (isFunction(v)) {
 	            forEach(meta.args, (item) => {
-	                if (item.viewer) {
+	                if (item && item.viewer) {
 	                    let viewer = item.viewer;
 	                    item.viewer = (_) => viewer(_, item);
 	                }
@@ -4875,10 +4895,10 @@
 	        }
 
 	        predicatesMetaInfo[name] = predicatesMetaInfo[name] || {};
-
-	        if (isFunction(v) && !predicatesMetaInfo[name].args) {
-	            predicatesMetaInfo[name].args = map(new Array(v.length), () => {
-	                return {};
+	        predicatesMetaInfo[name].args = predicatesMetaInfo[name].args || [];
+	        if (isFunction(v)) {
+	            forEach(new Array(v.length), (_, index) => {
+	                predicatesMetaInfo[name].args[index] = predicatesMetaInfo[name].args[index] || {};
 	            });
 	        } else if (v && isObject(v)) {
 	            completePredicatesMetaInfo(v, predicatesMetaInfo[name]);
@@ -8083,6 +8103,8 @@
 	    let params = value.params.slice(0, infix);
 
 	    return map(args.slice(0, infix), (opts, index) => {
+	        opts = opts || {};
+
 	        return itemRender(mergeMap(opts, {
 	            title: opts.name,
 
@@ -8110,6 +8132,8 @@
 	    let params = value.params.slice(infix);
 
 	    return map(args.slice(infix), (opts, index) => {
+	        opts = opts || {};
+
 	        return itemRender(mergeMap(opts, {
 	            title: opts.name,
 
@@ -29116,6 +29140,8 @@
 	    getExpandor,
 	    onchange,
 	    expressionBody
+	}, {
+	    update
 	}) => {
 	    return () => expandorWrapper(n('div', [
 	        getOptionsView(),
@@ -29139,6 +29165,7 @@
 	                        value.currentVariables = v;
 	                        expressionBody.updateVariables(variables.concat(value.currentVariables));
 	                        onchange(value);
+	                        update();
 	                    },
 
 	                    variables: value.currentVariables,
@@ -29187,10 +29214,8 @@
 	        'class': 'lambda-variable'
 	    }, [
 	        InputList({
-	            listData: map(variables, (variable) => {
-	                return {
-	                    value: variable || ''
-	                };
+	            value: map(variables, (variable) => {
+	                return variable || '';
 	            }),
 
 	            title: n('span', {
@@ -29203,11 +29228,11 @@
 	            onchange: (v) => {
 	                // TODO check variable definition
 	                onchange(reduce(v, (prev, item) => {
-	                    item.value && prev.push(item.value.trim());
+	                    item && prev.push(item.trim());
 	                    return prev;
 	                }, []));
 
-	                data.variables = map(v, (item) => item.value);
+	                data.variables = v;
 	            }
 	        })
 	    ]);
@@ -29234,19 +29259,34 @@
 
 	let line = __webpack_require__(100);
 
+	let Input = ({
+	    value = '', onchange, type = 'text', style, placeholder = ''
+	}) => {
+	    return n(`input type="${type}" placeholder="${placeholder}"`, {
+	        value,
+	        style,
+	        oninput: (e) => {
+	            onchange && onchange(e.target.value);
+	        }
+	    });
+	};
+
 	module.exports = ({
-	    listData,
+	    value,
 	    defaultItem,
 	    title,
-	    onchange = id
+	    itemOptions = {}, onchange = id, itemRender = Input
 	}) => {
 	    return dynamicList({
-	        listData,
-	        defaultItem,
 	        // append or delete items happend
-	        onchangeList: () => onchange(listData),
+	        onchange: () => onchange(value),
+
+	        value,
+
+	        defaultItem,
+
 	        render: ({
-	            appendItem, deleteItem, listData
+	            appendItem, deleteItem, value
 	        }) => {
 	            return n('div', {
 	                style: {
@@ -29273,21 +29313,24 @@
 	                    })))
 	                ]),
 
-	                map(listData, (item) => {
+	                map(value, (item, index) => {
 	                    return n('fieldset', [
-	                        n('input type="text"', mergeMap({
-	                            onkeyup: (e) => {
-	                                item.value = e.target.value;
-	                                onchange(listData);
+	                        itemRender(mergeMap(
+	                            itemOptions, {
+	                                value: item,
+	                                onchange: (v) => {
+	                                    value[index] = v;
+	                                    onchange(value);
+	                                }
 	                            }
-	                        }, item)),
+	                        )),
 
 	                        n('span', {
 	                            style: {
 	                                cursor: 'pointer',
 	                                fontWeight: 'bold'
 	                            },
-	                            onclick: () => deleteItem(item)
+	                            onclick: () => deleteItem(item, index)
 	                        }, n('div', {
 	                            style: {
 	                                display: 'inline-block',
@@ -29318,10 +29361,6 @@
 	'use strict';
 
 	let {
-	    findIndex, mergeMap
-	} = __webpack_require__(42);
-
-	let {
 	    view
 	} = __webpack_require__(9);
 
@@ -29337,41 +29376,42 @@
 	 *   (4) maintain list data
 	 *
 	 * @param render function
-	 *  render dom by listData
+	 *  render dom by value
 	 */
 	module.exports = view(({
-	    listData,
-	    defaultItem,
-	    render,
-	    onchangeList = id,
+	    value,
+	    defaultItem = '', render, onchange = id,
 	}, {
 	    update
 	}) => {
 	    let appendItem = () => {
-	        let value = defaultItem;
+	        let item = defaultItem;
 	        if (isFunction(defaultItem)) {
-	            value = defaultItem();
+	            item = defaultItem();
 	        } else {
-	            value = mergeMap(defaultItem);
+	            item = JSON.parse(JSON.stringify(defaultItem));
 	        }
-	        listData.push(value);
-	        onchangeList(value, 'append', listData);
+	        value.push(item);
+	        onchange({
+	            value, type: 'append', item
+	        });
 	        // update view
 	        update();
 	    };
 
-	    let deleteItem = (item) => {
-	        let index = findIndex(listData, item);
+	    let deleteItem = (item, index) => {
 	        if (index !== -1) {
-	            listData.splice(index, 1);
+	            value.splice(index, 1);
 	            // update view
-	            onchangeList(item, index, 'delete', listData);
+	            onchange({
+	                item, index, type: 'delete', value
+	            });
 	            update();
 	        }
 	    };
 
 	    return render({
-	        listData,
+	        value,
 	        appendItem,
 	        deleteItem
 	    });

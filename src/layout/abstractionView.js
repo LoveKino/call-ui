@@ -19,6 +19,8 @@ module.exports = view(({
     getExpandor,
     onchange,
     expressionBody
+}, {
+    update
 }) => {
     return () => expandorWrapper(n('div', [
         getOptionsView(),
@@ -42,6 +44,7 @@ module.exports = view(({
                         value.currentVariables = v;
                         expressionBody.updateVariables(variables.concat(value.currentVariables));
                         onchange(value);
+                        update();
                     },
 
                     variables: value.currentVariables,
