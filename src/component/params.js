@@ -33,21 +33,18 @@ let getPrefixParamser = (data, {
 
     let params = value.params.slice(0, infix);
 
-    return map(args.slice(0, infix), ({
-        name,
-        content
-    }, index) => {
-        return itemRender({
-            title: name,
+    return map(args.slice(0, infix), (opts, index) => {
+        return itemRender(mergeMap(opts, {
+            title: opts.name,
 
-            content: mergeMap(params[index] || {}, content || {}),
+            value: mergeMap(params[index] || {}, opts.value || {}),
 
             onchange: (itemValue) => {
                 params[index] = itemValue;
                 value.params = params.concat(value.params.slice(infix));
                 onchange(value);
             }
-        });
+        }));
     });
 };
 
@@ -63,21 +60,18 @@ let getSuffixParamser = (data, {
 
     let params = value.params.slice(infix);
 
-    return map(args.slice(infix), ({
-        name,
-        content
-    }, index) => {
-        return itemRender({
-            title: name,
+    return map(args.slice(infix), (opts, index) => {
+        return itemRender(mergeMap(opts, {
+            title: opts.name,
 
-            content: mergeMap(params[index] || {}, content || {}),
+            value: mergeMap(params[index] || {}, opts.value || {}),
 
             onchange: (itemValue) => {
                 params[index] = itemValue;
                 value.params = value.params.slice(0, infix).concat(params);
                 onchange(value);
             }
-        });
+        }));
     });
 };
 

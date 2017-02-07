@@ -150,9 +150,8 @@ let expressionView = view((data, {
 
         onchange(value);
 
-        return getExpressionViewer(data)(
-            getExpressionViewOptions(data, update)
-        );
+        let expressionOptions = getExpressionViewOptions(data, update);
+        return getExpressionViewer(data, expressionOptions)(expressionOptions);
     };
 });
 
@@ -238,36 +237,25 @@ let getExpressionViewOptions = (data, update) => {
         };
     };
 
-    let prefixParamItemRender = ({
-        title,
-        content,
-        onchange
-    }) => expressionView(mergeMap(globalConfig, {
-        value: content,
-        title,
-        onchange,
-        variables,
+    let prefixParamItemRender = (opts) => expressionView(
+        mergeMap(mergeMap(globalConfig, {
+            variables,
+            onexpandchange: (hide, data) => {
+                // close infix mode
+                update([
+                    ['infixPath', null],
+                    ['value', data.value],
+                    ['title', '']
+                ]);
+            }
+        }), opts)
+    );
 
-        onexpandchange: (hide, data) => {
-            // close infix mode
-            update([
-                ['infixPath', null],
-                ['value', data.value],
-                ['title', '']
-            ]);
-        }
-    }));
-
-    let suffixParamItemRender = ({
-        title,
-        content,
-        onchange
-    }) => expressionView(mergeMap(globalConfig, {
-        title,
-        onchange,
-        variables,
-        value: content,
-    }));
+    let suffixParamItemRender = (opts) => expressionView(
+        mergeMap(mergeMap(globalConfig, {
+            variables
+        }), opts)
+    );
 
     let expressionType = getExpressionType(value.path);
 
@@ -304,6 +292,7 @@ let getExpressionViewOptions = (data, update) => {
             };
         case VARIABLE:
             return {
+                value,
                 getOptionsView,
                 getExpandor,
 
@@ -318,12 +307,12 @@ let getExpressionViewOptions = (data, update) => {
                 getExpandor,
 
                 onchange,
+                expressionType,
                 expressionBody: getAbstractionBody(),
-
-                expressionType
             };
         default:
             return {
+                value,
                 getOptionsView,
                 getExpandor,
 

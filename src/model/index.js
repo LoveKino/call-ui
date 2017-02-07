@@ -165,8 +165,10 @@ let completeDataWithDefault = (data) => {
     // add UI predicates
     appendUIAsIds(data.predicates.UI, data.UI);
 
-    // TODO complete predicate meta info
     completePredicatesMetaInfo(data.predicates, data.predicatesMetaInfo);
+
+    // predicate meta info viewer
+    transitionPredicateMetaViewer(data.predicates, data.predicatesMetaInfo);
 
     // make title
     let expresionType = getExpressionType(data.value.path);
@@ -183,6 +185,22 @@ let completeDataWithDefault = (data) => {
     return data;
 };
 
+let transitionPredicateMetaViewer = (predicates, predicatesMetaInfo) => {
+    forEach(predicates, (v, name) => {
+        let meta = predicatesMetaInfo[name];
+        if (isFunction(v)) {
+            forEach(meta.args, (item) => {
+                if (item.viewer) {
+                    let viewer = item.viewer;
+                    item.viewer = (_) => viewer(_, item);
+                }
+            });
+        } else if (isObject(v)) {
+            transitionPredicateMetaViewer(v, meta);
+        }
+    });
+};
+
 let appendUIAsIds = (predicates, UI = {}) => {
     forEach(UI, (v, name) => {
         if (isFunction(v)) {
@@ -196,6 +214,10 @@ let appendUIAsIds = (predicates, UI = {}) => {
 
 let completePredicatesMetaInfo = (predicates, predicatesMetaInfo) => {
     forEach(predicates, (v, name) => {
+        if (isFunction(v) && v.meta) {
+            predicatesMetaInfo[name] = predicatesMetaInfo[name] || v.meta;
+        }
+
         predicatesMetaInfo[name] = predicatesMetaInfo[name] || {};
 
         if (isFunction(v) && !predicatesMetaInfo[name].args) {

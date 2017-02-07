@@ -2,19 +2,13 @@
 
 let assert = require('assert');
 
-let LetaUI = require('../..');
+let {
+    LetaUI, method, r, v
+} = require('../..');
 
 let {
     n
 } = require('kabanery');
-
-let {
-    dsl
-} = require('leta');
-
-let {
-    method, r, v
-} = dsl;
 
 let test = (name, data, assertFun) => {
     let changed = false;

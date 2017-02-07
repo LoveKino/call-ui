@@ -1,6 +1,6 @@
 'use strict';
 
-let LetaUI = require('./letaUI');
+let LetaUIView = require('./letaUI');
 
 let {
     runner, getLambdaUiValue
@@ -11,37 +11,47 @@ let {
 } = require('leta');
 
 let {
-    getJson
-} = dsl;
-
-let {
     mergeMap
 } = require('bolzano');
 
-module.exports = (...args) => {
-    let data = null;
-    if (args.length === 1) {
-        data = args[0];
-    } else if (args.length === 2) {
-        data = args[1];
-        data.value = getLambdaUiValue(
-            getJson(args[0])
-        ); // convert lambda json
-    } else {
-        throw new Error(`unexpected number of arguments. Expect one or two but got ${args.length}`);
+let meta = require('./tool/meta');
+
+let {
+    getJson, method, v, r
+} = dsl;
+
+module.exports = {
+    method,
+    v,
+    r,
+    meta,
+    runner,
+
+    LetaUI: (...args) => {
+        let data = null;
+        if (args.length === 1) {
+            data = args[0];
+        } else if (args.length === 2) {
+            data = args[1];
+            data.value = getLambdaUiValue(
+                getJson(args[0])
+            ); // convert lambda json
+        } else {
+            throw new Error(`unexpected number of arguments. Expect one or two but got ${args.length}`);
+        }
+
+        data = data || {};
+
+        let runLeta = runner(data.predicates);
+
+        return LetaUIView(mergeMap(data, {
+            onchange: (v) => {
+                data.onchange && data.onchange(v, {
+                    runLeta
+                });
+            },
+
+            runLeta
+        }));
     }
-
-    data = data || {};
-
-    let runLeta = runner(data.predicates);
-
-    return LetaUI(mergeMap(data, {
-        onchange: (v) => {
-            data.onchange && data.onchange(v, {
-                runLeta
-            });
-        },
-
-        runLeta
-    }));
 };
