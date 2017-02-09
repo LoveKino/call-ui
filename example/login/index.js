@@ -13,6 +13,10 @@ let {
 } = dsl;
 
 let {
+    overArgs
+} = require('bolzano');
+
+let {
     n
 } = require('kabanery');
 
@@ -23,6 +27,10 @@ let simpleForm = require('../../apply/ui/simpleForm');
 let simpleFolder = require('../../apply/ui/simpleFolder');
 
 let simpleList = require('../../apply/ui/simpleList');
+
+let UIMap = require('../../apply/ui/compose/UIMap');
+
+let N = require('../../apply/ui/compose/n');
 
 /**
  * 1. no expand
@@ -108,13 +116,13 @@ let advanceOpts = method('advanceOpts');
 
 document.body.appendChild(
     RealLetaUI(
-        createProject('', '', advanceOpts([], [], ''), 0),
+        createProject('', '', advanceOpts([], [], ''), [0, 0]),
 
         {
             predicates: {
                 createProject: meta(
-                    (projectName, startUrl, advanceOpts, doSubmit) => {
-                        console.log(projectName, startUrl, advanceOpts, doSubmit); // eslint-disable-line
+                    (projectName, startUrl, advanceOpts, [doSubmit, doCancel]) => {
+                        console.log(projectName, startUrl, advanceOpts, doSubmit, doCancel); // eslint-disable-line
                     },
 
                     {
@@ -128,11 +136,20 @@ document.body.appendChild(
                                 viewer: simpleInput,
                                 placeholder: 'input your start url'
                             },
+
                             null,
 
                             {
-                                viewer: button,
-                                title: 'submit'
+                                viewer: N('ul', UIMap(overArgs(N('div', {
+                                    style: {
+                                        display: 'inline-block',
+                                        paddingRight: 10
+                                    }
+                                }, button), (expOptions, index) => {
+                                    return [expOptions, {
+                                        title: index === 0 ? 'submit' : 'cancel'
+                                    }];
+                                })))
                             }
                         ]
                     }
