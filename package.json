@@ -1,14 +1,14 @@
 {
-  "name": "lambda-ui",
+  "name": "leta-ui",
   "version": "0.1.1",
-  "description": "lambda editor ui",
+  "description": "leta lambda editor ui",
   "main": "index.js",
   "scripts": {
     "test": "mocha test/model/**/*.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/LoveKino/lambda-ui.git"
+    "url": "git+https://github.com/LoveKino/leta-ui.git"
   },
   "keywords": [
     "function",
@@ -19,9 +19,9 @@
   "author": "ddchen",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/LoveKino/lambda-ui/issues"
+    "url": "https://github.com/LoveKino/leta-ui/issues"
   },
-  "homepage": "https://github.com/LoveKino/lambda-ui#readme",
+  "homepage": "https://github.com/LoveKino/leta-ui#readme",
   "devDependencies": {
     "mocha": "^3.2.0",
     "webpack": "^1.14.0"

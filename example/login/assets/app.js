@@ -169,12 +169,10 @@
 
 	                            {
 	                                viewer: simpleInput,
-	                                title: 'username',
-	                                placeholder: 'input your username'
+	                                placeholder: 'input your project name'
 	                            }, {
 	                                viewer: simpleInput,
-	                                title: 'username',
-	                                placeholder: 'input your username'
+	                                placeholder: 'input your start url'
 	                            },
 	                            null,
 
