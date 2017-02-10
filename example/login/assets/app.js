@@ -74,6 +74,8 @@
 
 	let simpleList = __webpack_require__(106);
 
+	let simpleSelect = __webpack_require__(109);
+
 	let UIMap = __webpack_require__(107);
 
 	let {
@@ -164,13 +166,13 @@
 
 	document.body.appendChild(
 	    RealLetaUI(
-	        createProject('', '', advanceOpts([], [], ''), [0, 0]),
+	        createProject('', 'web', '', advanceOpts([], [], ''), [0, 0]),
 
 	        {
 	            predicates: {
 	                createProject: meta(
-	                    (projectName, startUrl, advanceOpts, [doSubmit, doCancel]) => {
-	                        console.log(projectName, startUrl, advanceOpts, doSubmit, doCancel); // eslint-disable-line
+	                    (projectName, projectType, startUrl, advanceOpts, [doSubmit, doCancel]) => {
+	                        console.log(projectName, projectType, startUrl, advanceOpts, doSubmit, doCancel); // eslint-disable-line
 	                    },
 
 	                    {
@@ -180,7 +182,14 @@
 	                            {
 	                                viewer: simpleInput,
 	                                placeholder: 'input your project name'
-	                            }, {
+	                            },
+
+	                            {
+	                                viewer: simpleSelect,
+	                                options: [['android'], ['web']]
+	                            },
+
+	                            {
 	                                viewer: simpleInput,
 	                                placeholder: 'input your start url'
 	                            },
@@ -28813,6 +28822,44 @@
 	        }, getDataTypePath(value.path))
 	    ]);
 	};
+
+
+/***/ },
+/* 109 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	let {
+	    JSON_DATA
+	} = __webpack_require__(46);
+
+	let Select = __webpack_require__(76);
+
+	/**
+	 * simple select ui for leta-ui
+	 */
+	let simpleSelect = ({
+	    value,
+	    onchange
+	}, {
+	    options
+	}) => {
+	    return Select({
+	        selected: value.value,
+	        onchange: (one) => {
+	            value.value = one;
+	            onchange(value);
+	        },
+	        options
+	    });
+	};
+
+	simpleSelect.detect = ({
+	    expresionType
+	}) => expresionType === JSON_DATA;
+
+	module.exports = simpleSelect;
 
 
 /***/ }

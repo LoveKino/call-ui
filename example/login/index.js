@@ -28,6 +28,8 @@ let simpleFolder = require('../../apply/ui/simpleFolder');
 
 let simpleList = require('../../apply/ui/simpleList');
 
+let simpleSelect = require('../../apply/ui/simpleSelect');
+
 let UIMap = require('../../apply/ui/compose/UIMap');
 
 let {
@@ -118,13 +120,13 @@ let advanceOpts = method('advanceOpts');
 
 document.body.appendChild(
     RealLetaUI(
-        createProject('', '', advanceOpts([], [], ''), [0, 0]),
+        createProject('', 'web', '', advanceOpts([], [], ''), [0, 0]),
 
         {
             predicates: {
                 createProject: meta(
-                    (projectName, startUrl, advanceOpts, [doSubmit, doCancel]) => {
-                        console.log(projectName, startUrl, advanceOpts, doSubmit, doCancel); // eslint-disable-line
+                    (projectName, projectType, startUrl, advanceOpts, [doSubmit, doCancel]) => {
+                        console.log(projectName, projectType, startUrl, advanceOpts, doSubmit, doCancel); // eslint-disable-line
                     },
 
                     {
@@ -134,7 +136,14 @@ document.body.appendChild(
                             {
                                 viewer: simpleInput,
                                 placeholder: 'input your project name'
-                            }, {
+                            },
+
+                            {
+                                viewer: simpleSelect,
+                                options: [['android'], ['web']]
+                            },
+
+                            {
                                 viewer: simpleInput,
                                 placeholder: 'input your start url'
                             },
