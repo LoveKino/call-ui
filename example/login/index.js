@@ -30,7 +30,9 @@ let simpleList = require('../../apply/ui/simpleList');
 
 let UIMap = require('../../apply/ui/compose/UIMap');
 
-let N = require('../../apply/ui/compose/n');
+let {
+    N
+} = require('kabanery');
 
 /**
  * 1. no expand
@@ -140,7 +142,7 @@ document.body.appendChild(
                             null,
 
                             {
-                                viewer: N('ul', UIMap(overArgs(N('div', {
+                                viewer: UIMap(overArgs(N('div', {
                                     style: {
                                         display: 'inline-block',
                                         paddingRight: 10
@@ -149,7 +151,7 @@ document.body.appendChild(
                                     return [expOptions, {
                                         title: index === 0 ? 'submit' : 'cancel'
                                     }];
-                                })))
+                                }))
                             }
                         ]
                     }
