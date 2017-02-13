@@ -43,6 +43,7 @@ let ProjectView = view((data, {
                         title: 'name'
                     }, {
                         viewer: simpleSelect,
+                        title: 'projectType',
                         options: [
                             ['web'],
                             ['android']

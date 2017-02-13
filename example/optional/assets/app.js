@@ -89,6 +89,7 @@
 	                        title: 'name'
 	                    }, {
 	                        viewer: simpleSelect,
+	                        title: 'projectType',
 	                        options: [
 	                            ['web'],
 	                            ['android']
@@ -28533,6 +28534,10 @@
 
 	let Select = __webpack_require__(76);
 
+	let {
+	    n
+	} = __webpack_require__(4);
+
 	/**
 	 * simple select ui for leta-ui
 	 */
@@ -28540,16 +28545,21 @@
 	    value,
 	    onchange
 	}, {
+	    title,
 	    options
 	}) => {
-	    return Select({
-	        selected: value.value,
-	        onchange: (one) => {
-	            value.value = one;
-	            onchange(value);
-	        },
-	        options
-	    });
+	    return n('fieldset', [
+	        n('label', [title]),
+
+	        Select({
+	            selected: value.value,
+	            onchange: (one) => {
+	                value.value = one;
+	                onchange(value);
+	            },
+	            options
+	        })
+	    ]);
 	};
 
 	simpleSelect.detect = ({
