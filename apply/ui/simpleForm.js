@@ -22,7 +22,11 @@ let form = ({
     let parts = value.path.split('.');
     title = title || parts[parts.length - 1];
 
-    return n('form class="expression-wrapper"', [
+    return n('form class="expression-wrapper"', {
+        onclick: (e) => {
+            e.preventDefault();
+        }
+    }, [
         n('h3', title),
 
         map(getSuffixParams(0), (item) => {

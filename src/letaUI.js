@@ -12,7 +12,8 @@ let Expandor = require('./view/expandor');
 
 let {
     getPrefixParamser,
-    getSuffixParamser
+    getSuffixParamser,
+    getParamer
 } = require('./component/params');
 
 let {
@@ -130,7 +131,7 @@ let expressionView = view((data, {
             //
             let render = get(data.UI, getUIPredicatePath(value.path));
             return expressionView(mergeMap(data, {
-                viewer: (v) => render(v, ...map(value.params.slice(1), (item) => {
+                viewer: (expOptions) => render(expOptions, ...map(value.params.slice(1), (item) => {
                     return runLeta(item);
                 })),
                 value: value.params[0]
@@ -270,7 +271,11 @@ let getExpressionViewOptions = (data, update) => {
                 value,
 
                 getSuffixParams: getSuffixParamser(data, {
-                    expressionView,
+                    // suffix param item
+                    itemRender: suffixParamItemRender
+                }),
+
+                getParam: getParamer(data, {
                     // suffix param item
                     itemRender: suffixParamItemRender
                 }),

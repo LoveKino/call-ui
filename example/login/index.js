@@ -120,6 +120,9 @@ let advanceOpts = method('advanceOpts');
 
 document.body.appendChild(
     RealLetaUI(
+        // TODO conditional
+        // example, for web project using createWebProject,
+        // for android project using createAndroidProject
         createProject('', 'web', '', advanceOpts([], [], ''), [0, 0]),
 
         {

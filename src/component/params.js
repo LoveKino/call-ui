@@ -21,6 +21,31 @@ let getArgs = ({
 
 const id = v => v;
 
+let getParamer = (data, {
+    itemRender
+}) => (index) => {
+    let {
+        value,
+        onchange = id
+    } = data;
+
+    let args = getArgs(data);
+
+    let opts = args[index] || {};
+
+    return itemRender(mergeMap(opts, {
+        title: opts.name,
+
+        value: mergeMap(value.params[index] || {}, opts.value || {}),
+
+        onchange: (itemValue) => {
+            // update by index
+            value.params[index] = itemValue;
+            onchange(value);
+        }
+    }));
+};
+
 let getPrefixParamser = (data, {
     itemRender
 }) => (infix = 0) => {
@@ -81,5 +106,6 @@ let getSuffixParamser = (data, {
 
 module.exports = {
     getPrefixParamser,
-    getSuffixParamser
+    getSuffixParamser,
+    getParamer
 };

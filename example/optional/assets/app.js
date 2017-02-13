@@ -47,206 +47,85 @@
 	'use strict';
 
 	let {
-	    RealLetaUI, meta
+	    RealLetaUI, meta, method
 	} = __webpack_require__(1);
 
 	let {
-	    dsl
-	} = __webpack_require__(36);
-
-	let {
-	    method
-	} = dsl;
-
-	let {
-	    overArgs
-	} = __webpack_require__(38);
-
-	let {
-	    n
+	    view
 	} = __webpack_require__(4);
 
-	let button = __webpack_require__(103);
+	let simpleForm = __webpack_require__(103);
 
-	let simpleForm = __webpack_require__(104);
+	let simpleInput = __webpack_require__(104);
 
-	let simpleFolder = __webpack_require__(105);
+	let simpleSelect = __webpack_require__(105);
 
-	let simpleList = __webpack_require__(106);
+	let ProjectView = view((data, {
+	    update
+	}) => {
+	    let setProject = method('setProject');
+	    let setAndroidProjectOptions = method('setAndroidProjectOptions');
+	    let setWebProjectOptions = method('setWebProjectOptions');
 
-	let simpleSelect = __webpack_require__(109);
-
-	let UIMap = __webpack_require__(107);
-
-	let {
-	    N
-	} = __webpack_require__(4);
-
-	/**
-	 * 1. no expand
-	 *
-	 * 2. can not change expression type
-	 *
-	 * 3. custom input
-	 *
-	 * 4. custome expression ui
-	 */
-
-	let simpleInput = __webpack_require__(108);
-
-	let login = method('login');
-
-	/**
-	 * scope:
-	 *      - runtime scope (in leta expression)
-	 *
-	 *      - predicate scope
-	 *
-	 *      - global scope
-	 *
-	 * TODO expression viewer configuration in predicatesMetaInfo
-	 */
-	document.body.appendChild(
-	    RealLetaUI(
-	        login('', '', '', 0),
+	    return RealLetaUI(
+	        // initial state
+	        setProject(
+	            '',
+	            data.projectType,
+	            data.projectType === 'web' ? setWebProjectOptions('') : setAndroidProjectOptions('')
+	        ),
 
 	        {
 	            predicates: {
-	                // TODO can update view of param, reflect logic to view by update some data
-	                // TODO move predicate meta info here as comment for a function
-	                login: meta((username, password, captcha, doSubmit) => {
-	                    console.log(username, password, captcha, doSubmit); // eslint-disable-line
+	                setProject: meta((name, type, optionObj) => {
+	                    console.log(name, type, optionObj); // eslint-disable-line
+	                    if (type !== data.projectType) {
+	                        update('projectType', type);
+	                    }
 	                }, {
-	                    // TODO auto generate title or name by analysis function definition
 	                    viewer: simpleForm,
 	                    args: [{
 	                        viewer: simpleInput,
-	                        title: 'username',
-	                        placeholder: 'input your username'
+	                        title: 'name'
 	                    }, {
-	                        viewer: simpleInput,
-	                        title: 'password',
-	                        placeholder: 'input your password',
-	                        inputType: 'password'
-	                    }, {
-	                        viewer: ({
-	                            onchange
-	                        }) => {
-	                            return n('div', [
-	                                n('input', {
-	                                    oninput: (e) => {
-	                                        onchange({
-	                                            path: 'data.string',
-	                                            value: e.target.value
-	                                        });
-	                                    }
-	                                }),
-
-	                                n('img src="https://www.google.com.hk/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png"', {
-	                                    style: {
-	                                        width: 40
-	                                    }
-	                                })
-	                            ]);
-	                        }
-	                    }, {
-	                        viewer: button,
-	                        title: 'submit'
-	                    }]
-	                })
-	            }
-	        }
-	    )
-	);
-
-	document.body.appendChild(n('br'));
-
-	let createProject = method('createProject');
-	let advanceOpts = method('advanceOpts');
-
-	document.body.appendChild(
-	    RealLetaUI(
-	        // TODO conditional
-	        // example, for web project using createWebProject,
-	        // for android project using createAndroidProject
-	        createProject('', 'web', '', advanceOpts([], [], ''), [0, 0]),
-
-	        {
-	            predicates: {
-	                createProject: meta(
-	                    (projectName, projectType, startUrl, advanceOpts, [doSubmit, doCancel]) => {
-	                        console.log(projectName, projectType, startUrl, advanceOpts, doSubmit, doCancel); // eslint-disable-line
-	                    },
-
-	                    {
-	                        viewer: simpleForm,
-	                        args: [
-
-	                            {
-	                                viewer: simpleInput,
-	                                placeholder: 'input your project name'
-	                            },
-
-	                            {
-	                                viewer: simpleSelect,
-	                                options: [['android'], ['web']]
-	                            },
-
-	                            {
-	                                viewer: simpleInput,
-	                                placeholder: 'input your start url'
-	                            },
-
-	                            null,
-
-	                            {
-	                                viewer: UIMap(overArgs(N('div', {
-	                                    style: {
-	                                        display: 'inline-block',
-	                                        paddingRight: 10
-	                                    }
-	                                }, button), (expOptions, index) => {
-	                                    return [expOptions, {
-	                                        title: index === 0 ? 'submit' : 'cancel'
-	                                    }];
-	                                }))
-	                            }
+	                        viewer: simpleSelect,
+	                        options: [
+	                            ['web'],
+	                            ['android']
 	                        ]
-	                    }
-	                ),
+	                    }]
+	                }),
 
-	                advanceOpts: meta((cookies, headers, agent) => {
+	                setWebProjectOptions: meta((url) => {
 	                    return {
-	                        cookies,
-	                        headers,
-	                        agent
+	                        url
 	                    };
 	                }, {
-	                    viewer: simpleFolder,
-	                    title: 'advance options',
-	                    hide: true,
+	                    viewer: simpleForm,
 	                    args: [{
-	                        viewer: simpleList,
-	                        title: 'cookie',
-	                        itemOptions: {
-	                            placeholder: 'a=b;path=/;',
-	                        }
-	                    }, {
-	                        viewer: simpleList,
-	                        title: 'header',
-	                        type: 'text',
-	                        itemOptions: {
-	                            placeholder: 'Pagram: no-cache',
-	                        }
-	                    }, {
 	                        viewer: simpleInput,
-	                        title: 'agent'
+	                        title: 'url'
+	                    }]
+	                }),
+
+	                setAndroidProjectOptions: meta((packageName) => {
+	                    return {
+	                        packageName
+	                    };
+	                }, {
+	                    viewer: simpleForm,
+	                    args: [{
+	                        viewer: simpleInput,
+	                        title: 'packageName'
 	                    }]
 	                })
 	            }
-	        }
-	    )
-	);
+	        });
+	});
+
+	document.body.appendChild(ProjectView({
+	    projectType: 'web'
+	}));
 
 
 /***/ },
@@ -476,7 +355,7 @@
 	            //
 	            let render = get(data.UI, getUIPredicatePath(value.path));
 	            return expressionView(mergeMap(data, {
-	                viewer: (v) => render(v, ...map(value.params.slice(1), (item) => {
+	                viewer: (expOptions) => render(expOptions, ...map(value.params.slice(1), (item) => {
 	                    return runLeta(item);
 	                })),
 	                value: value.params[0]
@@ -623,7 +502,6 @@
 	                getParam: getParamer(data, {
 	                    // suffix param item
 	                    itemRender: suffixParamItemRender
-
 	                }),
 
 	                getOptionsView,
@@ -2833,7 +2711,7 @@
 	        }
 	    };
 
-	    let initData = (obj) => {
+	    let initData = (obj = {}) => {
 	        data = generateData(obj, ctx);
 	        return data;
 	    };
@@ -6834,7 +6712,7 @@
 
 	    let args = getArgs(data);
 
-	    let opts = args[index];
+	    let opts = args[index] || {};
 
 	    return itemRender(mergeMap(opts, {
 	        title: opts.name,
@@ -28549,51 +28427,6 @@
 	} = __webpack_require__(4);
 
 	let {
-	    JSON_DATA
-	} = __webpack_require__(46);
-
-	module.exports = ({
-	    expressionType,
-	    onchange
-	}, {
-	    title, style = {}
-	}) => {
-	    if (expressionType !== JSON_DATA) {
-	        return;
-	    }
-
-	    return n('button', {
-	        style,
-
-	        onclick: (e) => {
-	            e.preventDefault();
-	            e.stopPropagation();
-
-	            onchange({
-	                path: 'data.number',
-	                value: 1
-	            });
-
-	            onchange({
-	                path: 'data.number',
-	                value: 0
-	            });
-	        }
-	    }, title);
-	};
-
-
-/***/ },
-/* 104 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	let {
-	    n
-	} = __webpack_require__(4);
-
-	let {
 	    map
 	} = __webpack_require__(38);
 
@@ -28638,182 +28471,7 @@
 
 
 /***/ },
-/* 105 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	let fold = __webpack_require__(65);
-
-	let foldArrow = __webpack_require__(71);
-
-	let {
-	    n
-	} = __webpack_require__(4);
-
-	let {
-	    map
-	} = __webpack_require__(38);
-
-	let {
-	    PREDICATE
-	} = __webpack_require__(46);
-
-	let simpleFolder = ({
-	    value,
-	    expressionType,
-	    getSuffixParams
-	}, {
-	    title, hide
-	}) => {
-	    let parts = value.path.split('.');
-	    title = title || parts[parts.length - 1];
-
-	    return fold({
-	        head: (ops) => n('div', {
-	            style: {
-	                cursor: 'pointer'
-	            },
-	            onclick: () => {
-	                ops.toggle();
-	            }
-	        }, [
-	            foldArrow(ops),
-
-	            n('span', {
-	                style: {
-	                    color: '#9b9b9b'
-	                }
-	            }, title)
-	        ]),
-
-	        body: () => {
-	            return map(getSuffixParams(0), (item) => {
-	                return n('div', {
-	                    style: {
-	                        padding: 8
-	                    }
-	                }, item);
-	            });
-	        },
-
-	        hide
-	    });
-	};
-
-	simpleFolder.detect = ({
-	    expresionType
-	}) => {
-	    return expresionType === PREDICATE;
-	};
-
-	module.exports = simpleFolder;
-
-
-/***/ },
-/* 106 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	let InputList = __webpack_require__(93);
-
-	let {
-	    JSON_DATA
-	} = __webpack_require__(46);
-
-	let {
-	    n
-	} = __webpack_require__(4);
-
-	let {
-	    mergeMap
-	} = __webpack_require__(38);
-
-	let simpleList = ({
-	    value,
-	    onchange
-	}, {
-	    defaultItem,
-	    title,
-	    itemRender,
-
-	    itemOptions = {}
-	}) => {
-	    let onValueChanged = (v) => {
-	        value.value = v;
-	        onchange(value);
-	    };
-
-	    return InputList({
-	        onchange: onValueChanged,
-
-	        value: value.value,
-	        defaultItem,
-	        itemRender,
-	        itemOptions: mergeMap({
-	            style: {
-	                marginLeft: 10
-	            }
-	        }, itemOptions),
-
-	        title: n('span', {
-	            style: {
-	                paddingLeft: 12,
-	                color: '#666666'
-	            }
-	        }, [title])
-	    });
-	};
-
-	simpleList.detect = ({
-	    expresionType
-	}) => expresionType === JSON_DATA;
-
-	module.exports = simpleList;
-
-
-/***/ },
-/* 107 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	let {
-	    JSON_DATA
-	} = __webpack_require__(46);
-
-	let {
-	    map, mergeMap
-	} = __webpack_require__(38);
-
-	let UIMap = (handler) => {
-	    let UI = (expOptions) => {
-	        return map(map(expOptions.value.value, (item, index) => {
-	            return mergeMap(expOptions, {
-	                value: expOptions.value[index],
-	                onchange: (v) => {
-	                    expOptions.value.value[index] = v.value;
-	                    expOptions.onchange && expOptions.onchange(expOptions.value);
-	                }
-	            });
-	        }), handler);
-	    };
-
-	    UI.detect = ({
-	        expressionType
-	    }) => {
-	        return expressionType === JSON_DATA;
-	    };
-
-	    return UI;
-	};
-
-	module.exports = UIMap;
-
-
-/***/ },
-/* 108 */
+/* 104 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -28864,7 +28522,7 @@
 
 
 /***/ },
-/* 109 */
+/* 105 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
