@@ -2,7 +2,7 @@
 
 let {
     JSON_DATA
-} = require('../../src/const');
+} = require('../../../src/const');
 
 let {
     parseArgs, n
