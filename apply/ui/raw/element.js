@@ -8,6 +8,10 @@ let {
     parseArgs, n
 } = require('kabanery');
 
+let {
+    mergeMap
+} = require('bolzano');
+
 /**
  * raw element used as a data container
  */
@@ -24,31 +28,29 @@ let raw = (...args) => {
         value,
         onchange
     }) => {
-        let onValueChanged = (v) => {
-            value.value = v;
+        let attrs = mergeMap(attributes, {});
+
+        let onValueChanged = (e) => {
+            value.value = e.target.value;
             onchange(value);
         };
 
         if (tagName === 'input' || tagName === 'textarea') {
-            attributes.value = value.value;
+            attrs.value = value.value;
 
-            attributes.oninput = attributes.oninput || (e) => {
-                onValueChanged(e.target.value);
-            };
+            attrs.oninput = attrs.oninput || onValueChanged;
         } else if (tagName === 'select') {
-            attributes.onchange = attributes.onchange || (e) => {
-                onValueChanged(e.target.value);
-            }
+            attrs.onchange = attrs.onchange || onValueChanged;
         }
 
-        return n(tagName, attributes, childs);
+        return n(tagName, attrs, childs);
     };
 
-    let rawElement.detect = ({
+    rawElement.detect = ({
         expresionType
     }) => expresionType === JSON_DATA;
 
     return rawElement;
 };
 
-module.exports = rawElement;
+module.exports = raw;
