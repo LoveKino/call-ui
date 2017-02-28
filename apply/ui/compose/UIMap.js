@@ -12,7 +12,7 @@ let UIMap = (handler) => {
     let UI = (expOptions) => {
         return map(map(expOptions.value.value, (item, index) => {
             return mergeMap(expOptions, {
-                value: expOptions.value[index],
+                value: expOptions.value.value[index],
                 onchange: (v) => {
                     expOptions.value.value[index] = v.value;
                     expOptions.onchange && expOptions.onchange(expOptions.value);
