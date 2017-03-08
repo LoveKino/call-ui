@@ -4,8 +4,6 @@ let {
     view, n
 } = require('kabanery');
 
-let editor = require('kabanery-editor');
-
 module.exports = view((data) => {
     let {
         content,
@@ -19,9 +17,10 @@ module.exports = view((data) => {
             height: 500
         }
     }, [
-        editor({
-            content: JSON.stringify(content, null, 4) || '{}',
-            onchange: (v) => {
+        n('textarea', {
+            value: JSON.stringify(content, null, 4) || '{}',
+            oninput: (e) => {
+                let v = e.target.value;
                 try {
                     let jsonObject = JSON.parse(v);
                     data.content = jsonObject;
