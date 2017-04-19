@@ -17,7 +17,7 @@ let {
 } = require('bolzano');
 
 let {
-    n
+    n, mount
 } = require('kabanery');
 
 let button = require('../../apply/ui/button');
@@ -60,7 +60,7 @@ let login = method('login');
  *
  * TODO expression viewer configuration in predicatesMetaInfo
  */
-document.body.appendChild(
+mount(
     RealLetaUI(
         login('', '', '', 0),
 
@@ -110,15 +110,17 @@ document.body.appendChild(
                 })
             }
         }
-    )
+    ),
+
+    document.body
 );
 
-document.body.appendChild(n('br'));
+mount(n('br'), document.body);
 
 let createProject = method('createProject');
 let advanceOpts = method('advanceOpts');
 
-document.body.appendChild(
+mount(
     RealLetaUI(
         // TODO conditional
         // example, for web project using createWebProject,
@@ -199,5 +201,7 @@ document.body.appendChild(
                 })
             }
         }
-    )
+    ),
+
+    document.body
 );

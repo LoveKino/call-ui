@@ -5,7 +5,7 @@ let {
 } = require('../..');
 
 let {
-    view
+    view, mount
 } = require('kabanery');
 
 let simpleForm = require('../../apply/ui/simpleForm');
@@ -78,6 +78,6 @@ let ProjectView = view((data, {
         });
 });
 
-document.body.appendChild(ProjectView({
+mount(ProjectView({
     projectType: 'web'
-}));
+}), document.body);

@@ -7,7 +7,7 @@ let {
 } = require('../..');
 
 let {
-    n
+    n, mount
 } = require('kabanery');
 
 let test = (name, data, assertFun) => {
@@ -28,7 +28,7 @@ let test = (name, data, assertFun) => {
         }
     }, 500);
 
-    document.body.appendChild(n('div', {
+    mount(n('div', {
         style: {
             marginBottom: 50
         }
@@ -44,7 +44,7 @@ let test = (name, data, assertFun) => {
                 fontSize: 10
             }
         }, assertFun.toString())
-    ]));
+    ]), document.body);
 };
 
 let testWithLeta = (name, lambda, data, assertFun) => {
@@ -66,7 +66,7 @@ let testWithLeta = (name, lambda, data, assertFun) => {
         }
     }, 500);
 
-    document.body.appendChild(n('div', {
+    mount(n('div', {
         style: {
             marginBottom: 50
         }
@@ -82,7 +82,7 @@ let testWithLeta = (name, lambda, data, assertFun) => {
                 fontSize: 10
             }
         }, assertFun.toString())
-    ]));
+    ]), document.body);
 };
 
 testWithLeta('number', 10, null, (v) => assert.equal(v, 10));

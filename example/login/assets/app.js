@@ -63,7 +63,7 @@
 	} = __webpack_require__(38);
 
 	let {
-	    n
+	    n, mount
 	} = __webpack_require__(4);
 
 	let button = __webpack_require__(93);
@@ -106,7 +106,7 @@
 	 *
 	 * TODO expression viewer configuration in predicatesMetaInfo
 	 */
-	document.body.appendChild(
+	mount(
 	    RealLetaUI(
 	        login('', '', '', 0),
 
@@ -156,15 +156,17 @@
 	                })
 	            }
 	        }
-	    )
+	    ),
+
+	    document.body
 	);
 
-	document.body.appendChild(n('br'));
+	mount(n('br'), document.body);
 
 	let createProject = method('createProject');
 	let advanceOpts = method('advanceOpts');
 
-	document.body.appendChild(
+	mount(
 	    RealLetaUI(
 	        // TODO conditional
 	        // example, for web project using createWebProject,
@@ -245,7 +247,9 @@
 	                })
 	            }
 	        }
-	    )
+	    ),
+
+	    document.body
 	);
 
 

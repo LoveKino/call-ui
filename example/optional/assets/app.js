@@ -51,7 +51,7 @@
 	} = __webpack_require__(1);
 
 	let {
-	    view
+	    view, mount
 	} = __webpack_require__(4);
 
 	let simpleForm = __webpack_require__(93);
@@ -124,9 +124,9 @@
 	        });
 	});
 
-	document.body.appendChild(ProjectView({
+	mount(ProjectView({
 	    projectType: 'web'
-	}));
+	}), document.body);
 
 
 /***/ },
