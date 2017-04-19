@@ -7,14 +7,14 @@ let {
 } = require('bolzano');
 
 let {
-    n
+    n, mount
 } = require('kabanery');
 
 /**
  * type system
  *   basic type: number, string, boolean, function, object, array
  */
-document.body.appendChild(LambdaRetView({
+mount(LambdaRetView({
     predicates: {
         math: {
             '+': (x, y) => x + y
@@ -50,15 +50,15 @@ document.body.appendChild(LambdaRetView({
             }]
         }
     }
-}));
+}), document.body);
 
-document.body.appendChild(n('br'));
+mount(n('br'), document.body);
 
 /**
  * type system
  *   basic type: number, string, boolean, function, object, array
  */
-document.body.appendChild(LambdaRetView({
+mount(LambdaRetView({
     predicates: {
         math: {
             '+': (x, y) => x + y
@@ -115,11 +115,11 @@ document.body.appendChild(LambdaRetView({
     },
 
     showSelectTree: true
-}));
+}), document.body);
 
-document.body.appendChild(n('br'));
+mount(n('br'), document.body);
 
-document.body.appendChild(LambdaRetView({
+mount(LambdaRetView({
     predicates: {
         math: {
             'zero': () => 0
@@ -129,4 +129,4 @@ document.body.appendChild(LambdaRetView({
     predicatesMetaInfo: {
         math: {}
     }
-}));
+}), document.body);

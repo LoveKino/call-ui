@@ -1,6 +1,8 @@
 'use strict';
 
-let LambdaUI = require('../..');
+let {
+    LetaUI
+} = require('../..');
 
 let {
     dsl, interpreter
@@ -50,7 +52,7 @@ module.exports = view((data) => {
             value: n('span', '')
         }),
 
-        LambdaUI(mergeMap(data, {
+        LetaUI(mergeMap(data, {
             onchange: (v) => {
                 v = getLambda(v);
 
