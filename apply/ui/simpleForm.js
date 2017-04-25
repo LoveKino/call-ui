@@ -32,7 +32,8 @@ let form = ({
         map(getSuffixParams(0), (item) => {
             return n('div', {
                 style: {
-                    padding: 8
+                    padding: 8,
+                    display: 'inline-block'
                 }
             }, item);
         })
