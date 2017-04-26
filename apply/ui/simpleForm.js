@@ -17,7 +17,8 @@ let form = ({
     expressionType,
     getSuffixParams
 }, {
-    title
+    title,
+    inline = true
 } = {}) => {
     let parts = value.path.split('.');
     title = title || parts[parts.length - 1];
@@ -33,7 +34,7 @@ let form = ({
             return n('div', {
                 style: {
                     padding: 8,
-                    display: 'inline-block'
+                    display: inline ? 'inline-block' : 'block'
                 }
             }, item);
         })

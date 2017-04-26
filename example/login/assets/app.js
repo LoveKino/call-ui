@@ -119,6 +119,7 @@
 	                }, {
 	                    // TODO auto generate title or name by analysis function definition
 	                    viewer: simpleForm,
+	                    inline: false,
 	                    args: [{
 	                        viewer: simpleInput,
 	                        title: 'username',
@@ -182,6 +183,7 @@
 
 	                    {
 	                        viewer: simpleForm,
+	                        inline: false,
 	                        args: [
 
 	                            {
@@ -2142,8 +2144,8 @@
 	        childExp.unshift(value);
 	    }
 
-	    if (!attributes.onkeyup) {
-	        attributes.onkeyup = (e) => {
+	    if (!attributes.oninput) {
+	        attributes.oninput = (e) => {
 	            set(obj, path, e.target.value);
 	        };
 	    }
@@ -2930,10 +2932,17 @@
 	let editNode = (node, newNode) => {
 	    // attributes
 	    applyAttibutes(node, newNode);
+
 	    // transfer context
 	    if (newNode.ctx) {
 	        newNode.ctx.transferCtx(node);
 	    }
+
+	    // transfer event map
+	    if (newNode.__eventMap) {
+	        node.__eventMap = newNode.__eventMap;
+	    }
+
 	    let orinChildNodes = toArray(node.childNodes);
 	    let newChildNodes = toArray(newNode.childNodes);
 
@@ -8154,7 +8163,8 @@
 	    expressionType,
 	    getSuffixParams
 	}, {
-	    title
+	    title,
+	    inline = true
 	} = {}) => {
 	    let parts = value.path.split('.');
 	    title = title || parts[parts.length - 1];
@@ -8169,7 +8179,8 @@
 	        map(getSuffixParams(0), (item) => {
 	            return n('div', {
 	                style: {
-	                    padding: 8
+	                    padding: 8,
+	                    display: inline ? 'inline-block' : 'block'
 	                }
 	            }, item);
 	        })

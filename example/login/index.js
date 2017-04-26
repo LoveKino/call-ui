@@ -73,6 +73,7 @@ mount(
                 }, {
                     // TODO auto generate title or name by analysis function definition
                     viewer: simpleForm,
+                    inline: false,
                     args: [{
                         viewer: simpleInput,
                         title: 'username',
@@ -136,6 +137,7 @@ mount(
 
                     {
                         viewer: simpleForm,
+                        inline: false,
                         args: [
 
                             {
