@@ -41,7 +41,7 @@ describe('getLambdaUiValue', () => {
             ),
 
             {
-                path: 'data',
+                path: 'data.json',
                 value: {
                     a: 1
                 }
