@@ -3,7 +3,7 @@
 const LAMBDA_STYLE = require('./defaultStyle');
 
 let {
-    n
+    n, mount
 } = require('kabanery');
 
 module.exports = ({
@@ -12,6 +12,6 @@ module.exports = ({
     let $style = document.getElementById('lambda-style');
     if (!$style) {
         $style = n('style id="lambda-style" type="text/css"', styleStr);
-        document.getElementsByTagName('head')[0].appendChild($style);
+        mount($style, document.getElementsByTagName('head')[0]);
     }
 };

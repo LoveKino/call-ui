@@ -7,7 +7,7 @@ let {
 module.exports = (expView, expandor) => {
     return n('div class="expandor-wrapper"', [
         // expression
-        n('div class="expression-wrapper"', expView),
+        n('div class="expression-wrapper"', [expView]),
 
         // expandor
         expandor
