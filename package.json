@@ -1,6 +1,6 @@
 {
   "name": "leta-ui",
-  "version": "0.1.21",
+  "version": "0.1.22",
   "description": "leta lambda editor ui",
   "main": "index.js",
   "scripts": {
@@ -32,11 +32,11 @@
     "bolzano": "^0.1.1",
     "cl-jsoneq": "0.0.3",
     "css-shapes-object": "0.0.3",
-    "kabanery": "^0.2.0",
-    "kabanery-dynamic-listview": "^0.1.5",
-    "kabanery-fold": "0.0.6",
-    "kabanery-select": "0.0.5",
-    "kabanery-tree-select": "^0.1.5",
+    "kabanery": "^0.2.1",
+    "kabanery-dynamic-listview": "^0.1.6",
+    "kabanery-fold": "0.0.7",
+    "kabanery-select": "0.0.6",
+    "kabanery-tree-select": "^0.1.6",
     "leta": "^0.2.2"
   }
 }
